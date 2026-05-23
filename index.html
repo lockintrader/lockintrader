@@ -1231,6 +1231,33 @@
       <div class="cloud-status-dot"></div>
       <span id="cloud-status-label">CONECTANDO…</span>
     </div>
+    <!-- SOPORTE & SUGERENCIAS -->
+    <div style="padding:0 14px 4px;display:flex;gap:6px;">
+      <button onclick="openSoporteModal()" style="
+        flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+        padding:7px 8px;border-radius:8px;
+        border:0.5px solid var(--border2);background:transparent;
+        color:var(--text3);font-size:9px;letter-spacing:0.07em;
+        cursor:pointer;font-family:'Space Mono',monospace;
+        transition:all 0.18s;"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)';this.style.background='var(--accent-dim)'"
+        onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)';this.style.background='transparent'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        SOPORTE
+      </button>
+      <button onclick="openSugerenciasModal()" style="
+        flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+        padding:7px 8px;border-radius:8px;
+        border:0.5px solid var(--border2);background:transparent;
+        color:var(--text3);font-size:9px;letter-spacing:0.07em;
+        cursor:pointer;font-family:'Space Mono',monospace;
+        transition:all 0.18s;"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)';this.style.background='var(--accent-dim)'"
+        onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)';this.style.background='transparent'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        FEEDBACK
+      </button>
+    </div>
     <button class="nav-item logout" onclick="doLogout()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       SALIR
@@ -2612,7 +2639,18 @@ function saveLocal() { saveToFirestore(); }
 function saveOnlyTrades() { saveToFirestore('trades'); }
 function saveOnlyJournals() { saveToFirestore('journals'); }
 
-async function saveToFirestore(section) {
+// ── Save queue: serializa escrituras a Firestore para evitar race conditions.
+// Si el usuario guarda dos trades seguidos, la segunda escritura espera a que
+// termine la primera — así nunca se sobrescribe el array con datos incompletos.
+let _saveQueue = Promise.resolve();
+function saveToFirestore(section) {
+  _saveQueue = _saveQueue
+    .then(() => _doSaveToFirestore(section))
+    .catch(() => _doSaveToFirestore(section));
+  return _saveQueue;
+}
+
+async function _doSaveToFirestore(section) {
   if (!_fbUID) { console.warn('[ICT] saveToFirestore: no _fbUID, abortando'); return; }
   try {
     let payload = {};
@@ -3833,7 +3871,7 @@ function renderCalendar() {
   html += `<div class="cal-dow" style="color:#7B9FD4;letter-spacing:0.08em;font-size:9px;">PNL SEMANAL</div>`;
 
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateStr();
 
   // Find weekday (Mon=0..Fri=4) of the 1st of the month
   // getDay() returns 0=Sun,1=Mon,...,6=Sat
@@ -3908,22 +3946,21 @@ function renderCalendar() {
 // ====================== DAY MODAL ======================
 let currentDayDate = null;
 
+function getLocalDateStr() {
+  // Fecha local del dispositivo del usuario (nunca UTC) — evita que a las 6pm GT
+  // el sistema piense que ya es mañana y bloquee el día actual.
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 function isLockedDay(dateStr) {
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  // ── EXCEPCION TEMPORAL: Mayo 2026 habilitado hasta el lunes 12/05/2026 00:00 GT ──
-  // Guatemala = UTC-6. Lunes 12 mayo 00:00 GT = 12 mayo 06:00 UTC
-  const unlockUntil = new Date('2026-05-12T06:00:00Z');
-  const nowUTC = new Date();
-  if (nowUTC < unlockUntil && dateStr >= '2026-05-01' && dateStr <= '2026-05-11') {
-    if (accountConfig && accountConfig.resetFrom && dateStr <= accountConfig.resetFrom) return true;
-    return false;
-  }
-  // ── FIN EXCEPCION ──
-
-  // Comportamiento normal: bloquear dias pasados
+  const todayStr = getLocalDateStr();
+  // Bloquear días estrictamente anteriores al día de hoy (fecha local)
   if (dateStr < todayStr) return true;
-  // Bloquear el dia del reset y anteriores
+  // Bloquear el día del reset y anteriores
   if (accountConfig && accountConfig.resetFrom && dateStr <= accountConfig.resetFrom) return true;
   return false;
 }
@@ -3939,10 +3976,19 @@ function openDayModal(dateStr) {
   dmSimpleTPs = [];
   dmSimpleParcialesActive = false;
   setTimeout(() => setTradeMode('simple'), 0);
-  // Show market selector screen
-  document.getElementById('dm-market-screen').style.display = 'flex';
-  initMarketScreenChart();
-  document.getElementById('dm-body').style.visibility = 'hidden';
+
+  const locked = isLockedDay(dateStr);
+  if (locked) {
+    // Días pasados: abrir directo en modo lectura, sin pantalla de mercado
+    document.getElementById('dm-market-screen').style.display = 'none';
+    document.getElementById('dm-body').style.visibility = 'visible';
+    if (window._msChartRaf) { cancelAnimationFrame(window._msChartRaf); window._msChartRaf = null; }
+  } else {
+    // Día de hoy: mostrar selector de mercado
+    document.getElementById('dm-market-screen').style.display = 'flex';
+    initMarketScreenChart();
+    document.getElementById('dm-body').style.visibility = 'hidden';
+  }
 }
 
 function initMarketScreenChart() {
@@ -4801,7 +4847,7 @@ async function dmSaveAll() {
     }
 
     const newTrade = {
-      id: Date.now(),
+      id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
       date: currentDayDate,
       symbol, dir, entry: 0, sl: 0, slPoints: 0, qty,
       setup, result: overallResult,
@@ -4865,7 +4911,7 @@ async function dmSaveAll() {
     }
 
     const newTrade = {
-      id: Date.now(),
+      id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
       date: currentDayDate,
       symbol, dir, entry, sl, slPoints, qty,
       setup, result: overallResult,
@@ -5335,7 +5381,7 @@ function renderAdvancedStats() {
 // FEATURE 2 — LÍMITE DE PÉRDIDA DIARIA
 // ═══════════════════════════════════════════════════════════════════
 function getDailyLoss() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateStr();
   const todayTrades = getActiveTrades().filter(t=>t.date===today);
   return Math.abs(todayTrades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
 }
@@ -5889,6 +5935,241 @@ function renderTagStats() {
     </div>
   </div>
 </div>
+
+
+<!-- ===== MODALES SOPORTE & SUGERENCIAS ===== -->
+
+<!-- MODAL SOPORTE -->
+<div id="soporte-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;" onclick="closeSoporteModal(event)">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:460px;margin:16px;position:relative;" onclick="event.stopPropagation()">
+    <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--text3);margin-bottom:6px;">SOPORTE TÉCNICO</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;">Reportar un problema</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:20px;">Recibirás un número de caso para seguimiento en tu correo.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">CATEGORÍA DEL PROBLEMA</div>
+        <select id="soporte-categoria" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;">
+          <option value="">Selecciona una categoría...</option>
+          <option value="Error en trades">Error en trades</option>
+          <option value="Problema de sincronización">Problema de sincronización</option>
+          <option value="Error en estadísticas">Error en estadísticas</option>
+          <option value="Problema de acceso/login">Problema de acceso / login</option>
+          <option value="Error visual / UI">Error visual / UI</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">TU CORREO (para recibir el número de caso)</div>
+        <input id="soporte-email" type="email" placeholder="tucorreo@ejemplo.com" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;">
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">DESCRIPCIÓN DEL PROBLEMA</div>
+        <textarea id="soporte-descripcion" rows="4" placeholder="Describe con detalle qué sucedió y cuándo..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div id="soporte-msg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:11px;font-family:'Space Mono',monospace;"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button onclick="closeSoporteModal()" style="flex:1;padding:10px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;">CANCELAR</button>
+      <button onclick="enviarTicketSoporte()" id="soporte-btn-enviar" style="flex:2;padding:10px;border-radius:8px;border:none;background:var(--accent);color:var(--bg);font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.1em;">ENVIAR TICKET</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUGERENCIAS -->
+<div id="sugerencias-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;" onclick="closeSugerenciasModal(event)">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:460px;margin:16px;position:relative;" onclick="event.stopPropagation()">
+    <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--text3);margin-bottom:6px;">FEEDBACK</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;">Enviar sugerencia</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:20px;">Tu feedback nos ayuda a mejorar LockIn. ¡Gracias!</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">TIPO DE SUGERENCIA</div>
+        <select id="sugerencias-tipo" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;">
+          <option value="">Selecciona un tipo...</option>
+          <option value="Nueva función">Nueva función</option>
+          <option value="Mejora de UI">Mejora de UI</option>
+          <option value="Mejora de rendimiento">Mejora de rendimiento</option>
+          <option value="Nueva integración">Nueva integración</option>
+          <option value="Otra sugerencia">Otra sugerencia</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">TU CORREO (opcional)</div>
+        <input id="sugerencias-email" type="email" placeholder="tucorreo@ejemplo.com" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;">
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;">TU SUGERENCIA</div>
+        <textarea id="sugerencias-texto" rows="4" placeholder="Cuéntanos tu idea o mejora..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Space Mono',monospace;font-size:11px;resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div id="sugerencias-msg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:11px;font-family:'Space Mono',monospace;"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button onclick="closeSugerenciasModal()" style="flex:1;padding:10px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;">CANCELAR</button>
+      <button onclick="enviarSugerencia()" id="sugerencias-btn-enviar" style="flex:2;padding:10px;border-radius:8px;border:none;background:var(--accent);color:var(--bg);font-size:11px;cursor:pointer;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.1em;">ENVIAR SUGERENCIA</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// RESEND — CORREOS AUTOMÁTICOS
+// ═══════════════════════════════════════════════════════════════════
+const RESEND_API_KEY = 're_KXiGzd7Y_FKVSum6Rp986s7echnpNFHjr';
+
+async function sendEmail({ to, subject, html }) {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'LockIn <noreply@lockintrader.com>',
+        to: [to],
+        subject,
+        html
+      })
+    });
+    return res.ok;
+  } catch(e) {
+    console.error('[LockIn Email]', e);
+    return false;
+  }
+}
+
+async function sendWelcomeEmail(email) {
+  return sendEmail({
+    to: email,
+    subject: 'Bienvenido a LockIn Trading Journal',
+    html: `
+      <div style="background:#09090F;padding:40px;font-family:'Helvetica Neue',sans-serif;max-width:520px;margin:0 auto;border-radius:12px;">
+        <div style="font-size:22px;font-weight:700;color:#E8ECF5;margin-bottom:6px;">Bienvenido a <span style="color:#B4BED2;">LockIn</span> 👋</div>
+        <div style="color:#555870;font-size:13px;margin-bottom:24px;">Tu cuenta: ${email}</div>
+        <div style="color:#E8ECF5;font-size:14px;line-height:1.7;margin-bottom:24px;">Tu cuenta ha sido creada exitosamente. Ya puedes comenzar a registrar tus trades y analizar tu desempeño.</div>
+        <a href="https://www.lockintrader.com" style="display:inline-block;background:#B4BED2;color:#09090F;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;letter-spacing:0.08em;">IR A MI JOURNAL →</a>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #161625;color:#343548;font-size:11px;">LockIn Trading Journal · lockintrader.com</div>
+      </div>
+    `
+  });
+}
+
+async function sendTicketEmail(email, ticketNum, categoria, descripcion) {
+  await sendEmail({
+    to: email,
+    subject: `[LockIn] Ticket #${ticketNum} recibido — ${categoria}`,
+    html: `
+      <div style="background:#09090F;padding:40px;font-family:'Helvetica Neue',sans-serif;max-width:520px;margin:0 auto;border-radius:12px;">
+        <div style="font-size:22px;font-weight:700;color:#E8ECF5;margin-bottom:6px;">Tu ticket fue recibido ✓</div>
+        <div style="color:#555870;font-size:13px;margin-bottom:24px;">Número de caso: <span style="color:#B4BED2;font-weight:700;">#${ticketNum}</span></div>
+        <div style="background:#0F0F18;border:1px solid #161625;border-radius:8px;padding:16px;margin-bottom:20px;">
+          <div style="color:#555870;font-size:12px;margin-bottom:6px;"><strong style="color:#B4BED2;">Categoría:</strong> ${categoria}</div>
+          <div style="color:#555870;font-size:12px;"><strong style="color:#B4BED2;">Descripción:</strong> ${descripcion}</div>
+        </div>
+        <div style="color:#555870;font-size:13px;line-height:1.7;">Nuestro equipo revisará tu reporte. Guarda tu número <strong style="color:#B4BED2;">#${ticketNum}</strong> para seguimiento.</div>
+        <div style="margin-top:32px;padding-top:20px;border-top:1px solid #161625;color:#343548;font-size:11px;">LockIn Trading Journal · lockintrader.com</div>
+      </div>
+    `
+  });
+  await sendEmail({
+    to: 'soporte@lockintrader.com',
+    subject: `[TICKET #${ticketNum}] ${categoria} — ${email}`,
+    html: `<div style="font-family:sans-serif;padding:20px;"><h2>Nuevo Ticket #${ticketNum}</h2><p><strong>Usuario:</strong> ${email}</p><p><strong>Categoría:</strong> ${categoria}</p><p><strong>Descripción:</strong></p><div style="background:#f5f5f5;padding:12px;border-radius:6px;">${descripcion}</div></div>`
+  });
+}
+
+async function sendSugerenciaEmail(email, tipo, texto) {
+  if (email) {
+    await sendEmail({
+      to: email,
+      subject: `[LockIn] Sugerencia recibida — gracias por tu feedback`,
+      html: `
+        <div style="background:#09090F;padding:40px;font-family:'Helvetica Neue',sans-serif;max-width:520px;margin:0 auto;border-radius:12px;">
+          <div style="font-size:22px;font-weight:700;color:#E8ECF5;margin-bottom:6px;">¡Gracias por tu sugerencia! 🙌</div>
+          <div style="color:#555870;font-size:13px;margin-bottom:20px;">Tu feedback es muy importante para mejorar LockIn.</div>
+          <div style="background:#0F0F18;border:1px solid #161625;border-radius:8px;padding:16px;margin-bottom:20px;">
+            <div style="color:#555870;font-size:12px;margin-bottom:6px;"><strong style="color:#B4BED2;">Tipo:</strong> ${tipo}</div>
+            <div style="color:#555870;font-size:12px;"><strong style="color:#B4BED2;">Sugerencia:</strong> ${texto}</div>
+          </div>
+          <div style="margin-top:32px;padding-top:20px;border-top:1px solid #161625;color:#343548;font-size:11px;">LockIn Trading Journal · lockintrader.com</div>
+        </div>
+      `
+    });
+  }
+  await sendEmail({
+    to: 'sugerencias@lockintrader.com',
+    subject: `[SUGERENCIA] ${tipo} — ${email || 'anónimo'}`,
+    html: `<div style="font-family:sans-serif;padding:20px;"><h2>Nueva Sugerencia</h2><p><strong>Usuario:</strong> ${email || 'Anónimo'}</p><p><strong>Tipo:</strong> ${tipo}</p><p><strong>Texto:</strong></p><div style="background:#f5f5f5;padding:12px;border-radius:6px;">${texto}</div></div>`
+  });
+}
+
+// ─── Modales ───
+function openSoporteModal() {
+  document.getElementById('soporte-modal-overlay').style.display = 'flex';
+  document.getElementById('soporte-msg').style.display = 'none';
+  document.getElementById('soporte-categoria').value = '';
+  document.getElementById('soporte-email').value = '';
+  document.getElementById('soporte-descripcion').value = '';
+}
+function closeSoporteModal(e) {
+  if (e && e.target !== document.getElementById('soporte-modal-overlay')) return;
+  document.getElementById('soporte-modal-overlay').style.display = 'none';
+}
+function openSugerenciasModal() {
+  document.getElementById('sugerencias-modal-overlay').style.display = 'flex';
+  document.getElementById('sugerencias-msg').style.display = 'none';
+  document.getElementById('sugerencias-tipo').value = '';
+  document.getElementById('sugerencias-email').value = '';
+  document.getElementById('sugerencias-texto').value = '';
+}
+function closeSugerenciasModal(e) {
+  if (e && e.target !== document.getElementById('sugerencias-modal-overlay')) return;
+  document.getElementById('sugerencias-modal-overlay').style.display = 'none';
+}
+
+// ─── Envíos ───
+async function enviarTicketSoporte() {
+  const email       = document.getElementById('soporte-email').value.trim();
+  const categoria   = document.getElementById('soporte-categoria').value;
+  const descripcion = document.getElementById('soporte-descripcion').value.trim();
+  const msg = document.getElementById('soporte-msg');
+  const btn = document.getElementById('soporte-btn-enviar');
+  if (!email || !categoria || !descripcion) {
+    msg.style.cssText = 'display:block;background:rgba(255,84,112,0.1);color:#FF5470;border:1px solid rgba(255,84,112,0.2);padding:10px;border-radius:8px;font-size:11px;';
+    msg.textContent = 'Por favor completa todos los campos.'; return;
+  }
+  btn.textContent = 'ENVIANDO...'; btn.disabled = true;
+  const ticketNum = 'LK-' + Date.now().toString().slice(-6);
+  const ok = await sendTicketEmail(email, ticketNum, categoria, descripcion);
+  btn.textContent = 'ENVIAR TICKET'; btn.disabled = false;
+  if (ok) {
+    msg.style.cssText = 'display:block;background:rgba(180,190,210,0.08);color:var(--accent);border:1px solid rgba(180,190,210,0.2);padding:10px;border-radius:8px;font-size:11px;';
+    msg.textContent = `✓ Ticket ${ticketNum} enviado. Revisa tu correo.`;
+    setTimeout(() => { document.getElementById('soporte-modal-overlay').style.display = 'none'; }, 3000);
+  } else {
+    msg.style.cssText = 'display:block;background:rgba(255,84,112,0.1);color:#FF5470;border:1px solid rgba(255,84,112,0.2);padding:10px;border-radius:8px;font-size:11px;';
+    msg.textContent = 'Error al enviar. Intenta de nuevo.';
+  }
+}
+
+async function enviarSugerencia() {
+  const tipo  = document.getElementById('sugerencias-tipo').value;
+  const email = document.getElementById('sugerencias-email').value.trim();
+  const texto = document.getElementById('sugerencias-texto').value.trim();
+  const msg = document.getElementById('sugerencias-msg');
+  const btn = document.getElementById('sugerencias-btn-enviar');
+  if (!tipo || !texto) {
+    msg.style.cssText = 'display:block;background:rgba(255,84,112,0.1);color:#FF5470;border:1px solid rgba(255,84,112,0.2);padding:10px;border-radius:8px;font-size:11px;';
+    msg.textContent = 'Por favor selecciona un tipo y escribe tu sugerencia.'; return;
+  }
+  btn.textContent = 'ENVIANDO...'; btn.disabled = true;
+  await sendSugerenciaEmail(email, tipo, texto);
+  btn.textContent = 'ENVIAR SUGERENCIA'; btn.disabled = false;
+  msg.style.cssText = 'display:block;background:rgba(180,190,210,0.08);color:var(--accent);border:1px solid rgba(180,190,210,0.2);padding:10px;border-radius:8px;font-size:11px;';
+  msg.textContent = '✓ ¡Gracias! Tu sugerencia fue enviada.';
+  setTimeout(() => { document.getElementById('sugerencias-modal-overlay').style.display = 'none'; }, 3000);
+}
+</script>
 
 </body>
 </html>
