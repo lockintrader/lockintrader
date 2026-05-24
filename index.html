@@ -1169,12 +1169,23 @@
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-plan-info">
-          <div>
-            <div class="modal-plan-name" id="modal-plan-label">PLAN SEMESTRAL</div>
-            <div style="font-size:8px;color:var(--text3);margin-top:3px;letter-spacing:0.12em;" id="modal-plan-period">6 meses de acceso completo</div>
-          </div>
-          <div class="modal-plan-price" id="modal-plan-price">$20</div>
+        <div class="modal-section-title">ELIGE TU PLAN</div>
+        <div style="display:flex;gap:8px;margin-bottom:20px;">
+          <button onclick="switchModalPlan('trimestral',this)" id="mbtn-trimestral"
+            style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:14px;font-weight:700;color:var(--text);">$15</span>
+            <span>TRIMESTRAL</span>
+          </button>
+          <button onclick="switchModalPlan('semestral',this)" id="mbtn-semestral"
+            style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--amber);background:var(--amber-dim);color:var(--amber);font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:14px;font-weight:700;color:var(--text);">$20</span>
+            <span>SEMESTRAL</span>
+          </button>
+          <button onclick="switchModalPlan('anual',this)" id="mbtn-anual"
+            style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:14px;font-weight:700;color:var(--text);">$40</span>
+            <span>ANUAL</span>
+          </button>
         </div>
 
         <div class="modal-section-title">DATOS DE TU CUENTA</div>
@@ -1251,16 +1262,33 @@
   };
   let currentPlan = 'semestral', currentMethod = 'paypal';
 
-  function openModal(plan) {
+  function switchModalPlan(plan, btn) {
     currentPlan = plan;
     const p = PLANS[plan];
-    document.getElementById('modal-plan-label').textContent = p.label;
-    document.getElementById('modal-plan-period').textContent = p.period;
-    document.getElementById('modal-plan-price').textContent = p.price;
+    document.getElementById('modal-plan-label') && (document.getElementById('modal-plan-label').textContent = p.label);
+    document.getElementById('modal-plan-price') && (document.getElementById('modal-plan-price').textContent = p.price);
+    ['trimestral','semestral','anual'].forEach(k => {
+      const b = document.getElementById('mbtn-' + k);
+      if (!b) return;
+      if (k === plan) {
+        b.style.borderColor = 'var(--amber)';
+        b.style.background  = 'var(--amber-dim)';
+        b.style.color       = 'var(--amber)';
+      } else {
+        b.style.borderColor = 'var(--border2)';
+        b.style.background  = 'transparent';
+        b.style.color       = 'var(--text3)';
+      }
+    });
+  }
+
+  function openModal(plan) {
+    currentPlan = plan;
     document.getElementById('modal-form-content').style.display = '';
     document.getElementById('modal-success').classList.remove('visible');
     document.getElementById('error-msg').textContent = '';
     selectPay('paypal');
+    setTimeout(() => switchModalPlan(plan, null), 0);
     document.getElementById('payModal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
