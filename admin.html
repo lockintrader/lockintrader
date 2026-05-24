@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LockIn — Panel Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #09090F;
+  --bg2:     #0F0F18;
+  --bg3:     #141420;
+  --bg4:     #1A1A28;
+  --border:  #161625;
+  --border2: #1E1E30;
+  --text:    #E8ECF5;
+  --text2:   #555870;
+  --text3:   #343548;
+  --accent:  #B4BED2;
+  --red:     #FF5470;
+  --green:   #54C878;
+  --amber:   #F59E0B;
+  --blue:    #4AAFD4;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; min-height: 100vh; }
+
+/* ── LOGIN ── */
+#login-screen {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.login-box {
+  width: 100%; max-width: 360px; padding: 40px;
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 16px;
+  animation: fadeUp .3s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.login-logo-mark {
+  width: 32px; height: 32px; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.login-logo-text { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.1em; }
+.login-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.login-sub { font-size: 9px; color: var(--text3); letter-spacing: 0.12em; margin-bottom: 28px; }
+.login-label { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 6px; }
+.login-input {
+  width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px;
+  padding: 11px 14px; font-size: 12px; color: var(--text); font-family: 'Space Mono', monospace;
+  outline: none; margin-bottom: 14px; transition: border-color .2s;
+}
+.login-input:focus { border-color: var(--accent); }
+.login-btn {
+  width: 100%; background: var(--accent); color: var(--bg); border: none; border-radius: 8px;
+  padding: 13px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  cursor: pointer; font-family: 'Space Mono', monospace; transition: opacity .2s;
+}
+.login-btn:hover { opacity: .85; }
+.login-err { font-size: 10px; color: var(--red); margin-top: 10px; min-height: 16px; text-align: center; }
+
+/* ── LAYOUT ── */
+#app { display: none; }
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 50;
+  background: var(--bg2); border-bottom: 0.5px solid var(--border2);
+  display: flex; align-items: center; padding: 0 24px; gap: 16px;
+}
+.topbar-logo { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; }
+.topbar-badge {
+  font-size: 8px; background: rgba(255,84,112,.12); color: var(--red);
+  border: 1px solid rgba(255,84,112,.25); border-radius: 4px; padding: 2px 7px; letter-spacing: 0.1em;
+}
+.topbar-email { margin-left: auto; font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
+.logout-btn {
+  background: transparent; border: 0.5px solid var(--border2); border-radius: 6px;
+  color: var(--text3); font-size: 9px; letter-spacing: 0.08em; padding: 5px 10px;
+  cursor: pointer; font-family: 'Space Mono', monospace; transition: all .2s;
+}
+.logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+.main { padding: 72px 24px 40px; max-width: 1200px; margin: 0 auto; }
+
+/* ── STATS ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px;
+  padding: 18px 20px;
+}
+.stat-label { font-size: 9px; color: var(--text3); letter-spacing: 0.12em; margin-bottom: 8px; }
+.stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-sub { font-size: 9px; color: var(--text3); margin-top: 4px; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+.tab-btn {
+  padding: 8px 18px; border-radius: 8px; border: 0.5px solid transparent;
+  font-size: 10px; letter-spacing: 0.1em; cursor: pointer; font-family: 'Space Mono', monospace;
+  background: transparent; color: var(--text3); transition: all .2s;
+}
+.tab-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+.tab-btn:hover:not(.active) { color: var(--text2); }
+.tab-indicator {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; font-size: 8px;
+  background: rgba(255,84,112,.15); color: var(--red); margin-left: 6px;
+  font-weight: 700;
+}
+
+/* ── SEARCH / FILTERS ── */
+.toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+.search-input {
+  flex: 1; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
+  padding: 9px 14px; font-size: 11px; color: var(--text); font-family: 'Space Mono', monospace;
+  outline: none; transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.filter-select {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
+  padding: 9px 12px; font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace;
+  outline: none; cursor: pointer;
+}
+.refresh-btn {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
+  padding: 9px 14px; font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace;
+  cursor: pointer; letter-spacing: 0.08em; transition: all .2s; white-space: nowrap;
+}
+.refresh-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── TABLE ── */
+.table-wrap {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px;
+  overflow: hidden;
+}
+.table-header {
+  display: grid; grid-template-columns: var(--cols); padding: 10px 20px;
+  background: var(--bg3); border-bottom: 0.5px solid var(--border2);
+  font-size: 8px; color: var(--text3); letter-spacing: 0.12em;
+}
+.table-row {
+  display: grid; grid-template-columns: var(--cols);
+  padding: 14px 20px; border-bottom: 0.5px solid var(--border);
+  align-items: center; transition: background .15s;
+}
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: rgba(255,255,255,.02); }
+.cell-name { font-size: 11px; font-weight: 700; color: var(--text); }
+.cell-email { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.cell-date { font-size: 10px; color: var(--text2); }
+.plan-badge {
+  display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px;
+  font-size: 8px; letter-spacing: 0.08em; font-weight: 700;
+}
+.plan-trimestral { background: rgba(108,127,216,.12); color: #6C7FD8; border: 1px solid rgba(108,127,216,.25); }
+.plan-semestral  { background: rgba(74,175,212,.12); color: #4AAFD4; border: 1px solid rgba(74,175,212,.25); }
+.plan-anual      { background: rgba(180,190,210,.1); color: #B4BED2; border: 1px solid rgba(180,190,210,.2); }
+.plan-none       { background: rgba(85,88,112,.1); color: var(--text3); border: 1px solid rgba(85,88,112,.2); }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+  border-radius: 999px; font-size: 8px; letter-spacing: 0.08em; font-weight: 700;
+}
+.status-active  { background: rgba(84,200,120,.1); color: var(--green); border: 1px solid rgba(84,200,120,.25); }
+.status-pending { background: rgba(245,158,11,.1); color: var(--amber); border: 1px solid rgba(245,158,11,.25); }
+.status-blocked { background: rgba(255,84,112,.1); color: var(--red); border: 1px solid rgba(255,84,112,.25); }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.action-btn {
+  padding: 5px 11px; border-radius: 6px; font-size: 9px; letter-spacing: 0.07em;
+  font-family: 'Space Mono', monospace; cursor: pointer; font-weight: 700;
+  transition: all .15s; border: 1px solid transparent; white-space: nowrap;
+}
+.btn-approve { background: rgba(84,200,120,.12); color: var(--green); border-color: rgba(84,200,120,.3); }
+.btn-approve:hover { background: rgba(84,200,120,.22); }
+.btn-block { background: rgba(255,84,112,.08); color: var(--red); border-color: rgba(255,84,112,.25); }
+.btn-block:hover { background: rgba(255,84,112,.18); }
+.btn-unblock { background: rgba(74,175,212,.08); color: var(--blue); border-color: rgba(74,175,212,.25); }
+.btn-unblock:hover { background: rgba(74,175,212,.18); }
+.btn-detail { background: rgba(180,190,210,.06); color: var(--accent); border-color: rgba(180,190,210,.2); }
+.btn-detail:hover { background: rgba(180,190,210,.12); }
+
+.empty-state {
+  padding: 48px; text-align: center;
+  font-size: 11px; color: var(--text3); letter-spacing: 0.08em;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+  z-index: 200; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 16px;
+  padding: 32px; width: 100%; max-width: 480px; animation: fadeUp .2s ease;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal-field { margin-bottom: 14px; }
+.modal-label { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 6px; }
+.modal-val { font-size: 12px; color: var(--text); }
+.modal-val.mono { font-family: 'Space Mono', monospace; }
+.modal-divider { height: 0.5px; background: var(--border2); margin: 18px 0; }
+.modal-select {
+  width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px;
+  padding: 10px 12px; font-size: 11px; color: var(--text); font-family: 'Space Mono', monospace;
+  outline: none; margin-top: 6px;
+}
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn-primary {
+  flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 8px;
+  padding: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  cursor: pointer; font-family: 'Space Mono', monospace; transition: opacity .2s;
+}
+.modal-btn-primary:hover { opacity: .85; }
+.modal-btn-secondary {
+  flex: 1; background: transparent; color: var(--text3); border: 0.5px solid var(--border2);
+  border-radius: 8px; padding: 12px; font-size: 11px; letter-spacing: 0.08em;
+  cursor: pointer; font-family: 'Space Mono', monospace; transition: all .2s;
+}
+.modal-btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 10px;
+  padding: 12px 18px; font-size: 11px; color: var(--text); letter-spacing: 0.04em;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5); transform: translateY(20px);
+  opacity: 0; transition: all .25s; pointer-events: none;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.success { border-color: rgba(84,200,120,.4); color: var(--green); }
+#toast.error   { border-color: rgba(255,84,112,.4); color: var(--red); }
+
+/* ── LOADER ── */
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state { display: flex; align-items: center; gap: 12px; padding: 32px 20px; font-size: 11px; color: var(--text3); }
+
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .topbar-email { display: none; }
+  .main { padding: 68px 14px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ LOGIN ════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg width="16" height="16" viewBox="220 50 240 270" fill="none">
+          <defs>
+            <linearGradient id="ls" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
+            <linearGradient id="lg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
+            <clipPath id="lc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
+          </defs>
+          <polygon points="340,52 458,185 340,318 222,185" fill="#141420"/>
+          <g clip-path="url(#lc)">
+            <rect x="327" y="145" width="14" height="55" rx="2" fill="url(#lg)"/>
+            <rect x="349" y="136" width="14" height="62" rx="2" fill="url(#lg)"/>
+          </g>
+          <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#ls)" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="login-logo-text">LOCK<span style="color:#B4BED2;">IN</span></div>
+    </div>
+    <div class="login-title">Panel Admin</div>
+    <div class="login-sub">ACCESO RESTRINGIDO · SOLO ADMINISTRADOR</div>
+    <div class="login-label">CLAVE DE ACCESO</div>
+    <input class="login-input" type="password" id="adm-pass" placeholder="••••••••" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') doAdminLogin()">
+    <button class="login-btn" onclick="doAdminLogin()" id="login-btn-main">INGRESAR →</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ════════════════ APP ════════════════ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="login-logo-mark" style="width:26px;height:26px;border-radius:6px;">
+      <svg width="13" height="13" viewBox="220 50 240 270" fill="none">
+        <defs>
+          <linearGradient id="ts" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
+          <linearGradient id="tg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
+          <clipPath id="tc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
+        </defs>
+        <polygon points="340,52 458,185 340,318 222,185" fill="#141420"/>
+        <g clip-path="url(#tc)"><rect x="327" y="145" width="14" height="55" rx="2" fill="url(#tg)"/><rect x="349" y="136" width="14" height="62" rx="2" fill="url(#tg)"/></g>
+        <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#ts)" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="topbar-logo">LOCK<span style="color:#B4BED2;">IN</span></div>
+    <div class="topbar-badge">ADMIN</div>
+    <div class="topbar-email" id="topbar-email"></div>
+    <button class="logout-btn" onclick="doLogout()">CERRAR SESIÓN</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL USUARIOS</div>
+        <div class="stat-val" id="stat-total">—</div>
+        <div class="stat-sub">Registrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ACTIVOS</div>
+        <div class="stat-val" id="stat-active" style="color:var(--green)">—</div>
+        <div class="stat-sub">Con acceso aprobado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">PENDIENTES</div>
+        <div class="stat-val" id="stat-pending" style="color:var(--amber)">—</div>
+        <div class="stat-sub">Esperando aprobación</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BLOQUEADOS</div>
+        <div class="stat-val" id="stat-blocked" style="color:var(--red)">—</div>
+        <div class="stat-sub">Sin acceso</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('all',this)">TODOS</button>
+      <button class="tab-btn" onclick="switchTab('pending',this)">PENDIENTES <span class="tab-indicator" id="badge-pending">0</span></button>
+      <button class="tab-btn" onclick="switchTab('active',this)">ACTIVOS</button>
+      <button class="tab-btn" onclick="switchTab('blocked',this)">BLOQUEADOS</button>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <input class="search-input" type="text" id="search-input" placeholder="Buscar por nombre o correo…" oninput="renderTable()">
+      <select class="filter-select" id="filter-plan" onchange="renderTable()">
+        <option value="">TODOS LOS PLANES</option>
+        <option value="trimestral">TRIMESTRAL</option>
+        <option value="semestral">SEMESTRAL</option>
+        <option value="anual">ANUAL</option>
+      </select>
+      <button class="refresh-btn" onclick="loadUsers()">↻ ACTUALIZAR</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap" id="table-wrap">
+      <div class="loading-state"><div class="spinner"></div> Cargando usuarios…</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════ MODAL DETALLE / APROBAR ════════ -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Gestionar Usuario</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="modal-field">
+        <div class="modal-label">NOMBRES</div>
+        <div class="modal-val" id="md-nombres">—</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">APELLIDOS</div>
+        <div class="modal-val" id="md-apellidos">—</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">CORREO</div>
+      <div class="modal-val mono" id="md-email">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">REGISTRO</div>
+      <div class="modal-val" id="md-created">—</div>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <div class="modal-field">
+      <div class="modal-label">PLAN</div>
+      <select class="modal-select" id="md-plan">
+        <option value="trimestral">TRIMESTRAL — $15 / 3 meses</option>
+        <option value="semestral">SEMESTRAL — $20 / 6 meses</option>
+        <option value="anual">ANUAL — $40 / 12 meses</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">ESTADO</div>
+      <select class="modal-select" id="md-status">
+        <option value="pending">PENDIENTE — en espera de pago</option>
+        <option value="active">ACTIVO — acceso aprobado</option>
+        <option value="blocked">BLOQUEADO — sin acceso</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">NOTA INTERNA (opcional)</div>
+      <input type="text" class="modal-select" id="md-note" placeholder="Ej: Pago confirmado vía PayPal 24/05/26" style="font-family:'Space Mono',monospace;font-size:11px;">
+    </div>
+
+    <div id="modal-msg" style="font-size:10px;margin-top:8px;min-height:16px;"></div>
+
+    <div class="modal-btns">
+      <button class="modal-btn-secondary" onclick="closeModal()">CANCELAR</button>
+      <button class="modal-btn-primary" onclick="saveUser()" id="md-save-btn">GUARDAR CAMBIOS →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ════════════════ FIREBASE ════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const ADMIN_EMAIL   = 'lockintrader@gmail.com';
+const RESEND_KEY    = 're_KXiGzd7Y_FKVSum6Rp986s7echnpNFHjr';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyD7qzwECrRDkcwQNQu_AnU6G2hor7B-VUE",
+  authDomain:        "ict-traders-gt.firebaseapp.com",
+  projectId:         "ict-traders-gt",
+  storageBucket:     "ict-traders-gt.appspot.com",
+  messagingSenderId: "173761639587",
+  appId:             "1:173761639587:web:1eaa7fe3d0beb782933b16"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ── Auth state ──
+onAuthStateChanged(auth, (user) => {
+  if (user && user.email === ADMIN_EMAIL) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('topbar-email').textContent = user.email;
+    loadUsers();
+  } else if (user) {
+    // Logged in but not admin
+    signOut(auth);
+    showErr('Acceso denegado. Solo el administrador puede ingresar.');
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+// ── LOGIN ──
+window.doAdminLogin = async () => {
+  const key = document.getElementById('adm-pass').value;
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn-main');
+  err.textContent = '';
+  if (!key) { err.textContent = 'Ingresa la clave de acceso.'; return; }
+  if (key !== 'Familia#18') { err.textContent = 'Clave incorrecta.'; return; }
+  btn.textContent = 'INGRESANDO…'; btn.disabled = true;
+  try {
+    // Firebase Auth usa la misma clave para la cuenta admin
+    await signInWithEmailAndPassword(auth, ADMIN_EMAIL, key);
+  } catch(e) {
+    btn.textContent = 'INGRESAR →'; btn.disabled = false;
+    err.textContent = 'Error de acceso. Verifica tu clave.';
+    console.error('[Admin login]', e.code);
+  }
+};
+
+window.doLogout = async () => {
+  await signOut(auth);
+};
+
+// ── LOAD ALL USERS ──
+let allUsers = [];
+let currentTab = 'all';
+let currentEditUID = null;
+
+window.loadUsers = async () => {
+  document.getElementById('table-wrap').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div> Cargando usuarios…</div>';
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    allUsers = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (data.email === ADMIN_EMAIL) return; // exclude admin
+      allUsers.push({ uid: d.id, ...data });
+    });
+    // Sort newest first
+    allUsers.sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+    updateStats();
+    renderTable();
+    showToast('Datos actualizados', 'success');
+  } catch(e) {
+    document.getElementById('table-wrap').innerHTML =
+      `<div class="empty-state">Error al cargar usuarios: ${e.message}</div>`;
+  }
+};
+
+// ── STATS ──
+function updateStats() {
+  const total   = allUsers.length;
+  const active  = allUsers.filter(u => u.activated === true).length;
+  const pending = allUsers.filter(u => u.createdAt && !u.activated && u.activated !== false).length;
+  const blocked = allUsers.filter(u => u.activated === false).length;
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-active').textContent  = active;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-blocked').textContent = blocked;
+  document.getElementById('badge-pending').textContent = pending;
+}
+
+// ── TABS ──
+window.switchTab = (tab, btn) => {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+};
+
+// ── RENDER TABLE ──
+window.renderTable = () => {
+  const search  = (document.getElementById('search-input').value || '').toLowerCase();
+  const planF   = document.getElementById('filter-plan').value;
+
+  let users = allUsers.filter(u => {
+    const fullName = ((u.nombres || '') + ' ' + (u.apellidos || '') + ' ' + (u.displayName || '')).toLowerCase();
+    const email    = (u.email || '').toLowerCase();
+    const matchQ   = !search || fullName.includes(search) || email.includes(search);
+    const matchP   = !planF  || u.plan === planF;
+    let   matchT   = true;
+    if (currentTab === 'pending') matchT = u.createdAt && !u.activated && u.activated !== false;
+    if (currentTab === 'active')  matchT = u.activated === true;
+    if (currentTab === 'blocked') matchT = u.activated === false;
+    return matchQ && matchP && matchT;
+  });
+
+  if (!users.length) {
+    document.getElementById('table-wrap').innerHTML =
+      '<div class="empty-state">No hay usuarios que coincidan con los filtros.</div>';
+    return;
+  }
+
+  const cols = '2fr 1.5fr 100px 110px 120px 160px';
+  let html = `
+    <div class="table-header" style="--cols:${cols}">
+      <div>USUARIO</div><div>CORREO</div><div>PLAN</div><div>ESTADO</div><div>REGISTRO</div><div>ACCIONES</div>
+    </div>`;
+
+  users.forEach(u => {
+    const nombre  = u.nombres || u.displayName?.split(' ')[0] || '—';
+    const apellido= u.apellidos || (u.displayName?.split(' ').slice(1).join(' ')) || '—';
+    const email   = u.email || '—';
+    const plan    = u.plan || 'none';
+    const date    = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-GT', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+
+    let statusBadge, statusKey;
+    if (u.activated === true) {
+      statusBadge = `<span class="status-badge status-active"><span class="status-dot"></span>ACTIVO</span>`;
+      statusKey = 'active';
+    } else if (u.activated === false) {
+      statusBadge = `<span class="status-badge status-blocked"><span class="status-dot"></span>BLOQUEADO</span>`;
+      statusKey = 'blocked';
+    } else {
+      statusBadge = `<span class="status-badge status-pending"><span class="status-dot"></span>PENDIENTE</span>`;
+      statusKey = 'pending';
+    }
+
+    const planBadge = `<span class="plan-badge plan-${plan}">${plan.toUpperCase()}</span>`;
+
+    let actionBtns = `<button class="action-btn btn-detail" onclick="openModal('${u.uid}')">GESTIONAR</button> `;
+    if (statusKey === 'pending') {
+      actionBtns += `<button class="action-btn btn-approve" onclick="quickApprove('${u.uid}')">✓ APROBAR</button>`;
+    } else if (statusKey === 'active') {
+      actionBtns += `<button class="action-btn btn-block" onclick="quickBlock('${u.uid}')">BLOQUEAR</button>`;
+    } else {
+      actionBtns += `<button class="action-btn btn-unblock" onclick="quickApprove('${u.uid}')">RESTAURAR</button>`;
+    }
+
+    html += `
+      <div class="table-row" style="--cols:${cols}">
+        <div>
+          <div class="cell-name">${nombre} ${apellido}</div>
+          <div class="cell-email" style="font-size:9px;margin-top:3px;">${u.note ? '📝 ' + u.note : ''}</div>
+        </div>
+        <div class="cell-email">${email}</div>
+        <div>${planBadge}</div>
+        <div>${statusBadge}</div>
+        <div class="cell-date">${date}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">${actionBtns}</div>
+      </div>`;
+  });
+
+  document.getElementById('table-wrap').innerHTML = html;
+};
+
+// ── QUICK ACTIONS ──
+window.quickApprove = async (uid) => {
+  try {
+    await updateDoc(doc(db, 'users', uid), { activated: true });
+    const u = allUsers.find(x => x.uid === uid);
+    if (u) {
+      u.activated = true;
+      const plan = u.plan || 'trimestral';
+      sendActivationEmail(u.email, u.nombres || u.displayName?.split(' ')[0] || '', plan);
+    }
+    updateStats(); renderTable();
+    showToast('✓ Usuario aprobado y correo enviado', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+};
+
+window.quickBlock = async (uid) => {
+  try {
+    await updateDoc(doc(db, 'users', uid), { activated: false });
+    const u = allUsers.find(x => x.uid === uid);
+    if (u) u.activated = false;
+    updateStats(); renderTable();
+    showToast('Usuario bloqueado', 'error');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+};
+
+// ── MODAL ──
+window.openModal = (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+  currentEditUID = uid;
+  document.getElementById('md-nombres').textContent  = u.nombres || u.displayName?.split(' ')[0] || '—';
+  document.getElementById('md-apellidos').textContent = u.apellidos || (u.displayName?.split(' ').slice(1).join(' ')) || '—';
+  document.getElementById('md-email').textContent    = u.email || '—';
+  document.getElementById('md-created').textContent  = u.createdAt ? new Date(u.createdAt).toLocaleString('es-GT') : '—';
+  document.getElementById('md-plan').value   = u.plan || 'trimestral';
+  document.getElementById('md-status').value = u.activated === true ? 'active' : u.activated === false ? 'blocked' : 'pending';
+  document.getElementById('md-note').value   = u.note || '';
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-title').textContent = (u.nombres || '') + ' ' + (u.apellidos || '');
+  document.getElementById('user-modal').classList.add('open');
+};
+
+window.closeModal = () => {
+  document.getElementById('user-modal').classList.remove('open');
+  currentEditUID = null;
+};
+
+window.saveUser = async () => {
+  if (!currentEditUID) return;
+  const plan      = document.getElementById('md-plan').value;
+  const statusVal = document.getElementById('md-status').value;
+  const note      = document.getElementById('md-note').value.trim();
+  const btn       = document.getElementById('md-save-btn');
+  const msg       = document.getElementById('modal-msg');
+  const activated = statusVal === 'active' ? true : statusVal === 'blocked' ? false : null;
+
+  btn.textContent = 'GUARDANDO…'; btn.disabled = true;
+  msg.style.color = 'var(--text3)'; msg.textContent = '';
+
+  try {
+    const payload = { plan };
+    if (activated === null) {
+      // Remove activated field to set pending
+      payload.activated = null; // will be handled below
+    } else {
+      payload.activated = activated;
+    }
+    if (note) payload.note = note;
+
+    // Use setDoc with merge to handle null (delete field scenario)
+    const ref = doc(db, 'users', currentEditUID);
+    if (activated === null) {
+      const { deleteField } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      await updateDoc(ref, { plan, note: note || '', activated: deleteField() });
+    } else {
+      await updateDoc(ref, { plan, note: note || '', activated });
+    }
+
+    // Update local cache
+    const u = allUsers.find(x => x.uid === currentEditUID);
+    if (u) {
+      u.plan = plan; u.note = note;
+      if (activated === null) delete u.activated; else u.activated = activated;
+      // Send activation email if newly approved
+      if (activated === true && u.activated !== true) {
+        sendActivationEmail(u.email, u.nombres || '', plan);
+      }
+      u.activated = activated === null ? undefined : activated;
+    }
+
+    updateStats(); renderTable();
+    msg.style.color = 'var(--green)'; msg.textContent = '✓ Cambios guardados';
+    btn.textContent = 'GUARDAR CAMBIOS →'; btn.disabled = false;
+    setTimeout(closeModal, 1200);
+    showToast('✓ Usuario actualizado', 'success');
+  } catch(e) {
+    btn.textContent = 'GUARDAR CAMBIOS →'; btn.disabled = false;
+    msg.style.color = 'var(--red)'; msg.textContent = 'Error: ' + e.message;
+  }
+};
+
+// ── ACTIVATION EMAIL ──
+async function sendActivationEmail(email, nombres, plan) {
+  const planLabels = { trimestral:'Trimestral', semestral:'Semestral', anual:'Anual' };
+  const planPrices = { trimestral:'$15', semestral:'$20', anual:'$40' };
+  const planPeriod = { trimestral:'3 meses', semestral:'6 meses', anual:'1 año' };
+  const planColors = { trimestral:'#6C7FD8', semestral:'#4AAFD4', anual:'#B4BED2' };
+  const label  = planLabels[plan] || plan;
+  const price  = planPrices[plan] || '';
+  const period = planPeriod[plan] || '';
+  const color  = planColors[plan] || '#B4BED2';
+  const greeting = nombres ? `Hola, ${nombres}` : 'Hola';
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${RESEND_KEY}` },
+      body: JSON.stringify({
+        from: 'LockIn <noreply@lockintrader.com>',
+        to: [email],
+        subject: '¡Tu acceso a LockIn ha sido activado! 🎉',
+        html: `
+          <div style="background:#09090F;padding:40px;font-family:'Helvetica Neue',sans-serif;max-width:520px;margin:0 auto;border-radius:12px;">
+            <div style="font-size:13px;font-weight:500;letter-spacing:.15em;color:#343548;margin-bottom:16px;">LOCKIN TRADING JOURNAL</div>
+            <div style="width:36px;height:2px;background:#B4BED2;margin-bottom:28px;"></div>
+            <div style="font-size:22px;font-weight:700;color:#E8ECF5;margin-bottom:6px;">${greeting} 🎉</div>
+            <div style="color:#555870;font-size:13px;margin-bottom:24px;">${email}</div>
+            <div style="background:#0a1a0a;border:1px solid rgba(84,200,120,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+              <div style="font-size:14px;font-weight:700;color:#54C878;margin-bottom:6px;">✓ ACCESO ACTIVADO</div>
+              <div style="font-size:12px;color:#2a6a3a;line-height:1.7;">Tu cuenta ha sido verificada y activada. Ya puedes ingresar a tu Trading Journal.</div>
+            </div>
+            <div style="background:#0F0F1A;border:1px solid #1E1E30;border-radius:10px;padding:20px;margin-bottom:28px;">
+              <div style="font-size:11px;letter-spacing:.12em;color:#343548;margin-bottom:12px;">TU PLAN ACTIVO</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:${color};letter-spacing:.06em;">${label}</div>
+                  <div style="font-size:12px;color:#555870;margin-top:3px;">Vigencia: ${period}</div>
+                </div>
+                <div style="font-size:28px;font-weight:700;color:#E8ECF5;">${price}</div>
+              </div>
+            </div>
+            <a href="https://www.lockintrader.com/app" style="display:inline-block;background:#B4BED2;color:#09090F;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;letter-spacing:.08em;">IR A MI JOURNAL →</a>
+            <div style="margin-top:32px;padding-top:20px;border-top:1px solid #161625;color:#343548;font-size:11px;">LockIn Trading Journal · lockintrader.com</div>
+          </div>`
+      })
+    });
+  } catch(e) { console.warn('Activation email error:', e); }
+}
+
+// ── TOAST ──
+window.showToast = (msg, type='') => {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+};
+
+function showErr(msg) {
+  document.getElementById('login-err').textContent = msg;
+}
+
+// Close modal on overlay click
+document.getElementById('user-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('user-modal')) closeModal();
+});
+</script>
+</body>
+</html>
+
+<!--
+═══════════════════════════════════════════════════════
+  INSTRUCCIONES PARA lockintrader.com/admin
+═══════════════════════════════════════════════════════
+
+  OPCIÓN A — Si tu hosting usa un archivo de rutas (_redirects, .htaccess, vercel.json, etc.)
+
+  ▸ Netlify / Cloudflare Pages  →  archivo _redirects:
+      /admin   /admin.html   200
+
+  ▸ Apache (.htaccess):
+      RewriteRule ^admin$ /admin.html [L]
+
+  ▸ Nginx:
+      location = /admin { try_files /admin.html =404; }
+
+  ▸ Vercel (vercel.json):
+      { "rewrites": [{ "source": "/admin", "destination": "/admin.html" }] }
+
+  OPCIÓN B — Renombra este archivo a index.html
+  y súbelo dentro de una carpeta llamada "admin/"
+  en tu hosting. Así quedará disponible en:
+      lockintrader.com/admin/
+
+  ═══════════════════════════════════════════════════
+  CONFIGURAR FIREBASE AUTH para que acepte Familia#18
+  ═══════════════════════════════════════════════════
+  1. Ve a https://console.firebase.google.com
+  2. Proyecto ict-traders-gt → Authentication → Users
+  3. Busca lockintrader@gmail.com
+     - Si NO existe: Add user → email: lockintrader@gmail.com, password: Familia#18
+     - Si SÍ existe: Reset password → escribe Familia#18
+  ═══════════════════════════════════════════════════
+-->
