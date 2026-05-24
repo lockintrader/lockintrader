@@ -1128,11 +1128,6 @@
       <div class="login-form-label">CORREO ELECTRÓNICO</div>
       <input class="login-input" type="email" id="r-user" placeholder="tu@correo.com" autocomplete="email">
 
-      <!-- Contraseña -->
-      <div class="login-form-label">CONTRASEÑA</div>
-      <input class="login-input" type="password" id="r-pass" placeholder="mínimo 6 caracteres">
-      <div class="login-form-label">CONFIRMAR CONTRASEÑA</div>
-      <input class="login-input" type="password" id="r-pass2" placeholder="repite la contraseña">
 
       <!-- Plan — bloqueado si viene del landing -->
       <div class="login-form-label" style="margin-top:14px;">PLAN DE SUSCRIPCIÓN</div>
@@ -2295,7 +2290,7 @@ function showAuthTab(tab) {
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
   if (tab === 'register') {
-    ['r-nombres','r-apellidos','r-user','r-pass','r-pass2'].forEach(id => {
+    ['r-nombres','r-apellidos','r-user'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
   }
@@ -2425,16 +2420,17 @@ async function doRegister() {
   const nombres   = document.getElementById('r-nombres').value.trim();
   const apellidos = document.getElementById('r-apellidos').value.trim();
   const email = document.getElementById('r-user').value.trim().toLowerCase();
-  const pass  = document.getElementById('r-pass').value;
-  const pass2 = document.getElementById('r-pass2').value;
+
+
   const plan  = document.getElementById('r-plan').value;
   const err   = document.getElementById('register-error');
   err.textContent = '';
   if (!nombres)  { err.textContent = 'Ingresa tu(s) nombre(s).'; return; }
   if (!apellidos){ err.textContent = 'Ingresa tu(s) apellido(s).'; return; }
   if (!isValidEmail(email)) { err.textContent = 'Ingresa un correo válido.'; return; }
-  if (pass.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
-  if (pass !== pass2) { err.textContent = 'Las contraseñas no coinciden.'; return; }
+
+
+  const pass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-4).toUpperCase() + '!9';
   if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
   try {
     err.textContent = 'Creando cuenta…';
