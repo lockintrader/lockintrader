@@ -2100,7 +2100,7 @@
 <!-- ====================== FIREBASE SDK ====================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, inMemoryPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider }
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, inMemoryPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, linkWithCredential, updatePassword }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteField }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -2416,6 +2416,92 @@ const PLAN_LABELS = { trimestral: 'Trimestral — $15/3 meses', semestral: 'Seme
 const PLAN_PRICES = { trimestral: '$15', semestral: '$20', anual: '$40' };
 const PLAN_PERIOD = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
 
+// ── Genera contraseña aleatoria segura ──
+function _genRandomPass() {
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const specials = '!@#$%&*';
+  let pass = '';
+  for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+  pass += specials[Math.floor(Math.random() * specials.length)];
+  pass += Math.floor(Math.random() * 90 + 10);
+  // Mezclar caracteres
+  return pass.split('').sort(() => Math.random() - 0.5).join('');
+}
+
+// ── Modal cambio de contraseña en primer login ──
+function showChangePassModal(onDone) {
+  const existing = document.getElementById('change-pass-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'change-pass-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:16px;padding:32px;width:100%;max-width:380px;font-family:'Space Mono',monospace;">
+      <div style="font-size:11px;letter-spacing:0.15em;color:#343548;margin-bottom:8px;">LOCKIN TRADING JOURNAL</div>
+      <div style="font-size:20px;font-weight:700;color:#E8ECF5;margin-bottom:6px;font-family:'Syne',sans-serif;">CREA TU CONTRASEÑA</div>
+      <div style="font-size:11px;color:#555870;margin-bottom:24px;line-height:1.6;">Es tu primer ingreso. Elige una contraseña personal para acceder en el futuro.</div>
+      <div style="font-size:9px;letter-spacing:0.1em;color:#343548;margin-bottom:6px;">NUEVA CONTRASEÑA</div>
+      <input id="cp-new" type="password" placeholder="mínimo 8 caracteres"
+        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:11px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:12px;box-sizing:border-box;"
+        oninput="this.style.borderColor='#1E1E30'">
+      <div style="font-size:9px;letter-spacing:0.1em;color:#343548;margin-bottom:6px;">CONFIRMAR CONTRASEÑA</div>
+      <input id="cp-confirm" type="password" placeholder="repite la contraseña"
+        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:11px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:16px;box-sizing:border-box;"
+        oninput="this.style.borderColor='#1E1E30'">
+      <div id="cp-err" style="font-size:10px;color:#FF5470;margin-bottom:12px;min-height:16px;"></div>
+      <button onclick="submitChangePass()" id="cp-btn"
+        style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:13px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+        GUARDAR CONTRASEÑA →
+      </button>
+      <div style="text-align:center;margin-top:14px;">
+        <button onclick="skipChangePass()" style="background:none;border:none;color:#343548;font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;">
+          OMITIR POR AHORA
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  window._changePassCallback = onDone;
+}
+
+async function submitChangePass() {
+  const newPass    = document.getElementById('cp-new').value;
+  const confirm    = document.getElementById('cp-confirm').value;
+  const errEl      = document.getElementById('cp-err');
+  const btn        = document.getElementById('cp-btn');
+  if (newPass.length < 8) {
+    document.getElementById('cp-new').style.borderColor = '#FF5470';
+    errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; return;
+  }
+  if (newPass !== confirm) {
+    document.getElementById('cp-confirm').style.borderColor = '#FF5470';
+    errEl.textContent = 'Las contraseñas no coinciden.'; return;
+  }
+  errEl.textContent = '';
+  btn.textContent = 'GUARDANDO…'; btn.disabled = true;
+  try {
+    const auth = window._fbAuth || (typeof getAuth !== 'undefined' ? getAuth() : null);
+    if (auth && auth.currentUser) {
+      await updatePassword(auth.currentUser, newPass);
+    }
+    // Marcar en Firestore que ya cambió la contraseña
+    const uid = auth && auth.currentUser ? auth.currentUser.uid : null;
+    if (uid && window._fbSaveData) await window._fbSaveData(uid, { mustChangePass: false });
+    document.getElementById('change-pass-modal').remove();
+    if (window._changePassCallback) window._changePassCallback();
+  } catch(e) {
+    btn.textContent = 'GUARDAR CONTRASEÑA →'; btn.disabled = false;
+    errEl.textContent = e.code === 'auth/requires-recent-login'
+      ? 'Por seguridad, cierra sesión e ingresa de nuevo para cambiar la contraseña.'
+      : 'Error al guardar. Intenta de nuevo.';
+  }
+}
+
+function skipChangePass() {
+  document.getElementById('change-pass-modal').remove();
+  if (window._changePassCallback) window._changePassCallback();
+}
+
 async function doRegister() {
   const nombres   = document.getElementById('r-nombres').value.trim();
   const apellidos = document.getElementById('r-apellidos').value.trim();
@@ -2430,7 +2516,7 @@ async function doRegister() {
   if (!isValidEmail(email)) { err.textContent = 'Ingresa un correo válido.'; return; }
 
 
-  const pass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-4).toUpperCase() + '!9';
+  const pass = _genRandomPass();
   if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
   try {
     err.textContent = 'Creando cuenta…';
@@ -2442,10 +2528,11 @@ async function doRegister() {
       apellidos,
       displayName: nombres + ' ' + apellidos,
       plan,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      mustChangePass: true
     });
-    // Enviar correo de bienvenida al nuevo usuario
-    try { await sendWelcomeEmail(email, nombres, plan); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
+    // Enviar correo de bienvenida con credenciales de acceso
+    try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
     // onAuthStateChanged will call _onFirebaseLogin
   } catch(e) {
     const msg = e.code === 'auth/email-already-in-use'
@@ -2516,13 +2603,23 @@ async function doGoogleRegister() {
     let existing = null;
     try { existing = await window._fbLoadData(uid); } catch(e) {}
     if (!existing || !existing.createdAt) {
+      // Generar contraseña aleatoria y vincularla a la cuenta Google
+      const autoPass = _genRandomPass();
+      try {
+        const emailCred = EmailAuthProvider.credential(email, autoPass);
+        await linkWithCredential(result.user, emailCred);
+      } catch(linkErr) {
+        // Si ya tiene email/password vinculado, no interrumpir el flujo
+        console.warn('[ICT] linkWithCredential:', linkErr.code);
+      }
       await window._fbSaveData(uid, {
         email, nombres, apellidos, displayName,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        mustChangePass: true
       });
-      existing = { email, nombres, apellidos, displayName };
-      // Enviar correo de bienvenida solo en registro nuevo
-      try { await sendWelcomeEmail(email, nombres, 'trimestral'); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
+      existing = { email, nombres, apellidos, displayName, mustChangePass: true };
+      // Enviar correo de bienvenida con credenciales
+      try { await sendWelcomeEmail(email, nombres, 'trimestral', autoPass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
     }
     errReg.textContent = '';
     _googleVerifying = false;
@@ -2546,7 +2643,11 @@ function _googleEnterApp(user, data) {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
-  showWelcomeSplash(email, displayName);
+  if (data && data.mustChangePass) {
+    showChangePassModal(() => showWelcomeSplash(email, displayName));
+  } else {
+    showWelcomeSplash(email, displayName);
+  }
 }
 
 
@@ -2611,7 +2712,11 @@ window._onFirebaseLogin = async (user) => {
     return;
   }
   document.getElementById('login-page').style.display = 'none';
-  showWelcomeSplash(user.email, displayName);
+  if (userData && userData.mustChangePass) {
+    showChangePassModal(() => showWelcomeSplash(user.email, displayName));
+  } else {
+    showWelcomeSplash(user.email, displayName);
+  }
 };
 
 function showPendingGate(email) {
@@ -6264,7 +6369,7 @@ async function sendEmail({ to, subject, html }) {
   }
 }
 
-async function sendWelcomeEmail(email, nombres, plan) {
+async function sendWelcomeEmail(email, nombres, plan, accessPass) {
   const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
   const planPrices = { trimestral: '$15', semestral: '$20', anual: '$40' };
   const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
@@ -6274,9 +6379,22 @@ async function sendWelcomeEmail(email, nombres, plan) {
   const planPer    = planPeriod[plan]  || '3 meses';
   const planColor  = planColors[plan]  || '#B4BED2';
   const greeting   = nombres ? `Hola, ${nombres}` : 'Bienvenido';
+  const credBlock  = accessPass ? `
+        <div style="background:#0a1a0a;border:1px solid rgba(84,200,120,0.25);border-radius:10px;padding:20px;margin-bottom:20px;">
+          <div style="font-size:11px;letter-spacing:0.12em;color:#2a6a3a;margin-bottom:14px;">TUS CREDENCIALES DE ACCESO</div>
+          <div style="margin-bottom:10px;">
+            <div style="font-size:9px;letter-spacing:0.12em;color:#2a6a3a;margin-bottom:4px;">USUARIO</div>
+            <div style="font-size:13px;font-weight:700;color:#E8ECF5;background:#0F0F18;padding:10px 14px;border-radius:6px;letter-spacing:0.04em;word-break:break-all;">${email}</div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:9px;letter-spacing:0.12em;color:#2a6a3a;margin-bottom:4px;">CONTRASEÑA DE ACCESO</div>
+            <div style="font-size:15px;font-weight:700;color:#54C878;background:#0F0F18;padding:10px 14px;border-radius:6px;letter-spacing:0.1em;font-family:monospace;">${accessPass}</div>
+          </div>
+          <div style="font-size:10px;color:#2a6a3a;line-height:1.6;">⚠ Guarda esta contraseña. Al ingresar por primera vez se te pedirá cambiarla por una personal.</div>
+        </div>` : '';
   return sendEmail({
     to: email,
-    subject: 'Bienvenido a LockIn Trading Journal',
+    subject: 'Bienvenido a LockIn Trading Journal — Tus credenciales de acceso',
     html: `
       <div style="background:#09090F;padding:40px;font-family:'Helvetica Neue',sans-serif;max-width:520px;margin:0 auto;border-radius:12px;">
         <div style="font-size:13px;font-weight:500;letter-spacing:0.15em;color:#343548;margin-bottom:16px;">LOCKIN TRADING JOURNAL</div>
@@ -6284,6 +6402,7 @@ async function sendWelcomeEmail(email, nombres, plan) {
         <div style="font-size:22px;font-weight:700;color:#E8ECF5;margin-bottom:6px;">${greeting} <span style="color:#B4BED2;">👋</span></div>
         <div style="color:#555870;font-size:13px;margin-bottom:24px;">${email}</div>
         <div style="color:#E8ECF5;font-size:14px;line-height:1.7;margin-bottom:20px;">Tu cuenta ha sido creada exitosamente. Hemos recibido tu solicitud de acceso y estamos verificando tu pago.</div>
+        ${credBlock}
         <div style="background:#1a1a0a;border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:16px 20px;margin-bottom:20px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="font-size:20px;">⏳</div>
