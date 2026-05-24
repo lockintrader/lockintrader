@@ -1189,9 +1189,15 @@
         </div>
 
         <div class="modal-section-title">DATOS DE TU CUENTA</div>
-        <div class="field-group">
-          <label class="field-label">NOMBRE COMPLETO</label>
-          <input class="field-input" type="text" id="field-name" placeholder="Tu nombre...">
+        <div style="display:flex;gap:10px;">
+          <div class="field-group" style="flex:1;">
+            <label class="field-label">NOMBRES</label>
+            <input class="field-input" type="text" id="field-nombres" placeholder="Juan Carlos" autocomplete="given-name">
+          </div>
+          <div class="field-group" style="flex:1;">
+            <label class="field-label">APELLIDOS</label>
+            <input class="field-input" type="text" id="field-apellidos" placeholder="García López" autocomplete="family-name">
+          </div>
         </div>
         <div class="field-group">
           <label class="field-label">CORREO ELECTRÓNICO</label>
@@ -1314,10 +1320,13 @@
     });
   }
   function confirmPay() {
-    const name = document.getElementById('field-name').value.trim();
+    const nombres = document.getElementById('field-nombres').value.trim();
+    const apellidos = document.getElementById('field-apellidos').value.trim();
+    const name = (nombres + ' ' + apellidos).trim();
     const email = document.getElementById('field-email').value.trim();
     const errEl = document.getElementById('error-msg');
-    if (!name) { errEl.textContent = '⚠ Por favor ingresa tu nombre.'; return; }
+    if (!nombres) { errEl.textContent = '⚠ Por favor ingresa tus nombres.'; return; }
+    if (!apellidos) { errEl.textContent = '⚠ Por favor ingresa tus apellidos.'; return; }
     if (!email || !email.includes('@')) { errEl.textContent = '⚠ Por favor ingresa un correo válido.'; return; }
     errEl.textContent = '';
     if (currentMethod === 'paypal') {

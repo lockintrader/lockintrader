@@ -2334,6 +2334,27 @@ function applyLandingParams() {
       }
     }
 
+    if (name) {
+      const parts = name.trim().split(/\s+/);
+      const mid = Math.ceil(parts.length / 2);
+      const nombresVal   = parts.slice(0, mid).join(" ");
+      const apellidosVal = parts.slice(mid).join(" ");
+      const nombresEl   = document.getElementById("r-nombres");
+      const apellidosEl = document.getElementById("r-apellidos");
+      if (nombresEl) {
+        nombresEl.value = nombresVal;
+        nombresEl.readOnly = true;
+        nombresEl.style.opacity = "0.6";
+        nombresEl.style.cursor = "not-allowed";
+      }
+      if (apellidosEl) {
+        apellidosEl.value = apellidosVal;
+        apellidosEl.readOnly = true;
+        apellidosEl.style.opacity = "0.6";
+        apellidosEl.style.cursor = "not-allowed";
+      }
+    }
+
     if (plan) {
       // Reemplazar el selector de plan con un badge bloqueado
       const planLabels = { trimestral: 'TRIMESTRAL · $15 · 3 meses', semestral: 'SEMESTRAL · $20 · 6 meses', anual: 'ANUAL · $40 · 12 meses' };
