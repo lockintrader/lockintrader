@@ -1332,7 +1332,7 @@
     document.getElementById('modal-success').classList.add('visible');
     // Redirigir a la app después de 3 segundos con el plan como parámetro
     setTimeout(() => {
-      window.location.href = 'https://www.lockintrader.com/app?plan=' + currentPlan + '&email=' + encodeURIComponent(email);
+      window.location.href = 'https://www.lockintrader.com/app?plan=' + currentPlan + '&email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name);
     }, 3000);
   }
 

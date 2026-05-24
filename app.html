@@ -1111,30 +1111,47 @@
         REGISTRARSE CON GOOGLE
       </button>
       <div style="display:flex;align-items:center;gap:10px;margin:12px 0;"><div style="flex:1;height:0.5px;background:var(--border2);"></div><span style="font-size:9px;color:var(--text3);letter-spacing:0.1em;">O CON CORREO</span><div style="flex:1;height:0.5px;background:var(--border2);"></div></div>
-      <div class="login-form-label">NOMBRES</div>
-      <input class="login-input" type="text" id="r-nombres" placeholder="Juan Carlos" autocomplete="given-name">
-      <div class="login-form-label">APELLIDOS</div>
-      <input class="login-input" type="text" id="r-apellidos" placeholder="García López" autocomplete="family-name">
+
+      <!-- Fila 1: Nombres + Apellidos -->
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <div class="login-form-label">NOMBRES</div>
+          <input class="login-input" type="text" id="r-nombres" placeholder="Juan Carlos" autocomplete="given-name" style="margin-bottom:0;">
+        </div>
+        <div style="flex:1;">
+          <div class="login-form-label">APELLIDOS</div>
+          <input class="login-input" type="text" id="r-apellidos" placeholder="García López" autocomplete="family-name" style="margin-bottom:0;">
+        </div>
+      </div>
+
+      <!-- Correo electrónico -->
       <div class="login-form-label">CORREO ELECTRÓNICO</div>
       <input class="login-input" type="email" id="r-user" placeholder="tu@correo.com" autocomplete="email">
+
+      <!-- Contraseña -->
       <div class="login-form-label">CONTRASEÑA</div>
       <input class="login-input" type="password" id="r-pass" placeholder="mínimo 6 caracteres">
       <div class="login-form-label">CONFIRMAR CONTRASEÑA</div>
       <input class="login-input" type="password" id="r-pass2" placeholder="repite la contraseña">
+
+      <!-- Plan — bloqueado si viene del landing -->
       <div class="login-form-label" style="margin-top:14px;">PLAN DE SUSCRIPCIÓN</div>
-      <div style="display:flex;gap:8px;margin-bottom:4px;" id="plan-selector">
-        <button type="button" onclick="selectPlan('trimestral',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text2);">$15</span>
-          <span>TRIMESTRAL</span>
-        </button>
-        <button type="button" onclick="selectPlan('semestral',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text2);">$20</span>
-          <span>SEMESTRAL</span>
-        </button>
-        <button type="button" onclick="selectPlan('anual',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text2);">$40</span>
-          <span>ANUAL</span>
-        </button>
+      <div id="plan-selector-wrap">
+        <!-- Si viene del landing se reemplaza con plan fijo -->
+        <div style="display:flex;gap:8px;margin-bottom:4px;" id="plan-selector">
+          <button type="button" onclick="selectPlan('trimestral',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">$15</span>
+            <span>TRIMESTRAL</span>
+          </button>
+          <button type="button" onclick="selectPlan('semestral',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">$20</span>
+            <span>SEMESTRAL</span>
+          </button>
+          <button type="button" onclick="selectPlan('anual',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">$40</span>
+            <span>ANUAL</span>
+          </button>
+        </div>
       </div>
       <input type="hidden" id="r-plan" value="">
       <button class="login-btn" onclick="doRegister()">CREAR CUENTA →</button>
@@ -2290,33 +2307,55 @@ function showAuthTab(tab) {
   const params = new URLSearchParams(window.location.search);
   const plan  = params.get('plan');
   const email = params.get('email');
-  if (plan) {
-    // Guardar plan en sessionStorage para usarlo al cargar el formulario
-    sessionStorage.setItem('selectedPlan', plan);
-  }
-  if (email) {
-    sessionStorage.setItem('prefillEmail', email);
-  }
+  const name  = params.get('name');
+  if (plan) sessionStorage.setItem('selectedPlan', plan);
+  if (email) sessionStorage.setItem('prefillEmail', email);
+  if (name) sessionStorage.setItem('prefillName', name);
 })();
 
 function applyLandingParams() {
   const plan  = sessionStorage.getItem('selectedPlan');
   const email = sessionStorage.getItem('prefillEmail');
+  const name  = sessionStorage.getItem('prefillName');
   if (plan || email) {
     showAuthTab('register');
+
+    // Ampliar el login-box para layout más cómodo
+    const box = document.querySelector('.login-box');
+    if (box) box.style.maxWidth = '480px';
+
     if (email) {
       const emailEl = document.getElementById('r-user');
-      if (emailEl) emailEl.value = email;
+      if (emailEl) {
+        emailEl.value = email;
+        emailEl.readOnly = true;
+        emailEl.style.opacity = '0.6';
+        emailEl.style.cursor = 'not-allowed';
+      }
     }
+
     if (plan) {
-      // Preseleccionar el plan en el selector
-      setTimeout(() => {
-        const btn = document.querySelector(`#plan-selector button[onclick*="${plan}"]`);
-        if (btn) selectPlan(plan, btn);
-      }, 100);
+      // Reemplazar el selector de plan con un badge bloqueado
+      const planLabels = { trimestral: 'TRIMESTRAL · $15 · 3 meses', semestral: 'SEMESTRAL · $20 · 6 meses', anual: 'ANUAL · $40 · 12 meses' };
+      const wrap = document.getElementById('plan-selector-wrap');
+      if (wrap) {
+        wrap.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;border-radius:8px;border:0.5px solid var(--accent);
+            background:var(--accent-dim);margin-bottom:12px;">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.08em;">${planLabels[plan]}</div>
+              <div style="font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:0.06em;">Plan seleccionado en el proceso de pago</div>
+            </div>
+            <div style="font-size:16px;">🔒</div>
+          </div>`;
+        document.getElementById('r-plan').value = plan;
+      }
     }
+
     sessionStorage.removeItem('selectedPlan');
     sessionStorage.removeItem('prefillEmail');
+    sessionStorage.removeItem('prefillName');
   }
 }
 
