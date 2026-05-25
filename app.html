@@ -2210,6 +2210,11 @@ window._fbDeleteAccount = async (uid) => {
   await setDoc(doc(db, 'users', uid), { account: deleteField() }, { merge: true });
 };
 
+// Borra la contraseña temporal una vez que el usuario la cambia
+window._fbClearTempPass = async (uid) => {
+  await setDoc(doc(db, 'users', uid), { tempPass: deleteField() }, { merge: true });
+};
+
 window._fbLoadData = async (uid) => {
   const snap = await getDoc(doc(db, 'users', uid));
   return snap.exists() ? snap.data() : null;
@@ -2484,9 +2489,10 @@ async function submitChangePass() {
     if (auth && auth.currentUser) {
       await updatePassword(auth.currentUser, newPass);
     }
-    // Marcar en Firestore que ya cambió la contraseña
+    // Marcar en Firestore que ya cambió la contraseña y borrar la temporal
     const uid = auth && auth.currentUser ? auth.currentUser.uid : null;
     if (uid && window._fbSaveData) await window._fbSaveData(uid, { mustChangePass: false });
+    if (uid && window._fbClearTempPass) { try { await window._fbClearTempPass(uid); } catch(ce) {} }
     document.getElementById('change-pass-modal').remove();
     if (window._changePassCallback) window._changePassCallback();
   } catch(e) {
@@ -2529,7 +2535,8 @@ async function doRegister() {
       displayName: nombres + ' ' + apellidos,
       plan,
       createdAt: new Date().toISOString(),
-      mustChangePass: true
+      mustChangePass: true,
+      tempPass: pass   // Se borra cuando el usuario cambia su contraseña
     });
     // Enviar correo de bienvenida con credenciales de acceso
     try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
