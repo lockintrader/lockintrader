@@ -2535,9 +2535,65 @@ async function doRegister() {
     try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
     // onAuthStateChanged will call _onFirebaseLogin
   } catch(e) {
-    const msg = e.code === 'auth/email-already-in-use'
-      ? 'Ese correo ya está registrado.'
-      : e.code === 'auth/weak-password' ? 'La contraseña es muy débil.'
+    // ── Caso especial: correo ya existe en Firebase Auth pero doc fue eliminado por admin ──
+    // Ocurre cuando el admin borra solo el doc de Firestore sin eliminar la cuenta de Auth.
+    // En ese caso, el usuario puede volver a registrarse: re-creamos el doc en Firestore
+    // con su nuevo plan y lo dejamos pendiente de aprobación.
+    if (e.code === 'auth/email-already-in-use') {
+      err.textContent = 'Verificando cuenta…';
+      try {
+        // Intentar cargar el doc existente para saber si fue eliminado
+        // Necesitamos el UID — usar sendPasswordResetEmail no funciona aquí,
+        // así que usamos fetchSignInMethodsForEmail para saber si la cuenta existe,
+        // pero como no podemos obtener el UID sin login, usamos una Cloud Function o
+        // un truco: intentar sign-in con contraseña vacía para obtener el UID.
+        // La forma correcta: reutilizar el usuario actual de auth si ya está logueado.
+        const currentAuthUser = window._fbAuth && window._fbAuth.currentUser
+          ? window._fbAuth.currentUser
+          : null;
+
+        if (currentAuthUser && currentAuthUser.email.toLowerCase() === email) {
+          // Usuario ya está autenticado con ese correo (sesión activa sin doc)
+          const uid = currentAuthUser.uid;
+          const existingDoc = await window._fbLoadData(uid);
+          if (!existingDoc) {
+            // Doc fue eliminado por admin — re-crear como nuevo registro pendiente
+            await window._fbSaveData(uid, {
+              email,
+              nombres,
+              apellidos,
+              displayName: nombres + ' ' + apellidos,
+              plan,
+              createdAt: new Date().toISOString(),
+              mustChangePass: false  // Ya tiene contraseña, no forzar cambio
+            });
+            try { await sendWelcomeEmail(email, nombres, plan, '(tu contraseña anterior)'); } catch(we) {}
+            // Forzar recarga del estado de auth para que _onFirebaseLogin lo procese
+            const gate = document.getElementById('deleted-gate');
+            if (gate) gate.style.display = 'none';
+            if (window._onFirebaseLogin) await window._onFirebaseLogin(currentAuthUser);
+            return;
+          }
+          // El doc sí existe → ya tiene cuenta activa
+          err.textContent = 'Ese correo ya está registrado. Inicia sesión.';
+          return;
+        }
+
+        // No hay sesión activa — el usuario se está registrando en frío.
+        // Verificar si existe doc usando fetchSignInMethodsForEmail (solo indica si existe en Auth).
+        // Como no podemos hacer sign-in sin contraseña, mostramos instrucción clara.
+        err.textContent = '⚠ Ese correo ya tiene una cuenta. Si fuiste eliminado y quieres re-registrarte, inicia sesión con tu contraseña anterior o contáctanos.';
+        showAuthTab('login');
+        document.getElementById('l-user').value = email;
+        document.getElementById('login-error').textContent = '⚠ Ingresa con tu contraseña anterior para reactivar tu cuenta.';
+
+      } catch(innerErr) {
+        console.error('[doRegister reactivation error]', innerErr);
+        err.textContent = 'Ese correo ya está registrado. Intenta iniciar sesión.';
+      }
+      return;
+    }
+    const msg = e.code === 'auth/weak-password' ? 'La contraseña es muy débil.'
       : 'Error al crear cuenta. Intenta de nuevo.';
     err.textContent = msg;
   }
@@ -2707,9 +2763,10 @@ window._onFirebaseLogin = async (user) => {
 
   // Si no existe documento en Firestore (cuenta eliminada por admin) → bloquear
   // IMPORTANTE: no llamar _fbSaveData antes de este check, o se recrearía el doc
+  // Se pasa el objeto `user` para que la gate pueda ofrecer re-registro con el mismo UID
   if (!userData) {
     document.getElementById('login-page').style.display = 'none';
-    showDeletedAccountGate();
+    showDeletedAccountGate(user);
     return;
   }
 
@@ -2767,47 +2824,119 @@ function showPendingGate(email) {
   gate.style.display = 'flex';
 }
 
-function showDeletedAccountGate() {
-  // Cerrar sesión inmediatamente para que no quede sesión activa
-  try { signOut(auth); } catch(e) {}
+// authUserForReactivation: guarda temporalmente el user de Firebase Auth cuando
+// el doc no existe, para poder re-crear el doc sin necesidad de una segunda contraseña.
+window._reactivationUser = null;
+
+function showDeletedAccountGate(authUser) {
+  // NO cerrar sesión aquí — la necesitamos para poder re-registrar al usuario
+  // (antes se hacía signOut, lo cual impedía re-crear el doc con el mismo UID)
+  window._reactivationUser = authUser || null;
 
   let gate = document.getElementById('deleted-gate');
   if (!gate) {
     gate = document.createElement('div');
     gate.id = 'deleted-gate';
     gate.style.cssText = 'position:fixed;inset:0;background:#09090F;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"Space Mono",monospace;text-align:center;padding:24px;';
-    gate.innerHTML = `
-      <svg width="60" height="60" viewBox="220 50 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="dgs" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
-          <linearGradient id="dgb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#161624"/><stop offset="100%" stop-color="#0d0d18"/></linearGradient>
-          <linearGradient id="dgg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
-          <clipPath id="dgdc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
-        </defs>
-        <polygon points="340,52 458,185 340,318 222,185" fill="url(#dgb)"/>
-        <g clip-path="url(#dgdc)">
-          <rect x="327" y="145" width="14" height="55" rx="2" fill="url(#dgg)" opacity="0.95"/>
-          <rect x="349" y="136" width="14" height="62" rx="2" fill="url(#dgg)" opacity="0.95"/>
-        </g>
-        <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#dgs)" stroke-width="2.5" stroke-linejoin="round"/>
-      </svg>
-      <div style="font-size:18px;font-weight:700;color:#E8ECF5;letter-spacing:0.05em;">LOCK<span style="color:#B4BED2;">IN</span></div>
-      <div style="font-size:9px;color:#555870;letter-spacing:0.18em;margin-top:-12px;">TRADING JOURNAL</div>
-      <div style="background:#1a0a0a;border:1px solid rgba(255,84,112,0.25);border-radius:12px;padding:20px 24px;max-width:340px;margin-top:8px;">
-        <div style="font-size:20px;margin-bottom:10px;">🚫</div>
-        <div style="font-size:14px;font-weight:700;color:#FF5470;margin-bottom:8px;letter-spacing:0.06em;">CUENTA NO ENCONTRADA</div>
-        <div style="font-size:11px;color:#7a4040;line-height:1.8;">Esta cuenta no tiene acceso activo.<br>Si crees que es un error, contáctanos.</div>
-      </div>
-      <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">
-        <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a>
-      </div>
-      <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
-        CERRAR SESIÓN
-      </button>
-    `;
     document.body.appendChild(gate);
   }
+  // Renderizar según si hay usuario autenticado (puede re-registrarse) o no
+  const canReregister = !!(authUser && authUser.uid);
+  gate.innerHTML = `
+    <svg width="60" height="60" viewBox="220 50 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="dgs" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
+        <linearGradient id="dgb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#161624"/><stop offset="100%" stop-color="#0d0d18"/></linearGradient>
+        <linearGradient id="dgg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
+        <clipPath id="dgdc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
+      </defs>
+      <polygon points="340,52 458,185 340,318 222,185" fill="url(#dgb)"/>
+      <g clip-path="url(#dgdc)">
+        <rect x="327" y="145" width="14" height="55" rx="2" fill="url(#dgg)" opacity="0.95"/>
+        <rect x="349" y="136" width="14" height="62" rx="2" fill="url(#dgg)" opacity="0.95"/>
+      </g>
+      <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#dgs)" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <div style="font-size:18px;font-weight:700;color:#E8ECF5;letter-spacing:0.05em;">LOCK<span style="color:#B4BED2;">IN</span></div>
+    <div style="font-size:9px;color:#555870;letter-spacing:0.18em;margin-top:-12px;">TRADING JOURNAL</div>
+    <div style="background:#1a0a0a;border:1px solid rgba(255,84,112,0.25);border-radius:12px;padding:20px 24px;max-width:360px;margin-top:8px;">
+      <div style="font-size:20px;margin-bottom:10px;">🚫</div>
+      <div style="font-size:14px;font-weight:700;color:#FF5470;margin-bottom:8px;letter-spacing:0.06em;">CUENTA NO ENCONTRADA</div>
+      <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado del sistema.<br>Puedes volver a suscribirte eligiendo un nuevo plan.</div>
+    </div>
+    ${canReregister ? `
+    <div id="reregister-form" style="background:#0F0F18;border:1px solid #1E1E30;border-radius:12px;padding:20px 24px;max-width:360px;width:100%;">
+      <div style="font-size:9px;letter-spacing:0.14em;color:#555870;margin-bottom:14px;">NUEVO REGISTRO — ${authUser.email}</div>
+      <input id="rr-nombres" placeholder="Nombres" autocomplete="off"
+        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box;">
+      <input id="rr-apellidos" placeholder="Apellidos" autocomplete="off"
+        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box;">
+      <select id="rr-plan"
+        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:14px;box-sizing:border-box;cursor:pointer;">
+        <option value="">— Selecciona un plan —</option>
+        <option value="trimestral">Trimestral · $15 · 3 meses</option>
+        <option value="semestral">Semestral · $20 · 6 meses</option>
+        <option value="anual">Anual · $40 · 12 meses</option>
+      </select>
+      <div id="rr-err" style="font-size:10px;color:#FF5470;margin-bottom:10px;min-height:14px;"></div>
+      <button onclick="doReactivateAccount()" id="rr-btn"
+        style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:12px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+        REGISTRARME Y PAGAR →
+      </button>
+    </div>
+    ` : `
+    <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">
+      Contáctanos: <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a>
+    </div>
+    `}
+    <button onclick="doLogoutFromGate()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:4px;">
+      CERRAR SESIÓN
+    </button>
+  `;
   gate.style.display = 'flex';
+}
+
+async function doReactivateAccount() {
+  const authUser = window._reactivationUser;
+  if (!authUser || !authUser.uid) { doLogout(); return; }
+  const nombres   = (document.getElementById('rr-nombres').value || '').trim();
+  const apellidos = (document.getElementById('rr-apellidos').value || '').trim();
+  const plan      = document.getElementById('rr-plan').value;
+  const errEl     = document.getElementById('rr-err');
+  const btn       = document.getElementById('rr-btn');
+  if (!nombres)   { errEl.textContent = 'Ingresa tu(s) nombre(s).'; return; }
+  if (!apellidos) { errEl.textContent = 'Ingresa tu(s) apellido(s).'; return; }
+  if (!plan)      { errEl.textContent = 'Selecciona un plan.'; return; }
+  errEl.textContent = '';
+  btn.textContent = 'REGISTRANDO…'; btn.disabled = true;
+  try {
+    // Re-crear el doc de Firestore con el mismo UID de Auth que ya existe
+    await window._fbSaveData(authUser.uid, {
+      email: authUser.email,
+      nombres,
+      apellidos,
+      displayName: nombres + ' ' + apellidos,
+      plan,
+      createdAt: new Date().toISOString(),
+      mustChangePass: false,
+      activated: false   // Pendiente de aprobación del admin
+    });
+    // Enviar correo de bienvenida
+    try { await sendWelcomeEmail(authUser.email, nombres, plan, '(usa tu contraseña actual)'); } catch(we) {}
+    // Ocultar gate y mostrar pantalla de pendiente
+    document.getElementById('deleted-gate').style.display = 'none';
+    window._reactivationUser = null;
+    showPendingGate(authUser.email);
+  } catch(err) {
+    console.error('[doReactivateAccount]', err);
+    errEl.textContent = 'Error al registrar. Intenta de nuevo.';
+    btn.textContent = 'REGISTRARME Y PAGAR →'; btn.disabled = false;
+  }
+}
+
+function doLogoutFromGate() {
+  window._reactivationUser = null;
+  doLogout();
 }
 
 function showNoPlanGate(email) {
