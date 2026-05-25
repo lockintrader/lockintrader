@@ -2508,6 +2508,10 @@ function skipChangePass() {
   if (window._changePassCallback) window._changePassCallback();
 }
 
+// Flag que bloquea _onFirebaseLogin mientras doRegister está escribiendo Firestore
+// Evita el race condition: signUp dispara onAuthStateChanged antes de que setDoc termine
+let _registering = false;
+
 async function doRegister() {
   const nombres   = document.getElementById('r-nombres').value.trim();
   const apellidos = document.getElementById('r-apellidos').value.trim();
@@ -2526,6 +2530,7 @@ async function doRegister() {
   if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
   try {
     err.textContent = 'Creando cuenta…';
+    _registering = true;  // Bloquear _onFirebaseLogin hasta que el doc esté escrito
     const cred = await window._fbSignUp(email, pass);
     const uid = cred.user.uid;
     await window._fbSaveData(uid, {
@@ -2536,12 +2541,18 @@ async function doRegister() {
       plan,
       createdAt: new Date().toISOString(),
       mustChangePass: true,
-      tempPass: pass   // Se borra cuando el usuario cambia su contraseña
+      activated: false,   // Explícito: pendiente de aprobación del admin
+      tempPass: pass      // Se borra cuando el usuario cambia su contraseña
     });
+    _registering = false;
     // Enviar correo de bienvenida con credenciales de acceso
     try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
-    // onAuthStateChanged will call _onFirebaseLogin
+    // Mostrar pantalla de pendiente directamente — no esperar onAuthStateChanged
+    // (ya bloqueamos el auto-login con _registering, así que lo llamamos manualmente)
+    document.getElementById('login-page').style.display = 'none';
+    showPendingGate(email);
   } catch(e) {
+    _registering = false;
     // ── Caso especial: correo ya existe en Firebase Auth pero doc fue eliminado por admin ──
     // Ocurre cuando el admin borra solo el doc de Firestore sin eliminar la cuenta de Auth.
     // En ese caso, el usuario puede volver a registrarse: re-creamos el doc en Firestore
@@ -2572,13 +2583,15 @@ async function doRegister() {
               displayName: nombres + ' ' + apellidos,
               plan,
               createdAt: new Date().toISOString(),
-              mustChangePass: false  // Ya tiene contraseña, no forzar cambio
+              mustChangePass: false,
+              activated: false   // Pendiente de aprobación del admin
             });
-            try { await sendWelcomeEmail(email, nombres, plan, '(tu contraseña anterior)'); } catch(we) {}
-            // Forzar recarga del estado de auth para que _onFirebaseLogin lo procese
+            try { await sendWelcomeEmail(email, nombres, plan, '(usa tu contraseña actual)'); } catch(we) {}
+            // Mostrar pendiente directamente
             const gate = document.getElementById('deleted-gate');
             if (gate) gate.style.display = 'none';
-            if (window._onFirebaseLogin) await window._onFirebaseLogin(currentAuthUser);
+            document.getElementById('login-page').style.display = 'none';
+            showPendingGate(email);
             return;
           }
           // El doc sí existe → ya tiene cuenta activa
@@ -2748,8 +2761,9 @@ function _setCloudStatus(state) {
 }
 
 window._onFirebaseLogin = async (user) => {
-  // Skip auto-login if Google verification is in progress (handled manually)
+  // Skip auto-login si Google verification está en proceso o si doRegister aún escribe Firestore
   if (_googleVerifying) return;
+  if (_registering) return;  // Race condition guard: esperar a que doRegister termine setDoc
   _fbUID = user.uid;
   _setCloudStatus('ok');
   currentUser = user.email;
@@ -2766,6 +2780,7 @@ window._onFirebaseLogin = async (user) => {
   // ── Control de acceso: verificar plan activo ──
   const hasAccount  = userData && userData.createdAt;
   const hasPlan     = userData && userData.plan;
+  // activated debe ser explícitamente true — undefined o false = no activado
   const isActivated = userData && userData.activated === true;
 
   // Si no existe documento en Firestore (cuenta eliminada por admin) → bloquear
