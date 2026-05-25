@@ -23,6 +23,7 @@
   --green:   #54C878;
   --amber:   #F59E0B;
   --blue:    #4AAFD4;
+  --purple:  #9B8FD8;
 }
 body { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; min-height: 100vh; }
 
@@ -74,14 +75,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
   border: 1px solid rgba(255,84,112,.25); border-radius: 4px; padding: 2px 7px; letter-spacing: 0.1em;
 }
 .topbar-email { margin-left: auto; font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
-.topbar-live {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 9px; color: var(--text3); letter-spacing: 0.08em;
-}
+.topbar-live { display: flex; align-items: center; gap: 6px; font-size: 9px; color: var(--text3); letter-spacing: 0.08em; }
 .live-dot {
   width: 6px; height: 6px; border-radius: 50%; background: var(--green);
-  box-shadow: 0 0 6px rgba(84,200,120,.6);
-  animation: livepulse 2s infinite;
+  box-shadow: 0 0 6px rgba(84,200,120,.6); animation: livepulse 2s infinite;
 }
 @keyframes livepulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
 .logout-btn {
@@ -91,34 +88,43 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 }
 .logout-btn:hover { border-color: var(--red); color: var(--red); }
 
-.main { padding: 72px 24px 40px; max-width: 1200px; margin: 0 auto; }
+.main { padding: 72px 24px 40px; max-width: 1300px; margin: 0 auto; }
 
 /* ── STATS ── */
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 28px; }
 .stat-card {
-  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px;
-  padding: 18px 20px;
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 18px 20px;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: var(--stat-color, var(--border2));
 }
 .stat-label { font-size: 9px; color: var(--text3); letter-spacing: 0.12em; margin-bottom: 8px; }
-.stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: var(--stat-color, var(--text)); }
 .stat-sub { font-size: 9px; color: var(--text3); margin-top: 4px; }
 
-/* ── TABS ── */
-.tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
-.tab-btn {
-  padding: 8px 18px; border-radius: 8px; border: 0.5px solid transparent;
-  font-size: 10px; letter-spacing: 0.1em; cursor: pointer; font-family: 'Space Mono', monospace;
-  background: transparent; color: var(--text3); transition: all .2s;
+/* ── NAV TABS ── */
+.nav-tabs { display: flex; gap: 2px; margin-bottom: 24px; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 10px; padding: 4px; }
+.nav-tab {
+  flex: 1; padding: 9px 14px; border-radius: 7px; border: none;
+  font-size: 9px; letter-spacing: 0.1em; cursor: pointer; font-family: 'Space Mono', monospace;
+  background: transparent; color: var(--text3); transition: all .2s; text-align: center; white-space: nowrap;
 }
-.tab-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
-.tab-btn:hover:not(.active) { color: var(--text2); }
-.tab-indicator {
+.nav-tab.active { background: var(--bg3); border: 0.5px solid var(--border2); color: var(--text); }
+.nav-tab:hover:not(.active) { color: var(--text2); }
+.nav-tab-icon { font-size: 11px; margin-right: 5px; }
+.tab-badge {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 16px; height: 16px; border-radius: 8px; font-size: 8px; padding: 0 4px;
-  background: rgba(255,84,112,.15); color: var(--red); margin-left: 6px; font-weight: 700;
+  background: rgba(255,84,112,.15); color: var(--red); margin-left: 5px; font-weight: 700;
 }
 
-/* ── SEARCH / FILTERS ── */
+/* ── SECTION ── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── FILTER TOOLBAR ── */
 .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
 .search-input {
   flex: 1; min-width: 180px; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
@@ -128,15 +134,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .search-input:focus { border-color: var(--accent); }
 .filter-select {
   background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
-  padding: 9px 12px; font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace;
-  outline: none; cursor: pointer;
+  padding: 9px 12px; font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace; outline: none; cursor: pointer;
 }
-.refresh-btn {
-  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
-  padding: 9px 14px; font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace;
-  cursor: pointer; letter-spacing: 0.08em; transition: all .2s; white-space: nowrap;
-}
-.refresh-btn:hover { border-color: var(--accent); color: var(--text); }
+.filter-select option { background: var(--bg2); }
 
 /* ── TABLE ── */
 .table-wrap {
@@ -160,7 +160,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .cell-note { font-size: 9px; color: var(--text3); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
 .cell-email { font-size: 10px; color: var(--text2); }
 .cell-date { font-size: 10px; color: var(--text2); }
+.cell-mono { font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace; }
 
+/* badges */
 .plan-badge {
   display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px;
   font-size: 8px; letter-spacing: 0.08em; font-weight: 700; white-space: nowrap;
@@ -169,7 +171,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .plan-semestral  { background: rgba(74,175,212,.12);  color: #4AAFD4; border: 1px solid rgba(74,175,212,.25); }
 .plan-anual      { background: rgba(180,190,210,.1);  color: #B4BED2; border: 1px solid rgba(180,190,210,.2); }
 .plan-none       { background: rgba(85,88,112,.1);    color: var(--text3); border: 1px solid rgba(85,88,112,.2); }
-
 .status-badge {
   display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
   border-radius: 999px; font-size: 8px; letter-spacing: 0.08em; font-weight: 700; white-space: nowrap;
@@ -179,6 +180,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .status-blocked { background: rgba(255,84,112,.1);  color: var(--red);   border: 1px solid rgba(255,84,112,.25); }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
+/* action buttons */
 .action-btn {
   padding: 5px 11px; border-radius: 6px; font-size: 9px; letter-spacing: 0.07em;
   font-family: 'Space Mono', monospace; cursor: pointer; font-weight: 700;
@@ -192,26 +194,44 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .btn-unblock:hover { background: rgba(74,175,212,.18); }
 .btn-detail  { background: rgba(180,190,210,.06); color: var(--accent); border-color: rgba(180,190,210,.2); }
 .btn-detail:hover { background: rgba(180,190,210,.12); }
-
-.actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-view    { background: rgba(155,143,216,.08); color: var(--purple); border-color: rgba(155,143,216,.25); }
+.btn-view:hover { background: rgba(155,143,216,.18); }
+.btn-email   { background: rgba(74,175,212,.08);  color: var(--blue);  border-color: rgba(74,175,212,.25); }
+.btn-email:hover { background: rgba(74,175,212,.18); }
+.btn-pwd     { background: rgba(245,158,11,.08);  color: var(--amber); border-color: rgba(245,158,11,.25); }
+.btn-pwd:hover { background: rgba(245,158,11,.18); }
+.actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
 
 .empty-state { padding: 48px; text-align: center; font-size: 11px; color: var(--text3); letter-spacing: 0.08em; }
 
+/* ── USER SUBTABS ── */
+.user-tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+.user-tab-btn {
+  padding: 7px 16px; border-radius: 8px; border: 0.5px solid transparent;
+  font-size: 9px; letter-spacing: 0.1em; cursor: pointer; font-family: 'Space Mono', monospace;
+  background: transparent; color: var(--text3); transition: all .2s;
+}
+.user-tab-btn.active { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+.user-tab-btn:hover:not(.active) { color: var(--text2); }
+
 /* ── MODAL ── */
 .modal-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88);
   z-index: 200; align-items: center; justify-content: center; padding: 20px;
 }
 .modal-overlay.open { display: flex; }
 .modal-box {
   background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 16px;
-  padding: 32px; width: 100%; max-width: 480px; animation: fadeUp .2s ease;
+  padding: 32px; width: 100%; max-width: 520px; animation: fadeUp .2s ease;
   max-height: 90vh; overflow-y: auto;
 }
-.modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal-box.wide { max-width: 860px; }
+.modal-box.fullscreen { max-width: 96vw; max-height: 94vh; }
+.modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub   { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 20px; }
 .modal-field { margin-bottom: 14px; }
 .modal-label { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 6px; }
-.modal-val { font-size: 12px; color: var(--text); }
+.modal-val   { font-size: 12px; color: var(--text); }
 .modal-val.mono { font-family: 'Space Mono', monospace; }
 .modal-divider { height: 0.5px; background: var(--border2); margin: 18px 0; }
 .modal-select {
@@ -234,15 +254,84 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
   cursor: pointer; font-family: 'Space Mono', monospace; transition: all .2s;
 }
 .modal-btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+.modal-btn-danger {
+  background: rgba(255,84,112,.12); color: var(--red); border: 1px solid rgba(255,84,112,.3);
+  border-radius: 8px; padding: 12px; font-size: 11px; letter-spacing: 0.08em;
+  cursor: pointer; font-family: 'Space Mono', monospace; transition: all .2s; flex:1;
+}
+.modal-btn-danger:hover { background: rgba(255,84,112,.22); }
 
 /* Confirm modal */
 .confirm-box {
   background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 14px;
-  padding: 28px; width: 100%; max-width: 360px; animation: fadeUp .2s ease; text-align: center;
+  padding: 28px; width: 100%; max-width: 380px; animation: fadeUp .2s ease; text-align: center;
 }
 .confirm-icon { font-size: 28px; margin-bottom: 12px; }
 .confirm-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
 .confirm-msg { font-size: 11px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; }
+
+/* ── TRADES VIEW ── */
+.trades-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
+.trade-card {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 18px;
+  position: relative; overflow: hidden; transition: border-color .2s;
+}
+.trade-card:hover { border-color: rgba(180,190,210,.25); }
+.trade-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.trade-card-num { font-size: 8px; color: var(--text3); letter-spacing: 0.14em; }
+.trade-card-date { font-size: 9px; color: var(--text3); }
+.trade-card-symbol { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+.trade-card-dir { font-size: 9px; padding: 2px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px; }
+.dir-long  { background: rgba(84,200,120,.12); color: var(--green); }
+.dir-short { background: rgba(255,84,112,.12); color: var(--red); }
+.trade-card-pnl { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+.pnl-pos { color: var(--green); }
+.pnl-neg { color: var(--red); }
+.pnl-zero{ color: var(--text3); }
+.trade-card-meta { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.trade-meta-item { font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
+.trade-meta-val  { color: var(--text2); margin-left: 4px; }
+.result-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 8px; letter-spacing: 0.1em; font-weight: 700; }
+.result-win  { background: rgba(84,200,120,.12); color: var(--green); }
+.result-loss { background: rgba(255,84,112,.12); color: var(--red); }
+.result-be   { background: rgba(85,88,112,.12);  color: var(--text3); }
+.trade-note { font-size: 10px; color: var(--text2); line-height: 1.6; margin-top: 10px; padding: 8px 10px; background: var(--bg3); border-radius: 6px; border-left: 2px solid var(--border2); }
+.trade-images { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.trade-thumb {
+  width: 64px; height: 48px; object-fit: cover; border-radius: 5px;
+  border: 0.5px solid var(--border2); cursor: pointer; transition: opacity .15s;
+}
+.trade-thumb:hover { opacity: .8; }
+
+/* ── PASSWORDS SECTION ── */
+.pwd-card {
+  background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 20px;
+  display: grid; grid-template-columns: 2fr 2fr 1fr 140px; gap: 16px; align-items: center;
+  transition: background .15s; margin-bottom: 10px;
+}
+.pwd-card:hover { background: var(--bg3); }
+.pwd-field { font-size: 10px; color: var(--text); }
+.pwd-label { font-size: 8px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 4px; }
+.pwd-value {
+  font-family: 'Space Mono', monospace; font-size: 13px; color: var(--amber);
+  background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px;
+  padding: 6px 10px; letter-spacing: 0.08em; user-select: all; cursor: text;
+}
+.pwd-value.hidden { filter: blur(5px); user-select: none; cursor: pointer; transition: filter .2s; }
+.pwd-value.hidden:hover { filter: blur(3px); }
+
+/* ── IMAGE LIGHTBOX ── */
+#lightbox {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.95);
+  z-index: 999; align-items: center; justify-content: center;
+}
+#lightbox.open { display: flex; }
+#lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+#lightbox-close {
+  position: fixed; top: 20px; right: 24px; font-size: 24px; color: var(--text2);
+  cursor: pointer; z-index: 1000; transition: color .2s;
+}
+#lightbox-close:hover { color: var(--text); }
 
 /* ── TOAST ── */
 #toast {
@@ -255,21 +344,35 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 #toast.show { transform: translateY(0); opacity: 1; }
 #toast.success { border-color: rgba(84,200,120,.4); color: var(--green); }
 #toast.error   { border-color: rgba(255,84,112,.4); color: var(--red); }
+#toast.info    { border-color: rgba(74,175,212,.4);  color: var(--blue); }
 
 /* ── LOADER ── */
-.spinner {
-  width: 18px; height: 18px; border: 2px solid var(--border2);
-  border-top-color: var(--accent); border-radius: 50%;
-  animation: spin .7s linear infinite; display: inline-block; flex-shrink: 0;
-}
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-state { display: flex; align-items: center; gap: 12px; padding: 32px 20px; font-size: 11px; color: var(--text3); }
 
-@media (max-width: 768px) {
+/* ── SECTION HEADER ── */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+.section-count { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; }
+
+/* ── INFO CHIPS ── */
+.info-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px; font-size: 9px; color: var(--text3); margin-right: 8px; margin-bottom: 6px; }
+.chip-val { color: var(--text2); }
+
+/* password reset section */
+.pwd-reset-note { font-size: 10px; color: var(--text3); line-height: 1.7; padding: 12px 14px; background: var(--bg3); border-radius: 8px; border: 0.5px solid var(--border2); margin-top: 12px; }
+
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(3,1fr); }
+  .pwd-card { grid-template-columns: 1fr 1fr; gap: 10px; }
+}
+@media (max-width: 600px) {
   .stats-row { grid-template-columns: repeat(2,1fr); }
   .topbar-email, .topbar-live { display: none; }
   .main { padding: 68px 14px 40px; }
-  .toolbar { gap: 8px; }
+  .pwd-card { grid-template-columns: 1fr; }
+  .nav-tab span.nav-tab-label { display:none; }
 }
 </style>
 </head>
@@ -287,10 +390,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
             <clipPath id="lc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
           </defs>
           <polygon points="340,52 458,185 340,318 222,185" fill="#141420"/>
-          <g clip-path="url(#lc)">
-            <rect x="327" y="145" width="14" height="55" rx="2" fill="url(#lg)"/>
-            <rect x="349" y="136" width="14" height="62" rx="2" fill="url(#lg)"/>
-          </g>
+          <g clip-path="url(#lc)"><rect x="327" y="145" width="14" height="55" rx="2" fill="url(#lg)"/><rect x="349" y="136" width="14" height="62" rx="2" fill="url(#lg)"/></g>
           <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#ls)" stroke-width="2.5" stroke-linejoin="round"/>
         </svg>
       </div>
@@ -335,59 +435,143 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 
     <!-- STATS -->
     <div class="stats-row">
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-color:var(--accent)">
         <div class="stat-label">TOTAL USUARIOS</div>
         <div class="stat-val" id="stat-total">—</div>
         <div class="stat-sub">Registrados</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-color:var(--green)">
         <div class="stat-label">ACTIVOS</div>
-        <div class="stat-val" id="stat-active" style="color:var(--green)">—</div>
+        <div class="stat-val" id="stat-active">—</div>
         <div class="stat-sub">Con acceso aprobado</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-color:var(--amber)">
         <div class="stat-label">PENDIENTES</div>
-        <div class="stat-val" id="stat-pending" style="color:var(--amber)">—</div>
+        <div class="stat-val" id="stat-pending">—</div>
         <div class="stat-sub">Esperando aprobación</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-color:var(--red)">
         <div class="stat-label">BLOQUEADOS</div>
-        <div class="stat-val" id="stat-blocked" style="color:var(--red)">—</div>
+        <div class="stat-val" id="stat-blocked">—</div>
         <div class="stat-sub">Sin acceso</div>
+      </div>
+      <div class="stat-card" style="--stat-color:var(--purple)">
+        <div class="stat-label">TOTAL TRADES</div>
+        <div class="stat-val" id="stat-trades">—</div>
+        <div class="stat-sub">En todos los usuarios</div>
       </div>
     </div>
 
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('all',this)">TODOS</button>
-      <button class="tab-btn" onclick="switchTab('pending',this)">PENDIENTES <span class="tab-indicator" id="badge-pending">0</span></button>
-      <button class="tab-btn" onclick="switchTab('active',this)">ACTIVOS</button>
-      <button class="tab-btn" onclick="switchTab('blocked',this)">BLOQUEADOS</button>
+    <!-- NAV TABS -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showSection('users',this)" id="nav-users">
+        <span class="nav-tab-icon">👥</span><span class="nav-tab-label">USUARIOS</span>
+        <span class="tab-badge" id="badge-pending" style="display:none">0</span>
+      </button>
+      <button class="nav-tab" onclick="showSection('trades',this)" id="nav-trades">
+        <span class="nav-tab-icon">📊</span><span class="nav-tab-label">TRADES</span>
+      </button>
+      <button class="nav-tab" onclick="showSection('images',this)" id="nav-images">
+        <span class="nav-tab-icon">🖼️</span><span class="nav-tab-label">IMÁGENES</span>
+      </button>
+      <button class="nav-tab" onclick="showSection('passwords',this)" id="nav-passwords">
+        <span class="nav-tab-icon">🔑</span><span class="nav-tab-label">CONTRASEÑAS</span>
+      </button>
     </div>
 
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-      <input class="search-input" type="text" id="search-input" placeholder="Buscar por nombre o correo…" oninput="renderTable()">
-      <select class="filter-select" id="filter-plan" onchange="renderTable()">
-        <option value="">TODOS LOS PLANES</option>
-        <option value="trimestral">TRIMESTRAL</option>
-        <option value="semestral">SEMESTRAL</option>
-        <option value="anual">ANUAL</option>
-      </select>
+    <!-- ─── SECTION: USUARIOS ─── -->
+    <div class="section active" id="sec-users">
+
+      <!-- user sub-tabs -->
+      <div class="user-tabs">
+        <button class="user-tab-btn active" onclick="switchUserTab('all',this)">TODOS</button>
+        <button class="user-tab-btn" onclick="switchUserTab('pending',this)">PENDIENTES</button>
+        <button class="user-tab-btn" onclick="switchUserTab('active',this)">ACTIVOS</button>
+        <button class="user-tab-btn" onclick="switchUserTab('blocked',this)">BLOQUEADOS</button>
+      </div>
+
+      <div class="toolbar">
+        <input class="search-input" type="text" id="search-input" placeholder="Buscar por nombre o correo…" oninput="renderUsersTable()">
+        <select class="filter-select" id="filter-plan" onchange="renderUsersTable()">
+          <option value="">TODOS LOS PLANES</option>
+          <option value="trimestral">TRIMESTRAL</option>
+          <option value="semestral">SEMESTRAL</option>
+          <option value="anual">ANUAL</option>
+        </select>
+      </div>
+
+      <div class="table-wrap" id="users-table-wrap">
+        <div class="loading-state"><div class="spinner"></div> Conectando…</div>
+      </div>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrap" id="table-wrap">
-      <div class="loading-state"><div class="spinner"></div> Conectando…</div>
+    <!-- ─── SECTION: TRADES ─── -->
+    <div class="section" id="sec-trades">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Todos los Trades</div>
+          <div class="section-count" id="trades-count-label">Cargando…</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="filter-select" id="trades-user-filter" onchange="renderTradesSection()">
+            <option value="">TODOS LOS USUARIOS</option>
+          </select>
+          <select class="filter-select" id="trades-result-filter" onchange="renderTradesSection()">
+            <option value="">TODOS LOS RESULTADOS</option>
+            <option value="win">WIN</option>
+            <option value="loss">LOSS</option>
+            <option value="be">BE</option>
+          </select>
+          <select class="filter-select" id="trades-sort" onchange="renderTradesSection()">
+            <option value="newest">MÁS RECIENTES</option>
+            <option value="oldest">MÁS ANTIGUOS</option>
+            <option value="pnl_desc">PnL MAYOR</option>
+            <option value="pnl_asc">PnL MENOR</option>
+          </select>
+        </div>
+      </div>
+      <div id="trades-grid" class="trades-grid">
+        <div class="loading-state"><div class="spinner"></div> Cargando trades…</div>
+      </div>
     </div>
 
-  </div>
-</div>
+    <!-- ─── SECTION: IMÁGENES ─── -->
+    <div class="section" id="sec-images">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Galería de Imágenes por Usuario</div>
+          <div class="section-count" id="images-count-label">Cargando…</div>
+        </div>
+        <select class="filter-select" id="images-user-filter" onchange="renderImagesSection()">
+          <option value="">TODOS LOS USUARIOS</option>
+        </select>
+      </div>
+      <div id="images-container"></div>
+    </div>
 
-<!-- ════════ MODAL GESTIONAR ════════ -->
+    <!-- ─── SECTION: CONTRASEÑAS ─── -->
+    <div class="section" id="sec-passwords">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Contraseñas de Usuarios</div>
+          <div class="section-count">Contraseñas registradas al momento del registro · Haz clic para revelar</div>
+        </div>
+        <input class="search-input" type="text" id="pwd-search" placeholder="Buscar…" oninput="renderPasswordsSection()" style="max-width:220px;">
+      </div>
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:10px;color:var(--amber);line-height:1.7;">
+        ⚠️ Solo se muestran las contraseñas que los usuarios ingresaron al registrarse. Si el usuario cambió su contraseña después, solo podrás usar "Restablecer" para enviarle un enlace. Los usuarios de Google no tienen contraseña guardada.
+      </div>
+      <div id="passwords-list"></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════════ MODAL GESTIONAR USUARIO ════════ -->
 <div class="modal-overlay" id="user-modal">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Gestionar Usuario</div>
+    <div class="modal-sub" id="modal-uid-sub"></div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
       <div class="modal-field">
@@ -406,6 +590,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
     <div class="modal-field">
       <div class="modal-label">REGISTRO</div>
       <div class="modal-val" id="md-created">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">MÉTODO DE ACCESO</div>
+      <div class="modal-val" id="md-provider">—</div>
+    </div>
+
+    <!-- contraseña en modal -->
+    <div class="modal-field" id="md-pwd-wrap">
+      <div class="modal-label">CONTRASEÑA AL REGISTRO</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="pwd-value hidden" id="md-pwd-val" onclick="this.classList.toggle('hidden')">•••••••••</div>
+        <button class="action-btn btn-pwd" onclick="document.getElementById('md-pwd-val').classList.toggle('hidden')" style="height:fit-content;">👁</button>
+        <button class="action-btn btn-email" onclick="doSendResetFromModal()" id="md-reset-btn">RESTABLECER →</button>
+      </div>
+      <div style="font-size:9px;color:var(--text3);margin-top:5px;">Haz clic en el campo para revelar · "Restablecer" envía link de reset al correo</div>
     </div>
 
     <div class="modal-divider"></div>
@@ -441,7 +640,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
   </div>
 </div>
 
-<!-- ════════ MODAL CONFIRMAR ACCIÓN RÁPIDA ════════ -->
+<!-- ════════ MODAL VER TRADES DEL USUARIO ════════ -->
+<div class="modal-overlay" id="user-trades-modal">
+  <div class="modal-box wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div class="modal-title" id="ut-title">Trades del Usuario</div>
+        <div class="modal-sub" id="ut-sub"></div>
+      </div>
+      <button class="modal-btn-secondary" onclick="closeUserTradesModal()" style="flex:0;padding:8px 16px;width:auto;">✕ CERRAR</button>
+    </div>
+    <div id="ut-grid" class="trades-grid"></div>
+  </div>
+</div>
+
+<!-- ════════ MODAL CONFIRMAR ════════ -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="confirm-box">
     <div class="confirm-icon" id="confirm-icon">⚠️</div>
@@ -449,9 +662,15 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
     <div class="confirm-msg" id="confirm-msg"></div>
     <div class="modal-btns">
       <button class="modal-btn-secondary" onclick="closeConfirm()">CANCELAR</button>
-      <button class="modal-btn-primary" id="confirm-ok-btn" onclick="">CONFIRMAR →</button>
+      <button class="modal-btn-primary" id="confirm-ok-btn">CONFIRMAR →</button>
     </div>
   </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <div id="lightbox-close" onclick="closeLightbox()">✕</div>
+  <img id="lightbox-img" src="" alt="">
 </div>
 
 <!-- TOAST -->
@@ -461,16 +680,16 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 <script type="module">
 import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, doc, updateDoc, getDoc, setDoc,
+  getFirestore, collection, doc, updateDoc, getDoc,
   onSnapshot, deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Config ──────────────────────────────────────────────
 const ADMIN_EMAIL = 'lockintrader@gmail.com';
-const ADMIN_PASS  = 'Familia#18';         // local pre-check (same as Firebase Auth password)
+const ADMIN_PASS  = 'Familia#18';
 const RESEND_KEY  = 're_KXiGzd7Y_FKVSum6Rp986s7echnpNFHjr';
 
 const firebaseConfig = {
@@ -486,15 +705,16 @@ const fbApp = initializeApp(firebaseConfig);
 const auth  = getAuth(fbApp);
 const db    = getFirestore(fbApp);
 
-// ── State ────────────────────────────────────────────────
+// ── State ──
 let allUsers       = [];
-let currentTab     = 'all';
+let allTradesFlat  = [];  // [{uid, userName, ...tradeFields}]
+let currentUserTab = 'all';
 let currentEditUID = null;
-let unsubSnapshot  = null;   // Firestore real-time listener
+let unsubSnapshot  = null;
 let _confirmCb     = null;
 
 // ─────────────────────────────────────────────────────────
-// AUTH STATE
+// AUTH
 // ─────────────────────────────────────────────────────────
 onAuthStateChanged(auth, (user) => {
   if (user && user.email === ADMIN_EMAIL) {
@@ -512,9 +732,6 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────
-// LOGIN / LOGOUT
-// ─────────────────────────────────────────────────────────
 window.doAdminLogin = async () => {
   const key = document.getElementById('adm-pass').value;
   const btn = document.getElementById('login-btn-main');
@@ -526,7 +743,6 @@ window.doAdminLogin = async () => {
     await signInWithEmailAndPassword(auth, ADMIN_EMAIL, key);
   } catch(e) {
     btn.textContent = 'INGRESAR →'; btn.disabled = false;
-    // Don't expose whether user exists — generic message
     setLoginErr('Error de acceso. Verifica que la clave sea correcta.');
     console.error('[Admin login]', e.code);
   }
@@ -537,17 +753,13 @@ window.doLogout = async () => {
   await signOut(auth);
 };
 
-function setLoginErr(msg) {
-  document.getElementById('login-err').textContent = msg;
-}
+function setLoginErr(msg) { document.getElementById('login-err').textContent = msg; }
 
 // ─────────────────────────────────────────────────────────
-// REAL-TIME LISTENER (onSnapshot)
-// Replaces manual loadUsers() — updates the table live
-// whenever any user document changes in Firestore.
+// REAL-TIME LISTENER
 // ─────────────────────────────────────────────────────────
 function startRealtimeListener() {
-  document.getElementById('table-wrap').innerHTML =
+  document.getElementById('users-table-wrap').innerHTML =
     '<div class="loading-state"><div class="spinner"></div> Conectando en tiempo real…</div>';
 
   if (unsubSnapshot) unsubSnapshot();
@@ -556,35 +768,60 @@ function startRealtimeListener() {
     collection(db, 'users'),
     (snapshot) => {
       allUsers = [];
+      allTradesFlat = [];
+
       snapshot.forEach(d => {
         const data = d.data();
-        if (data.email === ADMIN_EMAIL) return; // exclude admin
-        allUsers.push({ uid: d.id, ...data });
+        if (data.email === ADMIN_EMAIL) return;
+        const user = { uid: d.id, ...data };
+        allUsers.push(user);
+
+        // Collect trades from this user
+        const trades = data.trades || [];
+        const name = ((data.nombres || '') + ' ' + (data.apellidos || '')).trim() || data.displayName || data.email || d.id;
+        trades.forEach(t => {
+          allTradesFlat.push({ ...t, _uid: d.id, _userName: name, _userEmail: data.email || '' });
+        });
       });
-      // Sort: newest first
+
+      // Sort newest first
       allUsers.sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+      allTradesFlat.sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1);
+
       updateStats();
-      renderTable();
+      renderUsersTable();
+      populateUserFilters();
+
+      // Re-render current section if open
+      const activeSection = document.querySelector('.section.active')?.id;
+      if (activeSection === 'sec-trades') renderTradesSection();
+      if (activeSection === 'sec-images') renderImagesSection();
+      if (activeSection === 'sec-passwords') renderPasswordsSection();
     },
     (err) => {
       console.error('[onSnapshot error]', err);
-      document.getElementById('table-wrap').innerHTML =
-        `<div class="empty-state">Error al conectar: ${err.message}</div>`;
+      document.getElementById('users-table-wrap').innerHTML =
+        `<div class="empty-state">Error al conectar: ${escHtml(err.message)}</div>`;
     }
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// HELPERS: STATUS CLASSIFICATION
-// A user is:
-//   active  → activated === true
-//   blocked → activated === false
-//   pending → anything else (no field, undefined, null)
+// HELPERS
 // ─────────────────────────────────────────────────────────
 function getStatus(u) {
   if (u.activated === true)  return 'active';
   if (u.activated === false) return 'blocked';
   return 'pending';
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('es-GT', { day:'2-digit', month:'short', year:'2-digit' });
 }
 
 // ─────────────────────────────────────────────────────────
@@ -599,58 +836,90 @@ function updateStats() {
   document.getElementById('stat-active').textContent  = active;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-blocked').textContent = blocked;
-  document.getElementById('badge-pending').textContent = pending;
+  document.getElementById('stat-trades').textContent  = allTradesFlat.length;
+
+  const badge = document.getElementById('badge-pending');
+  if (pending > 0) { badge.textContent = pending; badge.style.display = ''; }
+  else { badge.style.display = 'none'; }
 }
 
 // ─────────────────────────────────────────────────────────
-// TABS
+// POPULATE USER FILTERS (for trades & images dropdowns)
 // ─────────────────────────────────────────────────────────
-window.switchTab = (tab, btn) => {
-  currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function populateUserFilters() {
+  ['trades-user-filter', 'images-user-filter'].forEach(id => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">TODOS LOS USUARIOS</option>';
+    allUsers.forEach(u => {
+      const name = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.displayName || u.email || u.uid;
+      const opt = document.createElement('option');
+      opt.value = u.uid;
+      opt.textContent = name.toUpperCase();
+      sel.appendChild(opt);
+    });
+    if (cur) sel.value = cur;
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// NAV SECTION SWITCH
+// ─────────────────────────────────────────────────────────
+window.showSection = (name, btn) => {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
   btn.classList.add('active');
-  renderTable();
+
+  if (name === 'trades')    renderTradesSection();
+  if (name === 'images')    renderImagesSection();
+  if (name === 'passwords') renderPasswordsSection();
 };
 
 // ─────────────────────────────────────────────────────────
-// RENDER TABLE
+// SECTION: USERS
 // ─────────────────────────────────────────────────────────
-window.renderTable = () => {
+window.switchUserTab = (tab, btn) => {
+  currentUserTab = tab;
+  document.querySelectorAll('.user-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderUsersTable();
+};
+
+window.renderUsersTable = () => {
   const search = (document.getElementById('search-input').value || '').toLowerCase();
   const planF  = document.getElementById('filter-plan').value;
 
   let users = allUsers.filter(u => {
-    const fullName = ((u.nombres || '') + ' ' + (u.apellidos || '') + ' ' + (u.displayName || '')).toLowerCase();
+    const fullName = ((u.nombres||'') + ' ' + (u.apellidos||'') + ' ' + (u.displayName||'')).toLowerCase();
     const email    = (u.email || '').toLowerCase();
     const matchQ   = !search || fullName.includes(search) || email.includes(search);
     const matchP   = !planF  || u.plan === planF;
     const status   = getStatus(u);
-    let   matchT   = true;
-    if (currentTab !== 'all') matchT = status === currentTab;
+    const matchT   = currentUserTab === 'all' || status === currentUserTab;
     return matchQ && matchP && matchT;
   });
 
   if (!users.length) {
-    document.getElementById('table-wrap').innerHTML =
-      '<div class="empty-state">No hay usuarios que coincidan con los filtros.</div>';
+    document.getElementById('users-table-wrap').innerHTML =
+      '<div class="empty-state">No hay usuarios que coincidan.</div>';
     return;
   }
 
-  const cols = '2fr 1.6fr 100px 110px 100px 160px';
+  const cols = '2fr 1.6fr 80px 110px 90px 80px 200px';
   let html = `<div class="table-inner">
     <div class="table-header" style="--cols:${cols}">
-      <div>USUARIO</div><div>CORREO</div><div>PLAN</div><div>ESTADO</div><div>REGISTRO</div><div>ACCIONES</div>
+      <div>USUARIO</div><div>CORREO</div><div>PLAN</div><div>ESTADO</div><div>REGISTRO</div><div>TRADES</div><div>ACCIONES</div>
     </div>`;
 
   users.forEach(u => {
-    const nombre   = u.nombres   || u.displayName?.split(' ')[0]       || '—';
+    const nombre   = u.nombres   || u.displayName?.split(' ')[0] || '—';
     const apellido = u.apellidos || (u.displayName?.split(' ').slice(1).join(' ')) || '';
     const email    = u.email || '—';
     const plan     = u.plan  || 'none';
     const status   = getStatus(u);
-    const date     = u.createdAt
-      ? new Date(u.createdAt).toLocaleDateString('es-GT', { day:'2-digit', month:'short', year:'2-digit' })
-      : '—';
+    const date     = fmtDate(u.createdAt);
+    const tradeCount = (u.trades || []).length;
 
     const statusMap = {
       active:  `<span class="status-badge status-active"><span class="status-dot"></span>ACTIVO</span>`,
@@ -661,6 +930,8 @@ window.renderTable = () => {
     const planBadge = `<span class="plan-badge plan-${plan}">${plan.toUpperCase()}</span>`;
 
     let actionBtns = `<button class="action-btn btn-detail" onclick="openModal('${u.uid}')">GESTIONAR</button>`;
+    actionBtns += ` <button class="action-btn btn-view" onclick="openUserTradesModal('${u.uid}')">TRADES</button>`;
+
     if (status === 'pending') {
       actionBtns += ` <button class="action-btn btn-approve" onclick="confirmApprove('${u.uid}')">✓ APROBAR</button>`;
     } else if (status === 'active') {
@@ -669,9 +940,7 @@ window.renderTable = () => {
       actionBtns += ` <button class="action-btn btn-unblock" onclick="confirmApprove('${u.uid}')">RESTAURAR</button>`;
     }
 
-    const noteHtml = u.note
-      ? `<div class="cell-note" title="${escHtml(u.note)}">📝 ${escHtml(u.note)}</div>`
-      : '';
+    const noteHtml = u.note ? `<div class="cell-note" title="${escHtml(u.note)}">📝 ${escHtml(u.note)}</div>` : '';
 
     html += `
       <div class="table-row" style="--cols:${cols}">
@@ -683,93 +952,255 @@ window.renderTable = () => {
         <div>${planBadge}</div>
         <div>${statusMap[status]}</div>
         <div class="cell-date">${date}</div>
+        <div class="cell-mono" style="color:${tradeCount>0?'var(--accent)':'var(--text3)'};">${tradeCount}</div>
         <div class="actions-cell">${actionBtns}</div>
       </div>`;
   });
 
   html += '</div>';
-  document.getElementById('table-wrap').innerHTML = html;
+  document.getElementById('users-table-wrap').innerHTML = html;
 };
 
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ─────────────────────────────────────────────────────────
+// SECTION: TRADES
+// ─────────────────────────────────────────────────────────
+window.renderTradesSection = () => {
+  const userFilter   = document.getElementById('trades-user-filter').value;
+  const resultFilter = document.getElementById('trades-result-filter').value;
+  const sort         = document.getElementById('trades-sort').value;
+
+  let trades = [...allTradesFlat];
+
+  if (userFilter)   trades = trades.filter(t => t._uid === userFilter);
+  if (resultFilter) trades = trades.filter(t => (t.result || '') === resultFilter);
+
+  if (sort === 'oldest')   trades.sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1);
+  else if (sort === 'pnl_desc') trades.sort((a,b) => (b.pnl||0) - (a.pnl||0));
+  else if (sort === 'pnl_asc')  trades.sort((a,b) => (a.pnl||0) - (b.pnl||0));
+  else trades.sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
+
+  document.getElementById('trades-count-label').textContent = `${trades.length} trade${trades.length!==1?'s':''} · ${allUsers.length} usuarios`;
+
+  if (!trades.length) {
+    document.getElementById('trades-grid').innerHTML = '<div class="empty-state">No hay trades registrados.</div>';
+    return;
+  }
+
+  document.getElementById('trades-grid').innerHTML = trades.map(t => tradeCardHTML(t, true)).join('');
+};
+
+function tradeCardHTML(t, showUser = false) {
+  const pnl    = t.pnl || 0;
+  const pnlCls = pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : 'pnl-zero';
+  const pnlStr = (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(2);
+  const result = t.result || 'be';
+  const resCls = result === 'win' || result === 'cmw' ? 'result-win' : result === 'loss' || result === 'cml' ? 'result-loss' : 'result-be';
+  const resLbl = result.toUpperCase();
+  const dir    = t.dir || '—';
+  const dirCls = dir === 'Long' ? 'dir-long' : 'dir-short';
+  const imgs   = (t.tradeImages && t.tradeImages.length) ? t.tradeImages : (t.images || []);
+
+  const userBadge = showUser
+    ? `<div style="font-size:9px;color:var(--blue);margin-bottom:6px;letter-spacing:0.06em;">👤 ${escHtml(t._userName)}</div>`
+    : '';
+
+  const thumbs = imgs.length
+    ? `<div class="trade-images">${imgs.map(src => `<img class="trade-thumb" src="${escHtml(src)}" onclick="openLightbox('${escHtml(src)}')" loading="lazy">`).join('')}</div>`
+    : '';
+
+  const note = t.tradeNote
+    ? `<div class="trade-note">${escHtml(t.tradeNote)}</div>` : '';
+
+  const tags = (t.tags && t.tags.length)
+    ? `<div style="margin-top:8px;">${t.tags.map(tg => `<span class="info-chip" style="font-size:8px;">${escHtml(tg)}</span>`).join('')}</div>`
+    : '';
+
+  return `
+    <div class="trade-card">
+      ${userBadge}
+      <div class="trade-card-header">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="trade-card-symbol">${escHtml(t.symbol || '—')}</span>
+          <span class="trade-card-dir ${dirCls}">${escHtml(dir)}</span>
+        </div>
+        <span class="trade-card-date">${fmtDate(t.date)}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="trade-card-pnl ${pnlCls}">${pnlStr}</div>
+        <span class="result-badge ${resCls}">${resLbl}</span>
+      </div>
+      <div class="trade-card-meta">
+        ${t.setup ? `<div class="trade-meta-item">SETUP<span class="trade-meta-val">${escHtml(t.setup)}</span></div>` : ''}
+        ${t.qty   ? `<div class="trade-meta-item">QTY<span class="trade-meta-val">${t.qty}</span></div>` : ''}
+        ${t.entry ? `<div class="trade-meta-item">ENTRY<span class="trade-meta-val">${t.entry}</span></div>` : ''}
+        ${imgs.length ? `<div class="trade-meta-item" style="color:var(--purple);">📸 ${imgs.length} IMG</div>` : ''}
+      </div>
+      ${tags}${note}${thumbs}
+    </div>`;
 }
 
 // ─────────────────────────────────────────────────────────
-// CONFIRM MODAL (before quick actions)
+// SECTION: IMAGES
 // ─────────────────────────────────────────────────────────
-function openConfirm({ icon, title, msg, okLabel, okClass, cb }) {
-  document.getElementById('confirm-icon').textContent  = icon;
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-msg').textContent   = msg;
-  const btn = document.getElementById('confirm-ok-btn');
-  btn.textContent = okLabel + ' →';
-  btn.className   = 'modal-btn-primary ' + (okClass || '');
-  _confirmCb = cb;
-  document.getElementById('confirm-modal').classList.add('open');
-}
+window.renderImagesSection = () => {
+  const userFilter = document.getElementById('images-user-filter').value;
+  const container  = document.getElementById('images-container');
 
-window.closeConfirm = () => {
-  document.getElementById('confirm-modal').classList.remove('open');
-  _confirmCb = null;
+  // Group trades with images by user
+  let usersToShow = allUsers;
+  if (userFilter) usersToShow = allUsers.filter(u => u.uid === userFilter);
+
+  let totalImages = 0;
+  let html = '';
+
+  usersToShow.forEach(u => {
+    const trades = (u.trades || []).filter(t => {
+      const imgs = (t.tradeImages && t.tradeImages.length) ? t.tradeImages : (t.images || []);
+      return imgs.length > 0;
+    });
+    if (!trades.length) return;
+
+    const name = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.displayName || u.email || u.uid;
+    const userImgCount = trades.reduce((s, t) => {
+      const imgs = (t.tradeImages && t.tradeImages.length) ? t.tradeImages : (t.images || []);
+      return s + imgs.length;
+    }, 0);
+    totalImages += userImgCount;
+
+    html += `<div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border2);">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">${escHtml(name)}</div>
+        <div style="font-size:9px;color:var(--text3);">${escHtml(u.email||'')}</div>
+        <span class="plan-badge plan-${u.plan||'none'}" style="margin-left:auto;">${(u.plan||'—').toUpperCase()}</span>
+        <span style="font-size:9px;color:var(--purple);">📸 ${userImgCount} imagen${userImgCount!==1?'es':''}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">`;
+
+    trades.forEach(t => {
+      const imgs = (t.tradeImages && t.tradeImages.length) ? t.tradeImages : (t.images || []);
+      const pnl  = t.pnl || 0;
+      const pnlCls = pnl > 0 ? 'pnl-pos' : pnl < 0 ? 'pnl-neg' : 'pnl-zero';
+      const pnlStr = (pnl>=0?'+':'') + '$' + Math.abs(pnl).toFixed(2);
+      imgs.forEach(src => {
+        html += `
+          <div style="position:relative;cursor:pointer;" onclick="openLightbox('${escHtml(src)}')">
+            <img src="${escHtml(src)}" style="width:120px;height:90px;object-fit:cover;border-radius:8px;border:0.5px solid var(--border2);display:block;" loading="lazy">
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);padding:4px 6px;border-radius:0 0 8px 8px;font-size:8px;font-family:'Space Mono',monospace;">
+              <span style="color:var(--accent);">${escHtml(t.symbol||'—')}</span>
+              <span class="${pnlCls}" style="margin-left:5px;">${pnlStr}</span>
+              <span style="color:var(--text3);margin-left:5px;">${fmtDate(t.date)}</span>
+            </div>
+          </div>`;
+      });
+    });
+
+    html += `</div></div>`;
+  });
+
+  if (!html) {
+    container.innerHTML = '<div class="empty-state">No hay imágenes registradas en ningún trade.</div>';
+  } else {
+    container.innerHTML = html;
+  }
+
+  document.getElementById('images-count-label').textContent = `${totalImages} imagen${totalImages!==1?'es':''} en total`;
 };
 
-document.getElementById('confirm-ok-btn').addEventListener('click', async () => {
-  if (!_confirmCb) return;
-  const cb = _confirmCb;
-  closeConfirm();
-  await cb();
-});
+// ─────────────────────────────────────────────────────────
+// SECTION: PASSWORDS
+// ─────────────────────────────────────────────────────────
+window.renderPasswordsSection = () => {
+  const search = (document.getElementById('pwd-search').value || '').toLowerCase();
+  const container = document.getElementById('passwords-list');
 
-window.confirmApprove = (uid) => {
-  const u = allUsers.find(x => x.uid === uid);
-  if (!u) return;
-  const name = ((u.nombres || '') + ' ' + (u.apellidos || '')).trim() || u.email;
+  let users = allUsers.filter(u => {
+    if (!search) return true;
+    const name = ((u.nombres||'') + ' ' + (u.apellidos||'')).toLowerCase();
+    const email = (u.email||'').toLowerCase();
+    return name.includes(search) || email.includes(search);
+  });
+
+  if (!users.length) {
+    container.innerHTML = '<div class="empty-state">No hay usuarios que coincidan.</div>';
+    return;
+  }
+
+  container.innerHTML = users.map(u => {
+    const name    = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.displayName || '—';
+    const email   = u.email || '—';
+    const pwd     = u.accessPass || u.password || null;
+    const status  = getStatus(u);
+    const isGoogle = u.provider === 'google.com' || u.googleUid;
+
+    const statusBadge = {
+      active:  `<span class="status-badge status-active"><span class="status-dot"></span>ACTIVO</span>`,
+      pending: `<span class="status-badge status-pending"><span class="status-dot"></span>PENDIENTE</span>`,
+      blocked: `<span class="status-badge status-blocked"><span class="status-dot"></span>BLOQUEADO</span>`,
+    }[status];
+
+    const pwdDisplay = isGoogle
+      ? `<div style="font-size:10px;color:var(--text3);padding:6px 10px;background:var(--bg3);border-radius:6px;">Acceso vía Google — sin contraseña</div>`
+      : pwd
+        ? `<div class="pwd-value hidden" onclick="this.classList.toggle('hidden')">${escHtml(pwd)}</div>`
+        : `<div style="font-size:10px;color:var(--text3);padding:6px 10px;background:var(--bg3);border-radius:6px;">No registrada</div>`;
+
+    return `
+      <div class="pwd-card">
+        <div class="pwd-field">
+          <div class="pwd-label">USUARIO</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${escHtml(name)}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:3px;">${escHtml(email)}</div>
+        </div>
+        <div class="pwd-field">
+          <div class="pwd-label">CONTRASEÑA AL REGISTRO</div>
+          ${pwdDisplay}
+        </div>
+        <div>${statusBadge}<br><span class="plan-badge plan-${u.plan||'none'}" style="margin-top:6px;display:inline-flex;">${(u.plan||'—').toUpperCase()}</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${!isGoogle ? `<button class="action-btn btn-pwd" onclick="confirmSendReset('${escHtml(u.uid)}','${escHtml(email)}','${escHtml(name)}')" style="font-size:8px;">📧 ENVIAR RESET</button>` : ''}
+          <button class="action-btn btn-detail" onclick="openModal('${escHtml(u.uid)}')" style="font-size:8px;">GESTIONAR</button>
+        </div>
+      </div>`;
+  }).join('');
+};
+
+// ─────────────────────────────────────────────────────────
+// PASSWORD RESET
+// ─────────────────────────────────────────────────────────
+window.confirmSendReset = (uid, email, name) => {
   openConfirm({
-    icon: '✓', title: 'Aprobar acceso',
-    msg: `Se activará la cuenta de ${name} y se enviará el correo de activación.`,
-    okLabel: 'APROBAR', okClass: '',
-    cb: () => quickApprove(uid)
+    icon: '📧', title: 'Enviar reset de contraseña',
+    msg: `Se enviará un correo de restablecimiento a ${name} (${email}). El usuario recibirá un enlace para crear una nueva contraseña.`,
+    okLabel: 'ENVIAR',
+    cb: () => doSendReset(email)
   });
 };
 
-window.confirmBlock = (uid) => {
-  const u = allUsers.find(x => x.uid === uid);
+async function doSendReset(email) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showToast('✓ Correo de reset enviado a ' + email, 'success');
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+    console.error('[sendPasswordResetEmail]', e);
+  }
+}
+
+window.doSendResetFromModal = async () => {
+  const u = allUsers.find(x => x.uid === currentEditUID);
   if (!u) return;
-  const name = ((u.nombres || '') + ' ' + (u.apellidos || '')).trim() || u.email;
-  openConfirm({
-    icon: '🚫', title: 'Bloquear usuario',
-    msg: `Se revocará el acceso de ${name}. Podrás restaurarlo en cualquier momento.`,
-    okLabel: 'BLOQUEAR', okClass: 'danger-btn',
-    cb: () => quickBlock(uid)
-  });
+  const btn = document.getElementById('md-reset-btn');
+  btn.textContent = 'ENVIANDO…'; btn.disabled = true;
+  try {
+    await sendPasswordResetEmail(auth, u.email);
+    showToast('✓ Correo de reset enviado a ' + u.email, 'success');
+    btn.textContent = '✓ ENVIADO';
+    setTimeout(() => { btn.textContent = 'RESTABLECER →'; btn.disabled = false; }, 3000);
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+    btn.textContent = 'RESTABLECER →'; btn.disabled = false;
+  }
 };
-
-// ─────────────────────────────────────────────────────────
-// QUICK ACTIONS
-// ─────────────────────────────────────────────────────────
-async function quickApprove(uid) {
-  const u = allUsers.find(x => x.uid === uid);
-  if (!u) return;
-  try {
-    await updateDoc(doc(db, 'users', uid), { activated: true });
-    // onSnapshot will update allUsers automatically; send email
-    await sendActivationEmail(u.email, u.nombres || u.displayName?.split(' ')[0] || '', u.plan || 'trimestral');
-    showToast('✓ Usuario aprobado · correo enviado', 'success');
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-    console.error('[quickApprove]', e);
-  }
-}
-
-async function quickBlock(uid) {
-  try {
-    await updateDoc(doc(db, 'users', uid), { activated: false });
-    showToast('Usuario bloqueado', 'error');
-  } catch(e) {
-    showToast('Error: ' + e.message, 'error');
-  }
-}
 
 // ─────────────────────────────────────────────────────────
 // MODAL GESTIONAR
@@ -778,16 +1209,40 @@ window.openModal = (uid) => {
   const u = allUsers.find(x => x.uid === uid);
   if (!u) return;
   currentEditUID = uid;
-  document.getElementById('md-nombres').textContent  = u.nombres  || u.displayName?.split(' ')[0] || '—';
+
+  document.getElementById('md-nombres').textContent   = u.nombres  || u.displayName?.split(' ')[0] || '—';
   document.getElementById('md-apellidos').textContent = u.apellidos || (u.displayName?.split(' ').slice(1).join(' ')) || '—';
-  document.getElementById('md-email').textContent    = u.email   || '—';
-  document.getElementById('md-created').textContent  = u.createdAt ? new Date(u.createdAt).toLocaleString('es-GT') : '—';
-  document.getElementById('md-plan').value           = u.plan    || 'trimestral';
-  document.getElementById('md-status').value         = getStatus(u);
-  document.getElementById('md-note').value           = u.note    || '';
-  document.getElementById('modal-msg').textContent   = '';
-  document.getElementById('modal-title').textContent =
-    ((u.nombres || '') + ' ' + (u.apellidos || '')).trim() || u.email || 'Usuario';
+  document.getElementById('md-email').textContent     = u.email   || '—';
+  document.getElementById('md-created').textContent   = u.createdAt ? new Date(u.createdAt).toLocaleString('es-GT') : '—';
+  document.getElementById('md-provider').textContent  = u.provider === 'google.com' || u.googleUid ? '🔵 Google' : '🔑 Email / Contraseña';
+  document.getElementById('md-plan').value            = u.plan    || 'trimestral';
+  document.getElementById('md-status').value          = getStatus(u);
+  document.getElementById('md-note').value            = u.note    || '';
+  document.getElementById('modal-msg').textContent    = '';
+  document.getElementById('modal-uid-sub').textContent = 'UID: ' + uid;
+  document.getElementById('modal-title').textContent  =
+    ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.email || 'Usuario';
+
+  // Password field
+  const pwdWrap = document.getElementById('md-pwd-wrap');
+  const pwdVal  = document.getElementById('md-pwd-val');
+  const isGoogle = u.provider === 'google.com' || u.googleUid;
+
+  if (isGoogle) {
+    pwdWrap.style.display = 'none';
+  } else {
+    pwdWrap.style.display = 'block';
+    const pwd = u.accessPass || u.password || null;
+    if (pwd) {
+      pwdVal.textContent = pwd;
+      pwdVal.classList.add('hidden');
+    } else {
+      pwdVal.textContent = 'No registrada';
+      pwdVal.classList.remove('hidden');
+      pwdVal.style.color = 'var(--text3)';
+    }
+  }
+
   document.getElementById('user-modal').classList.add('open');
 };
 
@@ -808,35 +1263,31 @@ window.saveUser = async () => {
   btn.textContent = 'GUARDANDO…'; btn.disabled = true;
   msg.style.color = 'var(--text3)'; msg.textContent = '';
 
-  // Determine previous vs new status
-  const prevStatus = u ? getStatus(u) : 'pending';
+  const prevStatus  = u ? getStatus(u) : 'pending';
   const newlyActivated = statusVal === 'active' && prevStatus !== 'active';
 
   try {
     const ref = doc(db, 'users', currentEditUID);
 
     if (statusVal === 'pending') {
-      // Remove activated field entirely → treated as pending in app.html
       await updateDoc(ref, { plan, note: note || '', activated: deleteField() });
     } else {
       const activated = statusVal === 'active';
       await updateDoc(ref, { plan, note: note || '', activated });
     }
 
-    // Send activation email if status changed TO active
     if (newlyActivated && u) {
       await sendActivationEmail(u.email, u.nombres || u.displayName?.split(' ')[0] || '', plan);
       msg.style.color = 'var(--green)';
-      msg.textContent = '✓ Guardado · correo de activación enviado';
+      msg.textContent = '✓ Guardado · correo de activación enviado a ' + u.email;
     } else {
       msg.style.color = 'var(--green)';
       msg.textContent = '✓ Cambios guardados';
     }
 
     btn.textContent = 'GUARDAR CAMBIOS →'; btn.disabled = false;
-    setTimeout(closeModal, 1400);
+    setTimeout(closeModal, 1600);
     showToast('✓ Usuario actualizado', 'success');
-    // allUsers will auto-update via onSnapshot
   } catch(e) {
     btn.textContent = 'GUARDAR CAMBIOS →'; btn.disabled = false;
     msg.style.color = 'var(--red)'; msg.textContent = 'Error: ' + e.message;
@@ -844,16 +1295,138 @@ window.saveUser = async () => {
   }
 };
 
-// Close modals on overlay click
 document.getElementById('user-modal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('user-modal')) closeModal();
 });
+
+// ─────────────────────────────────────────────────────────
+// USER TRADES MODAL
+// ─────────────────────────────────────────────────────────
+window.openUserTradesModal = (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+  const name   = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.displayName || u.email;
+  const trades = u.trades || [];
+
+  document.getElementById('ut-title').textContent = 'Trades de ' + name;
+  document.getElementById('ut-sub').textContent   = `${trades.length} trade${trades.length!==1?'s':''} · ${u.email}`;
+
+  if (!trades.length) {
+    document.getElementById('ut-grid').innerHTML = '<div class="empty-state">Este usuario no tiene trades registrados.</div>';
+  } else {
+    const sorted = [...trades].sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
+    document.getElementById('ut-grid').innerHTML = sorted.map(t => tradeCardHTML({...t, _uid:uid, _userName:name})).join('');
+  }
+
+  document.getElementById('user-trades-modal').classList.add('open');
+};
+
+window.closeUserTradesModal = () => {
+  document.getElementById('user-trades-modal').classList.remove('open');
+};
+
+document.getElementById('user-trades-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('user-trades-modal')) closeUserTradesModal();
+});
+
+// ─────────────────────────────────────────────────────────
+// QUICK ACTIONS
+// ─────────────────────────────────────────────────────────
+window.confirmApprove = (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+  const name = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.email;
+  openConfirm({
+    icon: '✓', title: 'Aprobar acceso',
+    msg: `Se activará la cuenta de ${name} y se enviará el correo de activación a ${u.email}.`,
+    okLabel: 'APROBAR',
+    cb: () => quickApprove(uid)
+  });
+};
+
+window.confirmBlock = (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+  const name = ((u.nombres||'') + ' ' + (u.apellidos||'')).trim() || u.email;
+  openConfirm({
+    icon: '🚫', title: 'Bloquear usuario',
+    msg: `Se revocará el acceso de ${name}. Podrás restaurarlo en cualquier momento.`,
+    okLabel: 'BLOQUEAR',
+    cb: () => quickBlock(uid)
+  });
+};
+
+async function quickApprove(uid) {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u) return;
+  try {
+    await updateDoc(doc(db, 'users', uid), { activated: true });
+    const emailResult = await sendActivationEmail(u.email, u.nombres || u.displayName?.split(' ')[0] || '', u.plan || 'trimestral');
+    if (emailResult) {
+      showToast('✓ Usuario aprobado · correo enviado a ' + u.email, 'success');
+    } else {
+      showToast('✓ Aprobado · ERROR al enviar correo (revisar consola)', 'info');
+    }
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+    console.error('[quickApprove]', e);
+  }
+}
+
+async function quickBlock(uid) {
+  try {
+    await updateDoc(doc(db, 'users', uid), { activated: false });
+    showToast('Usuario bloqueado', 'error');
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// CONFIRM MODAL
+// ─────────────────────────────────────────────────────────
+function openConfirm({ icon, title, msg, okLabel, cb }) {
+  document.getElementById('confirm-icon').textContent  = icon;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.textContent = okLabel + ' →';
+  _confirmCb = cb;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+window.closeConfirm = () => {
+  document.getElementById('confirm-modal').classList.remove('open');
+  _confirmCb = null;
+};
+
+document.getElementById('confirm-ok-btn').addEventListener('click', async () => {
+  if (!_confirmCb) return;
+  const cb = _confirmCb;
+  closeConfirm();
+  await cb();
+});
+
 document.getElementById('confirm-modal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('confirm-modal')) closeConfirm();
 });
 
 // ─────────────────────────────────────────────────────────
-// ACTIVATION EMAIL  (same design as app.html)
+// LIGHTBOX
+// ─────────────────────────────────────────────────────────
+window.openLightbox = (src) => {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+window.closeLightbox = () => {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeConfirm(); } });
+
+// ─────────────────────────────────────────────────────────
+// ACTIVATION EMAIL
 // ─────────────────────────────────────────────────────────
 async function sendActivationEmail(email, nombres, plan) {
   const planLabels = { trimestral:'Trimestral', semestral:'Semestral', anual:'Anual' };
@@ -865,6 +1438,9 @@ async function sendActivationEmail(email, nombres, plan) {
   const period  = planPeriod[plan] || '';
   const color   = planColors[plan] || '#B4BED2';
   const greeting = nombres ? `Hola, ${nombres}` : 'Hola';
+
+  console.log('[sendActivationEmail] Enviando a:', email, '· plan:', plan);
+
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -898,11 +1474,19 @@ async function sendActivationEmail(email, nombres, plan) {
           </div>`
       })
     });
+
+    const body = await res.json().catch(() => ({}));
+    console.log('[sendActivationEmail] Respuesta Resend:', res.status, body);
+
     if (!res.ok) {
-      const detail = await res.json().catch(() => ({}));
-      console.warn('[sendActivationEmail] Resend error:', res.status, detail);
+      console.error('[sendActivationEmail] Error Resend:', res.status, body);
+      return false;
     }
-  } catch(e) { console.warn('[sendActivationEmail]', e); }
+    return true;
+  } catch(e) {
+    console.error('[sendActivationEmail] Excepción:', e);
+    return false;
+  }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -913,55 +1497,9 @@ window.showToast = (msg, type = '') => {
   t.textContent = msg;
   t.className = 'show ' + type;
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => { t.className = ''; }, 3200);
+  window._toastTimer = setTimeout(() => { t.className = ''; }, 3500);
 };
 
 </script>
 </body>
 </html>
-
-<!--
-═══════════════════════════════════════════════════════════════════════
-  INTEGRACIÓN CON app.html — CÓMO FUNCIONA EL FLUJO COMPLETO
-═══════════════════════════════════════════════════════════════════════
-
-  1. Usuario se registra en app.html (doRegister / doGoogleRegister)
-     → Firestore users/{uid}: { activated: <no existe>, plan, createdAt, … }
-     → app.html muestra "PAGO EN VERIFICACIÓN" (showPendingGate)
-
-  2. Admin ve al usuario en la tab PENDIENTES aquí
-     → Hace clic en ✓ APROBAR (o usa modal para cambiar plan primero)
-     → Firestore actualiza: { activated: true }
-     → Se envía correo de activación automáticamente (Resend)
-
-  3. Usuario recarga app.html
-     → isActivated === true → accede al Journal normalmente
-
-  CAMPO activated en Firestore:
-     (ausente / undefined / null) → PENDIENTE
-     true                        → ACTIVO
-     false                       → BLOQUEADO
-
-═══════════════════════════════════════════════════════════════════════
-  CONFIGURAR FIREBASE AUTH para lockintrader@gmail.com
-═══════════════════════════════════════════════════════════════════════
-  1. https://console.firebase.google.com → proyecto ict-traders-gt
-  2. Authentication → Users
-  3. Si NO existe: Add user
-       email: lockintrader@gmail.com
-       password: Familia#18
-  4. Si SÍ existe: ⋮ → Reset password → escribe Familia#18
-
-═══════════════════════════════════════════════════════════════════════
-  DESPLIEGUE
-═══════════════════════════════════════════════════════════════════════
-  Netlify / Cloudflare:  _redirects:
-    /admin   /admin.html   200
-
-  Vercel (vercel.json):
-    { "rewrites": [{ "source": "/admin", "destination": "/admin.html" }] }
-
-  Apache (.htaccess):
-    RewriteRule ^admin$ /admin.html [L]
-═══════════════════════════════════════════════════════════════════════
--->
