@@ -1035,8 +1035,74 @@ window.executeDeleteUser = async () => {
 window.confirmApprove = (uid) => {
   const u = allUsers.find(x=>x.uid===uid);
   const name = u ? (((u.nombres||'')+' '+(u.apellidos||'')).trim()||u.email||uid) : uid;
-  showConfirm('✓','Aprobar / Restaurar usuario',`¿Aprobar acceso para <strong>${escHtml(name)}</strong>?`,
-    async () => { await updateDoc(doc(db,'users',uid),{activated:true}); showToast('Usuario aprobado.','success'); });
+  showConfirm('✓','Aprobar acceso',`¿Aprobar acceso para <strong>${escHtml(name)}</strong>?<br><span style="font-size:9px;color:var(--text3);margin-top:6px;display:block;">Se enviará un correo de confirmación al usuario.</span>`,
+    async () => {
+      await updateDoc(doc(db,'users',uid), { activated: true });
+      showToast('Usuario aprobado.', 'success');
+      // Enviar correo de confirmación vía Resend
+      if (u?.email) {
+        const firstName = (u.nombres || u.displayName?.split(' ')[0] || 'Trader').trim();
+        try {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${RESEND_KEY}`
+            },
+            body: JSON.stringify({
+              from: 'LockIn <soporte@lockintrader.com>',
+              to: [u.email],
+              subject: '✅ Tu acceso a LockIn ha sido aprobado',
+              html: `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#09090F;font-family:'Courier New',monospace;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#09090F;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+        <!-- Logo -->
+        <tr><td align="center" style="padding-bottom:28px;">
+          <div style="display:inline-block;background:#141420;border:1px solid #1E1E30;border-radius:10px;padding:12px 22px;">
+            <span style="font-family:'Courier New',monospace;font-size:18px;font-weight:700;color:#E8ECF5;letter-spacing:0.12em;">LOCK<span style="color:#B4BED2;">IN</span></span>
+          </div>
+        </td></tr>
+        <!-- Card -->
+        <tr><td style="background:#0F0F18;border:1px solid #1E1E30;border-radius:16px;padding:36px 32px;">
+          <p style="font-size:10px;color:#343548;letter-spacing:0.16em;margin:0 0 16px;">ACCESO APROBADO</p>
+          <h1 style="font-size:22px;font-weight:700;color:#E8ECF5;margin:0 0 12px;">¡Ya tienes acceso, ${escHtml(firstName)}!</h1>
+          <p style="font-size:13px;color:#555870;line-height:1.8;margin:0 0 28px;">Tu cuenta en <strong style="color:#B4BED2;">LockIn Trading Journal</strong> ha sido verificada y aprobada. A partir de ahora puedes ingresar a la plataforma y comenzar a registrar tus trades.</p>
+          <!-- CTA -->
+          <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:28px;">
+            <a href="https://lockintrader.com/app" style="display:inline-block;background:#B4BED2;color:#09090F;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:0.1em;padding:14px 32px;border-radius:8px;">INGRESAR A LOCKIN →</a>
+          </td></tr></table>
+          <!-- Divider -->
+          <hr style="border:none;border-top:1px solid #1E1E30;margin:0 0 20px;">
+          <p style="font-size:10px;color:#343548;line-height:1.7;margin:0;">¿Tienes dudas? Escríbenos a <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a></p>
+        </td></tr>
+        <!-- Footer -->
+        <tr><td align="center" style="padding-top:20px;">
+          <p style="font-size:9px;color:#343548;letter-spacing:0.08em;margin:0;">© ${new Date().getFullYear()} LOCKIN TRADING JOURNAL</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+            })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast('✉️ Correo de confirmación enviado a ' + u.email, 'success');
+          } else {
+            console.error('[Resend]', data);
+            showToast('⚠️ Aprobado, pero error al enviar correo: ' + (data.message||'unknown'), 'error');
+          }
+        } catch(e) {
+          console.error('[Resend]', e);
+          showToast('⚠️ Aprobado, pero no se pudo enviar el correo.', 'error');
+        }
+      }
+    });
 };
 window.confirmBlock = (uid) => {
   const u = allUsers.find(x=>x.uid===uid);
