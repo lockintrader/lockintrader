@@ -2815,7 +2815,7 @@ function showPendingGate(email) {
         <div style="font-size:14px;font-weight:700;color:#F59E0B;margin-bottom:8px;letter-spacing:0.06em;">PAGO EN VERIFICACIÓN</div>
         <div style="font-size:11px;color:#7a6a40;line-height:1.8;">Tu cuenta está siendo verificada.<br>El proceso no tomará más de <strong style="color:#F59E0B;">24 horas</strong>.</div>
       </div>
-      <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
+      <button onclick="doLogoutToHome()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
         CERRAR SESIÓN
       </button>
     `;
@@ -2936,7 +2936,7 @@ async function doReactivateAccount() {
 
 function doLogoutFromGate() {
   window._reactivationUser = null;
-  doLogout();
+  doLogoutToHome();
 }
 
 function showNoPlanGate(email) {
@@ -2971,7 +2971,7 @@ function showNoPlanGate(email) {
          style="margin-top:12px;background:#B4BED2;color:#09090F;padding:12px 32px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-decoration:none;">
         VER PLANES →
       </a>
-      <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+      <button onclick="doLogoutToHome()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
         CERRAR SESIÓN
       </button>
     `;
@@ -3092,6 +3092,12 @@ function doLogout() {
   document.getElementById('nav-home').classList.add('active');
   document.getElementById('page-home').classList.add('active');
   if (window._fbSignOut) window._fbSignOut();
+}
+
+// Logout desde pantallas intermedias (pago pendiente, cuenta eliminada) → redirige al inicio
+async function doLogoutToHome() {
+  try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
+  window.location.href = 'https://lockintrader.com';
 }
 
 // Session check handled by Firebase onAuthStateChanged — show login by default
