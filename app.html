@@ -2692,26 +2692,29 @@ window._onFirebaseLogin = async (user) => {
   currentUser = user.email;
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
-  // Always persist email in Firestore (covers existing users who registered before this update)
-  try { await window._fbSaveData(user.uid, { email: user.email }); } catch(e) {}
-  // Load user data to get displayName and plan
+  // Load user data FIRST — antes de cualquier escritura
   let displayName = user.email.split('@')[0].toUpperCase();
   let userData = null;
   try {
     userData = await window._fbLoadData(user.uid);
     if (userData && userData.displayName) displayName = userData.displayName.toUpperCase();
   } catch(e) {}
+
   // ── Control de acceso: verificar plan activo ──
   const hasAccount  = userData && userData.createdAt;
   const hasPlan     = userData && userData.plan;
   const isActivated = userData && userData.activated === true;
 
   // Si no existe documento en Firestore (cuenta eliminada por admin) → bloquear
+  // IMPORTANTE: no llamar _fbSaveData antes de este check, o se recrearía el doc
   if (!userData) {
     document.getElementById('login-page').style.display = 'none';
     showDeletedAccountGate();
     return;
   }
+
+  // Solo persistir email si el doc existe (usuario legítimo)
+  try { await window._fbSaveData(user.uid, { email: user.email }); } catch(e) {}
 
   if (hasAccount && (!hasPlan || !isActivated)) {
     // Usuario registrado pero pago pendiente de verificación
