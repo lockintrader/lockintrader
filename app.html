@@ -2705,6 +2705,14 @@ window._onFirebaseLogin = async (user) => {
   const hasAccount  = userData && userData.createdAt;
   const hasPlan     = userData && userData.plan;
   const isActivated = userData && userData.activated === true;
+
+  // Si no existe documento en Firestore (cuenta eliminada por admin) → bloquear
+  if (!userData) {
+    document.getElementById('login-page').style.display = 'none';
+    showDeletedAccountGate();
+    return;
+  }
+
   if (hasAccount && (!hasPlan || !isActivated)) {
     // Usuario registrado pero pago pendiente de verificación
     document.getElementById('login-page').style.display = 'none';
@@ -2745,9 +2753,51 @@ function showPendingGate(email) {
       <div style="background:#1a1a0a;border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:20px 24px;max-width:340px;margin-top:8px;">
         <div style="font-size:20px;margin-bottom:10px;">⏳</div>
         <div style="font-size:14px;font-weight:700;color:#F59E0B;margin-bottom:8px;letter-spacing:0.06em;">PAGO EN VERIFICACIÓN</div>
-        <div style="font-size:11px;color:#7a6a40;line-height:1.8;">Tu cuenta está siendo verificada.<br>En un lapso de <strong style="color:#F59E0B;">24 horas</strong> recibirás un correo confirmando tu acceso.</div>
+        <div style="font-size:11px;color:#7a6a40;line-height:1.8;">Tu cuenta está siendo verificada.<br>El proceso no tomará más de <strong style="color:#F59E0B;">24 horas</strong>.</div>
       </div>
-      <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">¿Ya tienes tu comprobante de pago? Envíalo a<br><a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a></div>
+      <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
+        CERRAR SESIÓN
+      </button>
+    `;
+    document.body.appendChild(gate);
+  }
+  gate.style.display = 'flex';
+}
+
+function showDeletedAccountGate() {
+  // Cerrar sesión inmediatamente para que no quede sesión activa
+  try { signOut(auth); } catch(e) {}
+
+  let gate = document.getElementById('deleted-gate');
+  if (!gate) {
+    gate = document.createElement('div');
+    gate.id = 'deleted-gate';
+    gate.style.cssText = 'position:fixed;inset:0;background:#09090F;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"Space Mono",monospace;text-align:center;padding:24px;';
+    gate.innerHTML = `
+      <svg width="60" height="60" viewBox="220 50 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="dgs" x1="20%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
+          <linearGradient id="dgb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#161624"/><stop offset="100%" stop-color="#0d0d18"/></linearGradient>
+          <linearGradient id="dgg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
+          <clipPath id="dgdc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
+        </defs>
+        <polygon points="340,52 458,185 340,318 222,185" fill="url(#dgb)"/>
+        <g clip-path="url(#dgdc)">
+          <rect x="327" y="145" width="14" height="55" rx="2" fill="url(#dgg)" opacity="0.95"/>
+          <rect x="349" y="136" width="14" height="62" rx="2" fill="url(#dgg)" opacity="0.95"/>
+        </g>
+        <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#dgs)" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+      <div style="font-size:18px;font-weight:700;color:#E8ECF5;letter-spacing:0.05em;">LOCK<span style="color:#B4BED2;">IN</span></div>
+      <div style="font-size:9px;color:#555870;letter-spacing:0.18em;margin-top:-12px;">TRADING JOURNAL</div>
+      <div style="background:#1a0a0a;border:1px solid rgba(255,84,112,0.25);border-radius:12px;padding:20px 24px;max-width:340px;margin-top:8px;">
+        <div style="font-size:20px;margin-bottom:10px;">🚫</div>
+        <div style="font-size:14px;font-weight:700;color:#FF5470;margin-bottom:8px;letter-spacing:0.06em;">CUENTA NO ENCONTRADA</div>
+        <div style="font-size:11px;color:#7a4040;line-height:1.8;">Esta cuenta no tiene acceso activo.<br>Si crees que es un error, contáctanos.</div>
+      </div>
+      <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">
+        <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a>
+      </div>
       <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
         CERRAR SESIÓN
       </button>
