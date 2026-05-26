@@ -2507,7 +2507,7 @@ function skipChangePass() {
   if (window._changePassCallback) window._changePassCallback();
 }
 
-// Bloquea _onFirebaseLogin mientras doRegister escribe Firestore
+// _registering bloquea _onFirebaseLogin durante el registro
 // Evita race condition: signUp dispara onAuthStateChanged antes de que setDoc termine
 let _registering = false;
 
@@ -2544,7 +2544,6 @@ async function doRegister() {
       tempPass: pass
     });
     _registering = false;
-    // Enviar correo de bienvenida con credenciales de acceso
     try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
     // Mostrar pending directamente — no depender del timing de onAuthStateChanged
     document.getElementById('login-page').style.display = 'none';
@@ -2701,9 +2700,14 @@ function _setCloudStatus(state) {
 }
 
 window._onFirebaseLogin = async (user) => {
-  // Skip si Google verification está en proceso o si doRegister aún escribe Firestore
+  // Guard 1: Google verification en proceso
   if (_googleVerifying) return;
+  // Guard 2: doRegister aún escribiendo Firestore (race condition)
   if (_registering) return;
+  // Guard 3: hay parámetros del landing activos — el usuario viene del landing
+  // y debe completar el formulario de registro, no entrar automáticamente
+  const _landingPlan = sessionStorage.getItem('selectedPlan');
+  if (_landingPlan) return;
 
   _fbUID = user.uid;
   _setCloudStatus('ok');
@@ -2711,7 +2715,6 @@ window._onFirebaseLogin = async (user) => {
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
 
-  // Leer userData de Firestore PRIMERO — antes de cualquier otra acción
   let displayName = user.email.split('@')[0].toUpperCase();
   let userData = null;
   try {
@@ -2719,26 +2722,24 @@ window._onFirebaseLogin = async (user) => {
     if (userData && userData.displayName) displayName = userData.displayName.toUpperCase();
   } catch(e) {}
 
-  // ── GATE 1: doc no existe → cuenta eliminada por admin ──
+  // GATE 1: doc no existe → cuenta eliminada por admin
   if (!userData) {
     document.getElementById('login-page').style.display = 'none';
     showDeletedAccountGate(user);
     return;
   }
 
-  // Solo persistir email si el doc existe (usuario legítimo, no recrea doc borrado)
+  // Solo persistir email si el doc existe (no recrea doc borrado)
   try { await window._fbSaveData(user.uid, { email: user.email }); } catch(e) {}
 
-  // ── GATE 2: cuenta existe pero NO está aprobada (activated !== true) ──
-  // activated:false → pendiente | activated:undefined → doc viejo sin campo → también pendiente
-  const isActivated = userData.activated === true;
-  if (!isActivated) {
+  // GATE 2: no aprobado — activated debe ser explícitamente true
+  if (userData.activated !== true) {
     document.getElementById('login-page').style.display = 'none';
     showPendingGate(user.email);
     return;
   }
 
-  // ── Acceso concedido ──
+  // Acceso concedido
   document.getElementById('login-page').style.display = 'none';
   if (userData.mustChangePass) {
     showChangePassModal(() => showWelcomeSplash(user.email, displayName));
@@ -2788,7 +2789,6 @@ window._reactivationUser = null;
 
 function showDeletedAccountGate(authUser) {
   window._reactivationUser = authUser || null;
-
   let gate = document.getElementById('deleted-gate');
   if (!gate) {
     gate = document.createElement('div');
@@ -2817,7 +2817,7 @@ function showDeletedAccountGate(authUser) {
     <div style="background:#1a0a0a;border:1px solid rgba(255,84,112,0.25);border-radius:12px;padding:20px 24px;max-width:360px;margin-top:8px;">
       <div style="font-size:20px;margin-bottom:10px;">🚫</div>
       <div style="font-size:14px;font-weight:700;color:#FF5470;margin-bottom:8px;letter-spacing:0.06em;">CUENTA NO ENCONTRADA</div>
-      <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado del sistema.<br>Puedes volver a suscribirte eligiendo un nuevo plan.</div>
+      <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado.<br>Puedes volver a suscribirte eligiendo un nuevo plan.</div>
     </div>
     ${canReregister ? `
     <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:12px;padding:20px 24px;max-width:360px;width:100%;box-sizing:border-box;">
@@ -2862,14 +2862,10 @@ async function doReactivateAccount() {
   errEl.textContent = '';
   try {
     await window._fbSaveData(authUser.uid, {
-      email: authUser.email,
-      nombres,
-      apellidos,
+      email: authUser.email, nombres, apellidos,
       displayName: nombres + ' ' + apellidos,
-      plan,
-      createdAt: new Date().toISOString(),
-      mustChangePass: false,
-      activated: false
+      plan, createdAt: new Date().toISOString(),
+      mustChangePass: false, activated: false
     });
     document.getElementById('deleted-gate').style.display = 'none';
     window._reactivationUser = null;
@@ -3019,6 +3015,11 @@ function startWelcomeChart() {
 function doLogout() {
   trades = []; journals = [];
   if (overviewChartInstance) { overviewChartInstance.destroy(); overviewChartInstance = null; }
+
+async function doLogoutToHome() {
+  try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
+  window.location.href = 'https://lockintrader.com';
+}
   if (opsDonutInstance) { opsDonutInstance.destroy(); opsDonutInstance = null; }
   if (benefitsChartInstance) { benefitsChartInstance.destroy(); benefitsChartInstance = null; }
   if (consistencyGaugeInstance) { consistencyGaugeInstance.destroy(); consistencyGaugeInstance = null; }
@@ -3032,11 +3033,6 @@ function doLogout() {
   document.getElementById('nav-home').classList.add('active');
   document.getElementById('page-home').classList.add('active');
   if (window._fbSignOut) window._fbSignOut();
-}
-
-async function doLogoutToHome() {
-  try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
-  window.location.href = 'https://lockintrader.com';
 }
 
 // Session check handled by Firebase onAuthStateChanged — show login by default
