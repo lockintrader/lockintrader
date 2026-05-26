@@ -570,7 +570,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, updateDoc, deleteDoc, onSnapshot, deleteField }
+import { getFirestore, collection, doc, updateDoc, deleteDoc, onSnapshot, deleteField }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const ADMIN_EMAIL = 'lockintrader@gmail.com';
@@ -693,7 +693,7 @@ function startRealtimeListener() {
 }
 
 // ── HELPERS ──
-function getStatus(u) { if(u.activated===true) return 'active'; if(u.activated===false) return u.everActivated===true ? 'blocked' : 'pending'; return 'pending'; }
+function getStatus(u) { if(u.activated===true) return 'active'; if(u.activated===false) return 'blocked'; return 'pending'; }
 function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtDate(s) { if(!s) return '—'; return new Date(s).toLocaleDateString('es-GT',{day:'2-digit',month:'short',year:'2-digit'}); }
 function fmtDuration(ms) { if(!ms||ms<0) return '—'; const h=Math.floor(ms/3600000); const m=Math.floor((ms%3600000)/60000); return h>0 ? `${h}h ${m}m` : `${m}m`; }
@@ -1037,21 +1037,14 @@ window.confirmApprove = (uid) => {
   const name = u ? (((u.nombres||'')+' '+(u.apellidos||'')).trim()||u.email||uid) : uid;
   showConfirm('✓','Aprobar acceso',`¿Aprobar acceso para <strong>${escHtml(name)}</strong>?<br><span style="font-size:9px;color:var(--text3);margin-top:6px;display:block;">Se enviará un correo de bienvenida con credenciales al usuario.</span>`,
     async () => {
-      // Guardar activated:true y everActivated:true (para distinguir pending vs blocked luego)
-      await updateDoc(doc(db,'users',uid), { activated: true, everActivated: true });
+      await updateDoc(doc(db,'users',uid), { activated: true });
       showToast('Usuario aprobado.', 'success');
-      // Leer doc fresco de Firestore para tener tempPass actualizado
-      let freshUser = u;
-      try {
-        const snap = await getDoc(doc(db,'users',uid));
-        if (snap.exists()) freshUser = { uid, ...snap.data() };
-      } catch(_) { /* usar u como fallback */ }
       // Enviar correo de bienvenida con credenciales vía Resend
-      if (freshUser?.email) {
-        const firstName  = (freshUser.nombres || freshUser.displayName?.split(' ')[0] || 'Trader').trim();
-        const userEmail  = freshUser.email;
-        const userPass   = freshUser.tempPass || null;   // Guardada en Firestore al registrarse
-        const plan       = freshUser.plan || 'trimestral';
+      if (u?.email) {
+        const firstName  = (u.nombres || u.displayName?.split(' ')[0] || 'Trader').trim();
+        const userEmail  = u.email;
+        const userPass   = u.tempPass || null;   // Guardada en Firestore al registrarse
+        const plan       = u.plan || 'trimestral';
         const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
         const planPrices = { trimestral: '$15', semestral: '$20', anual: '$40' };
         const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
@@ -1109,7 +1102,7 @@ window.confirmApprove = (uid) => {
               'Authorization': `Bearer ${RESEND_KEY}`
             },
             body: JSON.stringify({
-              from: 'LockIn <noreply@lockintrader.com>',
+              from: 'LockIn <soporte@lockintrader.com>',
               to: [userEmail],
               subject: '✅ ¡Tu acceso a LockIn ha sido aprobado!',
               html: `<!DOCTYPE html>
@@ -1160,17 +1153,15 @@ window.confirmApprove = (uid) => {
             })
           });
           const data = await res.json();
-          console.log('[Resend] status:', res.status, 'response:', JSON.stringify(data));
           if (res.ok) {
             showToast('✉️ Correo de bienvenida enviado a ' + userEmail, 'success');
           } else {
-            const errMsg = data.message || data.name || data.error || JSON.stringify(data);
-            console.error('[Resend ERROR]', res.status, errMsg);
-            showToast('⚠️ Aprobado, pero error al enviar correo (' + res.status + '): ' + errMsg, 'error');
+            console.error('[Resend]', data);
+            showToast('⚠️ Aprobado, pero error al enviar correo: ' + (data.message||data.name||'unknown'), 'error');
           }
         } catch(e) {
-          console.error('[Resend EXCEPTION]', e.message, e);
-          showToast('⚠️ Aprobado, pero no se pudo enviar el correo: ' + e.message, 'error');
+          console.error('[Resend]', e);
+          showToast('⚠️ Aprobado, pero no se pudo enviar el correo.', 'error');
         }
       }
     });

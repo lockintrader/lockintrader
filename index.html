@@ -1247,15 +1247,63 @@
         </div>
       </div>
     </div>
+    <!-- PASO 2: Crear contraseña (obligatorio antes de ir a la app) -->
     <div class="modal-success" id="modal-success">
-      <div class="success-icon">✅</div>
-      <div class="success-title">¡SOLICITUD ENVIADA!</div>
-      <div class="success-desc">
-        Hemos recibido tu solicitud de cuenta.<br>
-        <span id="success-method-msg"></span><br><br>
-        Serás redirigido a la app en unos segundos para crear tu cuenta. También te llegará un correo de confirmación a <strong id="success-email"></strong>.
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:28px;margin-bottom:10px;">🔐</div>
+        <div class="success-title" style="font-size:16px;">CREAR TU CONTRASEÑA</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:8px;line-height:1.7;">
+          Pago recibido · <span id="success-method-msg2"></span><br>
+          Crea tu contraseña de acceso para <strong id="success-email2" style="color:var(--amber);"></strong>
+        </div>
       </div>
-      <button class="modal-btn confirm" style="margin-top:28px;width:100%;" onclick="closeModal()">ENTENDIDO</button>
+
+      <!-- Indicador de plan seleccionado -->
+      <div id="success-plan-badge" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:20px;">
+        <span style="font-size:9px;color:var(--text3);letter-spacing:0.1em;">PLAN ACTIVO</span>
+        <span id="success-plan-label" style="font-size:11px;font-weight:700;color:var(--amber);letter-spacing:0.08em;"></span>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">CONTRASEÑA</label>
+        <div style="position:relative;">
+          <input class="field-input" type="password" id="field-password" placeholder="Mínimo 8 caracteres"
+            style="padding-right:42px;"
+            oninput="checkPasswordStrength(this.value)">
+          <button type="button" onclick="togglePwd('field-password','eye-pass')"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;" id="eye-pass">👁</button>
+        </div>
+        <!-- Barra de fortaleza -->
+        <div style="margin-top:6px;display:flex;gap:4px;" id="pwd-strength-bars">
+          <div style="flex:1;height:3px;border-radius:999px;background:var(--border2);transition:background 0.3s;" id="sb1"></div>
+          <div style="flex:1;height:3px;border-radius:999px;background:var(--border2);transition:background 0.3s;" id="sb2"></div>
+          <div style="flex:1;height:3px;border-radius:999px;background:var(--border2);transition:background 0.3s;" id="sb3"></div>
+          <div style="flex:1;height:3px;border-radius:999px;background:var(--border2);transition:background 0.3s;" id="sb4"></div>
+        </div>
+        <div id="pwd-strength-label" style="font-size:9px;color:var(--text3);margin-top:4px;min-height:13px;letter-spacing:0.08em;"></div>
+      </div>
+
+      <div class="field-group" style="margin-top:12px;">
+        <label class="field-label">CONFIRMAR CONTRASEÑA</label>
+        <div style="position:relative;">
+          <input class="field-input" type="password" id="field-password2" placeholder="Repite tu contraseña"
+            style="padding-right:42px;">
+          <button type="button" onclick="togglePwd('field-password2','eye-pass2')"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;" id="eye-pass2">👁</button>
+        </div>
+      </div>
+
+      <div id="create-account-error" style="font-size:9px;color:var(--red);min-height:16px;margin-top:8px;"></div>
+
+      <button class="modal-btn confirm" id="btn-create-account" style="margin-top:20px;width:100%;font-size:11px;letter-spacing:0.12em;position:relative;"
+        onclick="createAccountAndRedirect()">
+        <span id="create-btn-label">CREAR CUENTA Y ACCEDER →</span>
+        <span id="create-btn-loader" style="display:none;font-size:10px;">CREANDO CUENTA...</span>
+      </button>
+      <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:10px;line-height:1.7;">
+        Al crear tu cuenta aceptas los <a href="#" style="color:var(--amber);">términos de uso</a>.<br>
+        No podrás acceder sin completar este paso.
+      </div>
     </div>
   </div>
 </div>
@@ -1319,6 +1367,9 @@
       setTimeout(() => el.style.display='none', 2500);
     });
   }
+  // Variables para datos del usuario pendiente de crear cuenta
+  let _pendingNombres = '', _pendingApellidos = '', _pendingEmail = '', _pendingPlan = '';
+
   function confirmPay() {
     const nombres = document.getElementById('field-nombres').value.trim();
     const apellidos = document.getElementById('field-apellidos').value.trim();
@@ -1329,20 +1380,97 @@
     if (!apellidos) { errEl.textContent = '⚠ Por favor ingresa tus apellidos.'; return; }
     if (!email || !email.includes('@')) { errEl.textContent = '⚠ Por favor ingresa un correo válido.'; return; }
     errEl.textContent = '';
+
+    // Guardar datos para el paso 2
+    _pendingNombres = nombres;
+    _pendingApellidos = apellidos;
+    _pendingEmail = email;
+    _pendingPlan = currentPlan;
+
+    // Abrir PayPal / mostrar cripto
     if (currentMethod === 'paypal') {
       window.open(PLANS[currentPlan].paypal, '_blank');
     }
-    // Mostrar pantalla de éxito y luego redirigir a la app con el plan
-    document.getElementById('success-email').textContent = email;
-    document.getElementById('success-method-msg').textContent = currentMethod === 'paypal'
-      ? 'Completa el pago en PayPal. Una vez confirmado recibirás acceso.'
-      : 'Envía tu comprobante de pago USDT a: pagos@lockintrader.com';
+
+    // Poblar datos en pantalla de crear cuenta
+    document.getElementById('success-email2').textContent = email;
+    document.getElementById('success-method-msg2').textContent = currentMethod === 'paypal'
+      ? 'PayPal'
+      : 'USDT Cripto — envía comprobante a pagos@lockintrader.com';
+    document.getElementById('success-plan-label').textContent = PLANS[currentPlan].label + ' ' + PLANS[currentPlan].price;
+
+    // Limpiar campos de contraseña
+    document.getElementById('field-password').value = '';
+    document.getElementById('field-password2').value = '';
+    document.getElementById('create-account-error').textContent = '';
+    resetStrengthBars();
+
+    // Mostrar paso 2 (crear contraseña)
     document.getElementById('modal-form-content').style.display = 'none';
     document.getElementById('modal-success').classList.add('visible');
-    // Redirigir a la app después de 3 segundos con el plan como parámetro
-    setTimeout(() => {
-      window.location.href = 'https://www.lockintrader.com/app?plan=' + currentPlan + '&email=' + encodeURIComponent(email) + '&name=' + encodeURIComponent(name);
-    }, 3000);
+  }
+
+  function togglePwd(fieldId, eyeId) {
+    const inp = document.getElementById(fieldId);
+    const eye = document.getElementById(eyeId);
+    if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+    else { inp.type = 'password'; eye.textContent = '👁'; }
+  }
+
+  function resetStrengthBars() {
+    ['sb1','sb2','sb3','sb4'].forEach(id => document.getElementById(id).style.background = 'var(--border2)');
+    document.getElementById('pwd-strength-label').textContent = '';
+    document.getElementById('pwd-strength-label').style.color = 'var(--text3)';
+  }
+
+  function checkPasswordStrength(val) {
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const colors = ['#FF4560','#F59E0B','#60a5fa','#22c55e'];
+    const labels = ['MUY DÉBIL','DÉBIL','BUENA','FUERTE'];
+    const bars = ['sb1','sb2','sb3','sb4'];
+    bars.forEach((id,i) => {
+      document.getElementById(id).style.background = i < score ? colors[score-1] : 'var(--border2)';
+    });
+    const lbl = document.getElementById('pwd-strength-label');
+    if (val.length === 0) { resetStrengthBars(); return; }
+    lbl.textContent = labels[score-1] || 'MUY DÉBIL';
+    lbl.style.color = colors[score-1] || '#FF4560';
+  }
+
+  async function createAccountAndRedirect() {
+    const pwd1 = document.getElementById('field-password').value;
+    const pwd2 = document.getElementById('field-password2').value;
+    const errEl = document.getElementById('create-account-error');
+    const btnLabel = document.getElementById('create-btn-label');
+    const btnLoader = document.getElementById('create-btn-loader');
+    const btn = document.getElementById('btn-create-account');
+
+    if (!pwd1 || pwd1.length < 8) { errEl.textContent = '⚠ La contraseña debe tener al menos 8 caracteres.'; return; }
+    if (pwd1 !== pwd2) { errEl.textContent = '⚠ Las contraseñas no coinciden.'; return; }
+    errEl.textContent = '';
+
+    // Estado de carga
+    btn.disabled = true; btnLabel.style.display = 'none'; btnLoader.style.display = 'inline';
+
+    // Construir URL con todos los parámetros incluyendo contraseña
+    const fullName = (_pendingNombres + ' ' + _pendingApellidos).trim();
+    const params = new URLSearchParams({
+      plan: _pendingPlan,
+      email: _pendingEmail,
+      name: fullName,
+      nombres: _pendingNombres,
+      apellidos: _pendingApellidos,
+      pwd: btoa(pwd1),          // codificado en base64 (no es seguro, solo ofuscación básica)
+      newUser: '1'              // flag para que app.html sepa que debe crear cuenta
+    });
+
+    // Pequeña pausa visual antes de redirigir
+    await new Promise(r => setTimeout(r, 800));
+    window.location.href = 'https://www.lockintrader.com/app?' + params.toString();
   }
 
   function toggleFaq(btn) {
