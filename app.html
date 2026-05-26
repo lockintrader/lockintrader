@@ -2210,14 +2210,13 @@ window._fbDeleteAccount = async (uid) => {
   await setDoc(doc(db, 'users', uid), { account: deleteField() }, { merge: true });
 };
 
-// Borra la contraseña temporal una vez que el usuario la cambia
-window._fbClearTempPass = async (uid) => {
-  await setDoc(doc(db, 'users', uid), { tempPass: deleteField() }, { merge: true });
-};
-
 window._fbLoadData = async (uid) => {
   const snap = await getDoc(doc(db, 'users', uid));
   return snap.exists() ? snap.data() : null;
+};
+
+window._fbClearTempPass = async (uid) => {
+  await setDoc(doc(db, 'users', uid), { tempPass: deleteField() }, { merge: true });
 };
 
 // Auth state observer — bridges Firebase auth into the existing app logic
@@ -2489,10 +2488,10 @@ async function submitChangePass() {
     if (auth && auth.currentUser) {
       await updatePassword(auth.currentUser, newPass);
     }
-    // Marcar en Firestore que ya cambió la contraseña y borrar la temporal
+    // Marcar en Firestore que ya cambió la contraseña
     const uid = auth && auth.currentUser ? auth.currentUser.uid : null;
     if (uid && window._fbSaveData) await window._fbSaveData(uid, { mustChangePass: false });
-    if (uid && window._fbClearTempPass) { try { await window._fbClearTempPass(uid); } catch(ce) {} }
+    if (uid && window._fbClearTempPass) { try { await window._fbClearTempPass(uid); } catch(_) {} }
     document.getElementById('change-pass-modal').remove();
     if (window._changePassCallback) window._changePassCallback();
   } catch(e) {
@@ -2508,8 +2507,8 @@ function skipChangePass() {
   if (window._changePassCallback) window._changePassCallback();
 }
 
-// Flag que bloquea _onFirebaseLogin mientras doRegister está escribiendo Firestore
-// Evita el race condition: signUp dispara onAuthStateChanged antes de que setDoc termine
+// Bloquea _onFirebaseLogin mientras doRegister escribe Firestore
+// Evita race condition: signUp dispara onAuthStateChanged antes de que setDoc termine
 let _registering = false;
 
 async function doRegister() {
@@ -2530,7 +2529,7 @@ async function doRegister() {
   if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
   try {
     err.textContent = 'Creando cuenta…';
-    _registering = true;  // Bloquear _onFirebaseLogin hasta que el doc esté escrito
+    _registering = true;
     const cred = await window._fbSignUp(email, pass);
     const uid = cred.user.uid;
     await window._fbSaveData(uid, {
@@ -2541,79 +2540,20 @@ async function doRegister() {
       plan,
       createdAt: new Date().toISOString(),
       mustChangePass: true,
-      activated: false,   // Explícito: pendiente de aprobación del admin
-      tempPass: pass      // Se borra cuando el usuario cambia su contraseña
+      activated: false,
+      tempPass: pass
     });
     _registering = false;
     // Enviar correo de bienvenida con credenciales de acceso
     try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
-    // Mostrar pantalla de pendiente directamente — no esperar onAuthStateChanged
-    // (ya bloqueamos el auto-login con _registering, así que lo llamamos manualmente)
+    // Mostrar pending directamente — no depender del timing de onAuthStateChanged
     document.getElementById('login-page').style.display = 'none';
     showPendingGate(email);
   } catch(e) {
     _registering = false;
-    // ── Caso especial: correo ya existe en Firebase Auth pero doc fue eliminado por admin ──
-    // Ocurre cuando el admin borra solo el doc de Firestore sin eliminar la cuenta de Auth.
-    // En ese caso, el usuario puede volver a registrarse: re-creamos el doc en Firestore
-    // con su nuevo plan y lo dejamos pendiente de aprobación.
-    if (e.code === 'auth/email-already-in-use') {
-      err.textContent = 'Verificando cuenta…';
-      try {
-        // Intentar cargar el doc existente para saber si fue eliminado
-        // Necesitamos el UID — usar sendPasswordResetEmail no funciona aquí,
-        // así que usamos fetchSignInMethodsForEmail para saber si la cuenta existe,
-        // pero como no podemos obtener el UID sin login, usamos una Cloud Function o
-        // un truco: intentar sign-in con contraseña vacía para obtener el UID.
-        // La forma correcta: reutilizar el usuario actual de auth si ya está logueado.
-        const currentAuthUser = window._fbAuth && window._fbAuth.currentUser
-          ? window._fbAuth.currentUser
-          : null;
-
-        if (currentAuthUser && currentAuthUser.email.toLowerCase() === email) {
-          // Usuario ya está autenticado con ese correo (sesión activa sin doc)
-          const uid = currentAuthUser.uid;
-          const existingDoc = await window._fbLoadData(uid);
-          if (!existingDoc) {
-            // Doc fue eliminado por admin — re-crear como nuevo registro pendiente
-            await window._fbSaveData(uid, {
-              email,
-              nombres,
-              apellidos,
-              displayName: nombres + ' ' + apellidos,
-              plan,
-              createdAt: new Date().toISOString(),
-              mustChangePass: false,
-              activated: false   // Pendiente de aprobación del admin
-            });
-            try { await sendWelcomeEmail(email, nombres, plan, '(usa tu contraseña actual)'); } catch(we) {}
-            // Mostrar pendiente directamente
-            const gate = document.getElementById('deleted-gate');
-            if (gate) gate.style.display = 'none';
-            document.getElementById('login-page').style.display = 'none';
-            showPendingGate(email);
-            return;
-          }
-          // El doc sí existe → ya tiene cuenta activa
-          err.textContent = 'Ese correo ya está registrado. Inicia sesión.';
-          return;
-        }
-
-        // No hay sesión activa — el usuario se está registrando en frío.
-        // Verificar si existe doc usando fetchSignInMethodsForEmail (solo indica si existe en Auth).
-        // Como no podemos hacer sign-in sin contraseña, mostramos instrucción clara.
-        err.textContent = '⚠ Ese correo ya tiene una cuenta. Si fuiste eliminado y quieres re-registrarte, inicia sesión con tu contraseña anterior o contáctanos.';
-        showAuthTab('login');
-        document.getElementById('l-user').value = email;
-        document.getElementById('login-error').textContent = '⚠ Ingresa con tu contraseña anterior para reactivar tu cuenta.';
-
-      } catch(innerErr) {
-        console.error('[doRegister reactivation error]', innerErr);
-        err.textContent = 'Ese correo ya está registrado. Intenta iniciar sesión.';
-      }
-      return;
-    }
-    const msg = e.code === 'auth/weak-password' ? 'La contraseña es muy débil.'
+    const msg = e.code === 'auth/email-already-in-use'
+      ? 'Ese correo ya está registrado.'
+      : e.code === 'auth/weak-password' ? 'La contraseña es muy débil.'
       : 'Error al crear cuenta. Intenta de nuevo.';
     err.textContent = msg;
   }
@@ -2761,15 +2701,17 @@ function _setCloudStatus(state) {
 }
 
 window._onFirebaseLogin = async (user) => {
-  // Skip auto-login si Google verification está en proceso o si doRegister aún escribe Firestore
+  // Skip si Google verification está en proceso o si doRegister aún escribe Firestore
   if (_googleVerifying) return;
-  if (_registering) return;  // Race condition guard: esperar a que doRegister termine setDoc
+  if (_registering) return;
+
   _fbUID = user.uid;
   _setCloudStatus('ok');
   currentUser = user.email;
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
-  // Load user data FIRST — antes de cualquier escritura
+
+  // Leer userData de Firestore PRIMERO — antes de cualquier otra acción
   let displayName = user.email.split('@')[0].toUpperCase();
   let userData = null;
   try {
@@ -2777,32 +2719,28 @@ window._onFirebaseLogin = async (user) => {
     if (userData && userData.displayName) displayName = userData.displayName.toUpperCase();
   } catch(e) {}
 
-  // ── Control de acceso: verificar plan activo ──
-  const hasAccount  = userData && userData.createdAt;
-  const hasPlan     = userData && userData.plan;
-  // activated debe ser explícitamente true — undefined o false = no activado
-  const isActivated = userData && userData.activated === true;
-
-  // Si no existe documento en Firestore (cuenta eliminada por admin) → bloquear
-  // IMPORTANTE: no llamar _fbSaveData antes de este check, o se recrearía el doc
-  // Se pasa el objeto `user` para que la gate pueda ofrecer re-registro con el mismo UID
+  // ── GATE 1: doc no existe → cuenta eliminada por admin ──
   if (!userData) {
     document.getElementById('login-page').style.display = 'none';
     showDeletedAccountGate(user);
     return;
   }
 
-  // Solo persistir email si el doc existe (usuario legítimo)
+  // Solo persistir email si el doc existe (usuario legítimo, no recrea doc borrado)
   try { await window._fbSaveData(user.uid, { email: user.email }); } catch(e) {}
 
-  if (hasAccount && (!hasPlan || !isActivated)) {
-    // Usuario registrado pero pago pendiente de verificación
+  // ── GATE 2: cuenta existe pero NO está aprobada (activated !== true) ──
+  // activated:false → pendiente | activated:undefined → doc viejo sin campo → también pendiente
+  const isActivated = userData.activated === true;
+  if (!isActivated) {
     document.getElementById('login-page').style.display = 'none';
     showPendingGate(user.email);
     return;
   }
+
+  // ── Acceso concedido ──
   document.getElementById('login-page').style.display = 'none';
-  if (userData && userData.mustChangePass) {
+  if (userData.mustChangePass) {
     showChangePassModal(() => showWelcomeSplash(user.email, displayName));
   } else {
     showWelcomeSplash(user.email, displayName);
@@ -2846,13 +2784,9 @@ function showPendingGate(email) {
   gate.style.display = 'flex';
 }
 
-// authUserForReactivation: guarda temporalmente el user de Firebase Auth cuando
-// el doc no existe, para poder re-crear el doc sin necesidad de una segunda contraseña.
 window._reactivationUser = null;
 
 function showDeletedAccountGate(authUser) {
-  // NO cerrar sesión aquí — la necesitamos para poder re-registrar al usuario
-  // (antes se hacía signOut, lo cual impedía re-crear el doc con el mismo UID)
   window._reactivationUser = authUser || null;
 
   let gate = document.getElementById('deleted-gate');
@@ -2862,7 +2796,6 @@ function showDeletedAccountGate(authUser) {
     gate.style.cssText = 'position:fixed;inset:0;background:#09090F;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"Space Mono",monospace;text-align:center;padding:24px;';
     document.body.appendChild(gate);
   }
-  // Renderizar según si hay usuario autenticado (puede re-registrarse) o no
   const canReregister = !!(authUser && authUser.uid);
   gate.innerHTML = `
     <svg width="60" height="60" viewBox="220 50 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2887,7 +2820,7 @@ function showDeletedAccountGate(authUser) {
       <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado del sistema.<br>Puedes volver a suscribirte eligiendo un nuevo plan.</div>
     </div>
     ${canReregister ? `
-    <div id="reregister-form" style="background:#0F0F18;border:1px solid #1E1E30;border-radius:12px;padding:20px 24px;max-width:360px;width:100%;">
+    <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:12px;padding:20px 24px;max-width:360px;width:100%;box-sizing:border-box;">
       <div style="font-size:9px;letter-spacing:0.14em;color:#555870;margin-bottom:14px;">NUEVO REGISTRO — ${authUser.email}</div>
       <input id="rr-nombres" placeholder="Nombres" autocomplete="off"
         style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box;">
@@ -2901,17 +2834,15 @@ function showDeletedAccountGate(authUser) {
         <option value="anual">Anual · $40 · 12 meses</option>
       </select>
       <div id="rr-err" style="font-size:10px;color:#FF5470;margin-bottom:10px;min-height:14px;"></div>
-      <button onclick="doReactivateAccount()" id="rr-btn"
+      <button onclick="doReactivateAccount()"
         style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:12px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
-        REGISTRARME Y PAGAR →
+        REGISTRARME →
       </button>
-    </div>
-    ` : `
+    </div>` : `
     <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">
       Contáctanos: <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a>
-    </div>
-    `}
-    <button onclick="doLogoutFromGate()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:4px;">
+    </div>`}
+    <button onclick="doLogoutToHome()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:4px;">
       CERRAR SESIÓN
     </button>
   `;
@@ -2920,19 +2851,16 @@ function showDeletedAccountGate(authUser) {
 
 async function doReactivateAccount() {
   const authUser = window._reactivationUser;
-  if (!authUser || !authUser.uid) { doLogout(); return; }
+  if (!authUser || !authUser.uid) { doLogoutToHome(); return; }
   const nombres   = (document.getElementById('rr-nombres').value || '').trim();
   const apellidos = (document.getElementById('rr-apellidos').value || '').trim();
   const plan      = document.getElementById('rr-plan').value;
   const errEl     = document.getElementById('rr-err');
-  const btn       = document.getElementById('rr-btn');
   if (!nombres)   { errEl.textContent = 'Ingresa tu(s) nombre(s).'; return; }
   if (!apellidos) { errEl.textContent = 'Ingresa tu(s) apellido(s).'; return; }
   if (!plan)      { errEl.textContent = 'Selecciona un plan.'; return; }
   errEl.textContent = '';
-  btn.textContent = 'REGISTRANDO…'; btn.disabled = true;
   try {
-    // Re-crear el doc de Firestore con el mismo UID de Auth que ya existe
     await window._fbSaveData(authUser.uid, {
       email: authUser.email,
       nombres,
@@ -2941,24 +2869,14 @@ async function doReactivateAccount() {
       plan,
       createdAt: new Date().toISOString(),
       mustChangePass: false,
-      activated: false   // Pendiente de aprobación del admin
+      activated: false
     });
-    // Enviar correo de bienvenida
-    try { await sendWelcomeEmail(authUser.email, nombres, plan, '(usa tu contraseña actual)'); } catch(we) {}
-    // Ocultar gate y mostrar pantalla de pendiente
     document.getElementById('deleted-gate').style.display = 'none';
     window._reactivationUser = null;
     showPendingGate(authUser.email);
   } catch(err) {
-    console.error('[doReactivateAccount]', err);
     errEl.textContent = 'Error al registrar. Intenta de nuevo.';
-    btn.textContent = 'REGISTRARME Y PAGAR →'; btn.disabled = false;
   }
-}
-
-function doLogoutFromGate() {
-  window._reactivationUser = null;
-  doLogoutToHome();
 }
 
 function showNoPlanGate(email) {
@@ -2993,7 +2911,7 @@ function showNoPlanGate(email) {
          style="margin-top:12px;background:#B4BED2;color:#09090F;padding:12px 32px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-decoration:none;">
         VER PLANES →
       </a>
-      <button onclick="doLogoutToHome()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+      <button onclick="doLogout()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
         CERRAR SESIÓN
       </button>
     `;
@@ -3116,7 +3034,6 @@ function doLogout() {
   if (window._fbSignOut) window._fbSignOut();
 }
 
-// Logout desde pantallas intermedias (pago pendiente, cuenta eliminada) → redirige al inicio
 async function doLogoutToHome() {
   try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
   window.location.href = 'https://lockintrader.com';
