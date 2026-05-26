@@ -1149,7 +1149,7 @@
         </div>
       </div>
       <input type="hidden" id="r-plan" value="">
-      <button class="login-btn" onclick="doRegister()">CREAR CUENTA →</button>
+      <button class="login-btn" id="register-btn" onclick="doRegister()">CREAR CUENTA →</button>
       <div class="login-error" id="register-error"></div>
     </div>
   </div>
@@ -2303,296 +2303,100 @@ function showAuthTab(tab) {
 // ── Leer parámetros del landing ──
 // Si el usuario viene del landing con ?plan=xxx, preseleccionar plan y abrir registro
 (function initFromLanding() {
-  const params = new URLSearchParams(window.location.search);
-  const plan     = params.get('plan');
-  const email    = params.get('email');
-  const name     = params.get('name');
-  const nombres  = params.get('nombres');
-  const apellidos= params.get('apellidos');
-  const pwd      = params.get('pwd');
-  const newUser  = params.get('newUser');
-  if (plan)      sessionStorage.setItem('selectedPlan', plan);
-  if (email)     sessionStorage.setItem('prefillEmail', email);
-  if (name)      sessionStorage.setItem('prefillName', name);
-  if (nombres)   sessionStorage.setItem('prefillNombres', nombres);
-  if (apellidos) sessionStorage.setItem('prefillApellidos', apellidos);
-  if (pwd)       sessionStorage.setItem('prefillPwd', pwd);
-  if (newUser)   sessionStorage.setItem('isNewUser', '1');
-  // Limpiar URL sin recargar
-  if (plan || email || pwd) {
-    const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, '', cleanUrl);
+  const params    = new URLSearchParams(window.location.search);
+  const plan      = params.get('plan');
+  const email     = params.get('email');
+  const name      = params.get('name');       // legacy fallback
+  const nombres   = params.get('nombres');
+  const apellidos = params.get('apellidos');
+  const metodo    = params.get('metodo');     // 'paypal' | 'usdt'
+  if (plan)      sessionStorage.setItem('selectedPlan',      plan);
+  if (email)     sessionStorage.setItem('prefillEmail',      email);
+  if (name)      sessionStorage.setItem('prefillName',       name);
+  if (nombres)   sessionStorage.setItem('prefillNombres',    nombres);
+  if (apellidos) sessionStorage.setItem('prefillApellidos',  apellidos);
+  if (metodo)    sessionStorage.setItem('prefillMetodo',     metodo);
+  // Limpiar URL sin recargar para que el usuario no comparta parámetros sensibles
+  if (plan || email) {
+    try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
   }
 })();
 
 function applyLandingParams() {
   const plan      = sessionStorage.getItem('selectedPlan');
   const email     = sessionStorage.getItem('prefillEmail');
-  const name      = sessionStorage.getItem('prefillName');
+  const name      = sessionStorage.getItem('prefillName');       // legacy
   const nombres   = sessionStorage.getItem('prefillNombres');
   const apellidos = sessionStorage.getItem('prefillApellidos');
-  const pwd       = sessionStorage.getItem('prefillPwd');
-  const isNewUser = sessionStorage.getItem('isNewUser');
+  const metodo    = sessionStorage.getItem('prefillMetodo');
 
   if (!plan && !email) return;
 
-  // Si viene con contraseña y flag de nuevo usuario → mostrar pantalla de registro automático
-  if (isNewUser && email && pwd) {
-    // Limpiar sessionStorage excepto lo que necesita el auto-registro
-    sessionStorage.removeItem('selectedPlan');
-    sessionStorage.removeItem('prefillEmail');
-    sessionStorage.removeItem('prefillName');
-    sessionStorage.removeItem('prefillNombres');
-    sessionStorage.removeItem('prefillApellidos');
-    sessionStorage.removeItem('prefillPwd');
-    sessionStorage.removeItem('isNewUser');
-    // Mostrar pantalla de auto-registro (intercepta el login-page completo)
-    _showAutoRegisterScreen(email, nombres, apellidos, plan, pwd);
-    return;
-  }
-
-  // Flujo original (sin contraseña) — pre-rellenar formulario
+  // ── Cambiar al tab de registro y ampliar el box ──
   showAuthTab('register');
   const box = document.querySelector('.login-box');
   if (box) box.style.maxWidth = '480px';
 
+  // ── Email (bloqueado) ──
   if (email) {
     const emailEl = document.getElementById('r-user');
     if (emailEl) {
-      emailEl.value = email;
+      emailEl.value    = email;
       emailEl.readOnly = true;
       emailEl.style.opacity = '0.6';
-      emailEl.style.cursor = 'not-allowed';
+      emailEl.style.cursor  = 'not-allowed';
     }
   }
 
-  const nombresVal   = nombres || (name ? name.trim().split(/\s+/).slice(0, Math.ceil(name.trim().split(/\s+/).length / 2)).join(' ') : '');
+  // ── Nombres y apellidos (de los campos separados o del name legacy) ──
+  const nombresVal   = nombres   || (name ? name.trim().split(/\s+/).slice(0, Math.ceil(name.trim().split(/\s+/).length / 2)).join(' ') : '');
   const apellidosVal = apellidos || (name ? name.trim().split(/\s+/).slice(Math.ceil(name.trim().split(/\s+/).length / 2)).join(' ') : '');
 
-  if (nombresVal) {
-    const el = document.getElementById('r-nombres');
-    if (el) { el.value = nombresVal; el.readOnly = true; el.style.opacity = '0.6'; el.style.cursor = 'not-allowed'; }
-  }
-  if (apellidosVal) {
-    const el = document.getElementById('r-apellidos');
-    if (el) { el.value = apellidosVal; el.readOnly = true; el.style.opacity = '0.6'; el.style.cursor = 'not-allowed'; }
-  }
+  const nombresEl   = document.getElementById('r-nombres');
+  const apellidosEl = document.getElementById('r-apellidos');
+  if (nombresEl && nombresVal)   { nombresEl.value = nombresVal;     nombresEl.readOnly = true;   nombresEl.style.opacity = '0.6';   nombresEl.style.cursor = 'not-allowed'; }
+  if (apellidosEl && apellidosVal) { apellidosEl.value = apellidosVal; apellidosEl.readOnly = true; apellidosEl.style.opacity = '0.6'; apellidosEl.style.cursor = 'not-allowed'; }
 
+  // ── Plan (bloqueado, resaltado) ──
   if (plan) {
-    const planLabels = { trimestral: 'TRIMESTRAL · $15 · 3 meses', semestral: 'SEMESTRAL · $20 · 6 meses', anual: 'ANUAL · $40 · 12 meses' };
+    const planLabels = {
+      trimestral: 'TRIMESTRAL · $15 · 3 meses',
+      semestral:  'SEMESTRAL · $20 · 6 meses',
+      anual:      'ANUAL · $40 · 12 meses'
+    };
     const wrap = document.getElementById('plan-selector-wrap');
     if (wrap) {
       wrap.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;
-          padding:12px 16px;border-radius:8px;border:0.5px solid var(--accent);
-          background:var(--accent-dim);margin-bottom:12px;">
+          padding:14px 18px;border-radius:10px;
+          border:1.5px solid var(--accent);background:var(--accent-dim);
+          margin-bottom:12px;position:relative;">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.08em;">${planLabels[plan]||plan.toUpperCase()}</div>
-            <div style="font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:0.06em;">Plan seleccionado en el proceso de pago</div>
+            <div style="font-size:8px;letter-spacing:0.14em;color:var(--text3);margin-bottom:4px;">PLAN SELECCIONADO</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.06em;">${planLabels[plan] || plan.toUpperCase()}</div>
+            <div style="font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:0.05em;">Seleccionado durante el proceso de pago</div>
           </div>
-          <div style="font-size:16px;">🔒</div>
+          <div style="font-size:18px;margin-left:12px;">🔒</div>
         </div>`;
-      document.getElementById('r-plan').value = plan;
+      const hiddenPlan = document.getElementById('r-plan');
+      if (hiddenPlan) hiddenPlan.value = plan;
     }
   }
 
-  sessionStorage.removeItem('selectedPlan');
-  sessionStorage.removeItem('prefillEmail');
-  sessionStorage.removeItem('prefillName');
-  sessionStorage.removeItem('prefillNombres');
-  sessionStorage.removeItem('prefillApellidos');
-  sessionStorage.removeItem('prefillPwd');
-  sessionStorage.removeItem('isNewUser');
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// AUTO-REGISTRO: Usuario viene del landing con datos + contraseña
-// Muestra una pantalla de confirmación con la contraseña del usuario
-// y ejecuta el registro automáticamente al confirmar.
-// ═══════════════════════════════════════════════════════════════════
-function _showAutoRegisterScreen(email, nombres, apellidos, plan, pwdB64) {
-  // Decodificar contraseña
-  let pwd = '';
-  try { pwd = atob(pwdB64); } catch(e) { pwd = pwdB64; }
-
-  // Ocultar login-page
-  document.getElementById('login-page').style.display = 'none';
-
-  // Crear pantalla de confirmación
-  const screen = document.createElement('div');
-  screen.id = 'auto-register-screen';
-  screen.style.cssText = `
-    position:fixed;inset:0;background:#09090F;z-index:9999;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;font-family:'Space Mono',monospace;
-    background-image:linear-gradient(rgba(245,158,11,0.02) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(245,158,11,0.02) 1px,transparent 1px);
-    background-size:48px 48px;
-  `;
-
-  const planLabels = { trimestral:'TRIMESTRAL — $15', semestral:'SEMESTRAL — $20', anual:'ANUAL — $40' };
-  const displayName = ((nombres || '') + ' ' + (apellidos || '')).trim() || email.split('@')[0];
-
-  screen.innerHTML = `
-    <div style="width:100%;max-width:420px;">
-      <!-- Logo -->
-      <div style="text-align:center;margin-bottom:32px;">
-        <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#E8ECF5;letter-spacing:0.05em;">
-          LOCK<span style="color:#B4BED2;">IN</span>
-        </div>
-        <div style="font-size:9px;color:#555870;letter-spacing:0.22em;margin-top:2px;">TRADING JOURNAL</div>
-      </div>
-
-      <!-- Card principal -->
-      <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:16px;padding:32px;">
-        <div style="font-size:10px;letter-spacing:0.18em;color:#555870;margin-bottom:8px;">CREAR TU CUENTA</div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:#E8ECF5;margin-bottom:4px;">
-          Bienvenido, ${displayName} 👋
-        </div>
-        <div style="font-size:11px;color:#555870;margin-bottom:24px;line-height:1.7;">
-          Tu pago fue recibido. Confirma tus datos y crea tu cuenta de acceso.
-        </div>
-
-        <!-- Datos de la cuenta -->
-        <div style="background:#141420;border:0.5px solid #1E1E30;border-radius:10px;padding:16px;margin-bottom:20px;">
-          <div style="font-size:8px;letter-spacing:0.14em;color:#343548;margin-bottom:12px;">DATOS DE TU CUENTA</div>
-          <div style="display:grid;gap:8px;">
-            <div style="display:flex;justify-content:space-between;font-size:11px;">
-              <span style="color:#555870;">Correo</span>
-              <span style="color:#E8ECF5;font-weight:700;">${email}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:11px;">
-              <span style="color:#555870;">Plan</span>
-              <span style="color:#B4BED2;font-weight:700;">${planLabels[plan] || plan.toUpperCase()}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contraseña -->
-        <div style="background:#0a1a0a;border:1px solid rgba(84,200,120,0.2);border-radius:10px;padding:16px;margin-bottom:8px;">
-          <div style="font-size:8px;letter-spacing:0.14em;color:#2a6a3a;margin-bottom:10px;">TU CONTRASEÑA DE ACCESO</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div id="ar-pass-display" style="flex:1;background:#0F0F18;border-radius:6px;padding:10px 14px;font-size:14px;font-weight:700;color:#54C878;letter-spacing:0.12em;font-family:monospace;">
-              ${'•'.repeat(pwd.length)}
-            </div>
-            <button onclick="toggleArPass()" id="ar-eye-btn"
-              style="background:#141420;border:0.5px solid #1E1E30;border-radius:6px;padding:8px 12px;color:#555870;cursor:pointer;font-size:13px;transition:all 0.15s;"
-              onmouseover="this.style.color='#E8ECF5'" onmouseout="this.style.color='#555870'">👁</button>
-          </div>
-          <div style="font-size:9px;color:#2a6a3a;margin-top:8px;line-height:1.6;">
-            ⚠ Guarda esta contraseña ahora. También te llegará por correo.
-          </div>
-        </div>
-        <div style="font-size:9px;color:#343548;margin-bottom:20px;padding:0 4px;">
-          Al ingresar por primera vez podrás cambiarla por una personal.
-        </div>
-
-        <div id="ar-error" style="font-size:10px;color:#FF5470;margin-bottom:12px;min-height:16px;"></div>
-
-        <!-- Botón crear cuenta -->
-        <button id="ar-create-btn" onclick="doAutoRegister()"
-          style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:10px;padding:14px;font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.2s;position:relative;">
-          <span id="ar-btn-label">CREAR CUENTA Y ACCEDER →</span>
-          <span id="ar-btn-loader" style="display:none;font-size:10px;">CREANDO CUENTA...</span>
-        </button>
-
-        <div style="text-align:center;margin-top:14px;">
-          <div style="font-size:9px;color:#343548;line-height:1.7;">
-            Al crear tu cuenta aceptas los términos de uso de LockIn.<br>
-            El acceso será activado en un lapso de <strong style="color:#F59E0B;">24 horas</strong>.
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(screen);
-
-  // Guardar datos en la pantalla para uso posterior
-  screen._regData = { email, nombres: nombres||'', apellidos: apellidos||'', plan, pwd };
-
-  let _arPassVisible = false;
-  window._arPwd = pwd; // Solo accesible en esta sesión
-
-  window.toggleArPass = function() {
-    _arPassVisible = !_arPassVisible;
-    document.getElementById('ar-pass-display').textContent = _arPassVisible
-      ? window._arPwd
-      : '•'.repeat(window._arPwd.length);
-    document.getElementById('ar-eye-btn').textContent = _arPassVisible ? '🙈' : '👁';
-  };
-
-  window.doAutoRegister = async function() {
-    const screen = document.getElementById('auto-register-screen');
-    if (!screen || !screen._regData) return;
-    const { email, nombres, apellidos, plan, pwd } = screen._regData;
-    const btnLabel  = document.getElementById('ar-btn-label');
-    const btnLoader = document.getElementById('ar-btn-loader');
-    const btn       = document.getElementById('ar-create-btn');
-    const errEl     = document.getElementById('ar-error');
-    errEl.textContent = '';
-    btn.disabled = true; btnLabel.style.display = 'none'; btnLoader.style.display = 'inline';
-
-    try {
-      _registering = true;
-      // Intentar crear cuenta con la contraseña que el usuario eligió en el landing
-      let cred;
-      try {
-        cred = await window._fbSignUp(email, pwd);
-      } catch(signUpErr) {
-        if (signUpErr.code === 'auth/email-already-in-use') {
-          // El usuario ya existe en Firebase Auth — podría ser un usuario eliminado de Firestore
-          // Intentar sign-in con la contraseña y verificar si existe doc en Firestore
-          try {
-            const loginCred = await window._fbSignIn(email, pwd);
-            // Si logra entrar, verificar si tiene doc
-            const existingDoc = await window._fbLoadData(loginCred.user.uid);
-            if (existingDoc) {
-              // Usuario ya existe y tiene doc — redirigir a login normal
-              errEl.textContent = '⚠ Este correo ya tiene cuenta activa. Ingresa desde el formulario de login.';
-              _registering = false;
-              btn.disabled = false; btnLabel.style.display = 'inline'; btnLoader.style.display = 'none';
-              return;
-            }
-            // Doc eliminado pero auth existe — el admin borró el doc, no el auth user
-            // Recrear el doc como nuevo usuario pendiente
-            cred = loginCred;
-          } catch(loginErr) {
-            // No puede iniciar sesión — contraseña incorrecta o cuenta bloqueada
-            errEl.textContent = '⚠ Este correo ya existe. Si olvidaste tu contraseña, contáctanos.';
-            _registering = false;
-            btn.disabled = false; btnLabel.style.display = 'inline'; btnLoader.style.display = 'none';
-            return;
-          }
-        } else {
-          throw signUpErr;
-        }
-      }
-
-      const uid = cred.user.uid;
-      await window._fbSaveData(uid, {
-        email,
-        nombres: nombres || '',
-        apellidos: apellidos || '',
-        displayName: ((nombres || '') + ' ' + (apellidos || '')).trim() || email.split('@')[0],
-        plan: plan || 'trimestral',
-        createdAt: new Date().toISOString(),
-        mustChangePass: true,         // al primer ingreso debe cambiar contraseña
-        activated: false,             // admin debe activar
-        tempPass: pwd                 // guardado para el email de bienvenida
-      });
-      _registering = false;
-      // Enviar email de bienvenida con la contraseña
-      try { await sendWelcomeEmail(email, nombres, plan, pwd); } catch(e) { console.warn('[LockIn] sendWelcomeEmail:', e); }
-      // Limpiar pantalla y mostrar pending gate
-      screen.remove();
-      delete window._arPwd;
-      showPendingGate(email);
-    } catch(err) {
-      _registering = false;
-      btn.disabled = false; btnLabel.style.display = 'inline'; btnLoader.style.display = 'none';
-      errEl.textContent = '⚠ ' + (err.message || 'Error al crear la cuenta. Intenta de nuevo.');
+  // ── Aviso de método de pago ──
+  if (metodo) {
+    const errEl = document.getElementById('register-error');
+    if (errEl) {
+      errEl.style.color = metodo === 'usdt' ? '#E8A838' : '#54C878';
+      errEl.textContent = metodo === 'paypal'
+        ? '✓ Completa el pago en PayPal, luego crea tu cuenta aquí.'
+        : '⚠ Recuerda enviar tu comprobante USDT a: pagos@lockintrader.com';
     }
-  };
+  }
+
+  // ── Limpiar sessionStorage ──
+  ['selectedPlan','prefillEmail','prefillName','prefillNombres','prefillApellidos','prefillMetodo']
+    .forEach(k => sessionStorage.removeItem(k));
 }
 
 async function doLogin() {
@@ -2730,46 +2534,53 @@ let _registering = false;
 async function doRegister() {
   const nombres   = document.getElementById('r-nombres').value.trim();
   const apellidos = document.getElementById('r-apellidos').value.trim();
-  const email = document.getElementById('r-user').value.trim().toLowerCase();
+  const email     = document.getElementById('r-user').value.trim().toLowerCase();
+  const plan      = document.getElementById('r-plan').value;
+  const err       = document.getElementById('register-error');
 
-
-  const plan  = document.getElementById('r-plan').value;
-  const err   = document.getElementById('register-error');
+  // Limpiar mensaje de método de pago antes de validar
+  err.style.color = '';
   err.textContent = '';
-  if (!nombres)  { err.textContent = 'Ingresa tu(s) nombre(s).'; return; }
-  if (!apellidos){ err.textContent = 'Ingresa tu(s) apellido(s).'; return; }
+  if (!nombres)   { err.textContent = 'Ingresa tu(s) nombre(s).'; return; }
+  if (!apellidos) { err.textContent = 'Ingresa tu(s) apellido(s).'; return; }
   if (!isValidEmail(email)) { err.textContent = 'Ingresa un correo válido.'; return; }
-
+  if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
 
   const pass = _genRandomPass();
-  if (!plan) { err.textContent = 'Selecciona un plan de suscripción.'; return; }
+
+  // Cambiar estado del botón a "cargando"
+  const regBtn = document.getElementById('register-btn');
+  const regBtnOrig = regBtn ? regBtn.textContent : '';
+  if (regBtn) { regBtn.disabled = true; regBtn.textContent = 'CREANDO CUENTA…'; }
+
   try {
-    err.textContent = 'Creando cuenta…';
     _registering = true;
     const cred = await window._fbSignUp(email, pass);
-    const uid = cred.user.uid;
+    const uid  = cred.user.uid;
     await window._fbSaveData(uid, {
       email,
       nombres,
       apellidos,
       displayName: nombres + ' ' + apellidos,
       plan,
-      createdAt: new Date().toISOString(),
+      createdAt:     new Date().toISOString(),
       mustChangePass: true,
-      activated: false,
-      tempPass: pass
+      activated:     false,
+      tempPass:      pass     // admin enviará este pass al aprobar
     });
     _registering = false;
-    try { await sendWelcomeEmail(email, nombres, plan, pass); } catch(e) { console.warn('[ICT] sendWelcomeEmail error:', e); }
+    // NO enviamos correo aquí — se envía cuando el admin APRUEBA el pago
     // Mostrar pending directamente — no depender del timing de onAuthStateChanged
     document.getElementById('login-page').style.display = 'none';
     showPendingGate(email);
   } catch(e) {
     _registering = false;
+    if (regBtn) { regBtn.disabled = false; regBtn.textContent = regBtnOrig || 'CREAR CUENTA →'; }
     const msg = e.code === 'auth/email-already-in-use'
-      ? 'Ese correo ya está registrado.'
+      ? 'Ese correo ya está registrado. Inicia sesión en el tab INGRESAR.'
       : e.code === 'auth/weak-password' ? 'La contraseña es muy débil.'
       : 'Error al crear cuenta. Intenta de nuevo.';
+    err.style.color = 'var(--red)';
     err.textContent = msg;
   }
 }
@@ -2924,9 +2735,6 @@ window._onFirebaseLogin = async (user) => {
   // y debe completar el formulario de registro, no entrar automáticamente
   const _landingPlan = sessionStorage.getItem('selectedPlan');
   if (_landingPlan) return;
-  // Guard 4: flujo de auto-registro desde landing con contraseña propia
-  const _isNewUser = sessionStorage.getItem('isNewUser');
-  if (_isNewUser) return;
 
   _fbUID = user.uid;
   _setCloudStatus('ok');
@@ -2993,7 +2801,7 @@ function showPendingGate(email) {
       <div style="background:#1a1a0a;border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:20px 24px;max-width:340px;margin-top:8px;">
         <div style="font-size:20px;margin-bottom:10px;">⏳</div>
         <div style="font-size:14px;font-weight:700;color:#F59E0B;margin-bottom:8px;letter-spacing:0.06em;">PAGO EN VERIFICACIÓN</div>
-        <div style="font-size:11px;color:#7a6a40;line-height:1.8;">Tu cuenta está siendo verificada.<br>El proceso no tomará más de <strong style="color:#F59E0B;">24 horas</strong>.</div>
+        <div style="font-size:11px;color:#7a6a40;line-height:1.8;">Tu pago está siendo verificado por nuestro equipo.<br>Una vez confirmado recibirás un correo con tu <strong style="color:#F59E0B;">contraseña de acceso</strong>.<br>El proceso no toma más de <strong style="color:#F59E0B;">24 horas</strong>.</div>
       </div>
       <button onclick="doLogoutToHome()" style="background:transparent;border:none;color:#343548;font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;margin-top:8px;">
         CERRAR SESIÓN
@@ -3036,36 +2844,27 @@ function showDeletedAccountGate(authUser) {
     <div style="background:#1a0a0a;border:1px solid rgba(255,84,112,0.25);border-radius:12px;padding:20px 24px;max-width:360px;margin-top:8px;">
       <div style="font-size:20px;margin-bottom:10px;">🚫</div>
       <div style="font-size:14px;font-weight:700;color:#FF5470;margin-bottom:8px;letter-spacing:0.06em;">CUENTA NO ENCONTRADA</div>
-      <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado.<br>Para reactivar tu acceso debes realizar un <strong style="color:#FF5470;">nuevo pago</strong> desde el landing y seguir el proceso de registro.</div>
+      <div style="font-size:11px;color:#7a4040;line-height:1.8;">Tu registro fue eliminado.<br>Puedes volver a suscribirte eligiendo un nuevo plan.</div>
     </div>
     ${canReregister ? `
     <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:12px;padding:20px 24px;max-width:360px;width:100%;box-sizing:border-box;">
-      <div style="font-size:9px;letter-spacing:0.14em;color:#555870;margin-bottom:10px;">OPCIONES DE REACTIVACIÓN</div>
-      <a href="https://www.lockintrader.com?email=${encodeURIComponent(authUser ? authUser.email : '')}"
-         style="display:block;width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:12px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;text-decoration:none;text-align:center;box-sizing:border-box;margin-bottom:10px;">
-        VER PLANES Y PAGAR →
-      </a>
-      <div style="font-size:9px;color:#555870;margin-bottom:10px;text-align:center;letter-spacing:0.06em;">— o si ya realizaste un pago —</div>
-      <div style="font-size:8px;letter-spacing:0.12em;color:#343548;margin-bottom:12px;">DATOS DEL NUEVO REGISTRO · ${authUser ? authUser.email : ''}</div>
+      <div style="font-size:9px;letter-spacing:0.14em;color:#555870;margin-bottom:14px;">NUEVO REGISTRO — ${authUser.email}</div>
       <input id="rr-nombres" placeholder="Nombres" autocomplete="off"
         style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box;">
       <input id="rr-apellidos" placeholder="Apellidos" autocomplete="off"
         style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:8px;box-sizing:border-box;">
       <select id="rr-plan"
         style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:14px;box-sizing:border-box;cursor:pointer;">
-        <option value="">— Plan que pagaste —</option>
+        <option value="">— Selecciona un plan —</option>
         <option value="trimestral">Trimestral · $15 · 3 meses</option>
         <option value="semestral">Semestral · $20 · 6 meses</option>
         <option value="anual">Anual · $40 · 12 meses</option>
       </select>
       <div id="rr-err" style="font-size:10px;color:#FF5470;margin-bottom:10px;min-height:14px;"></div>
       <button onclick="doReactivateAccount()"
-        style="width:100%;background:transparent;color:#B4BED2;border:1px solid #1E1E30;border-radius:8px;padding:12px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
-        YA PAGUÉ — ENVIAR SOLICITUD →
+        style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:12px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+        REGISTRARME →
       </button>
-      <div style="font-size:9px;color:#343548;margin-top:8px;text-align:center;line-height:1.6;">
-        El equipo verificará tu pago y activará tu cuenta en menos de 24 horas.
-      </div>
     </div>` : `
     <div style="font-size:10px;color:#555870;max-width:300px;line-height:1.7;">
       Contáctanos: <a href="mailto:soporte@lockintrader.com" style="color:#B4BED2;">soporte@lockintrader.com</a>
@@ -3093,9 +2892,7 @@ async function doReactivateAccount() {
       email: authUser.email, nombres, apellidos,
       displayName: nombres + ' ' + apellidos,
       plan, createdAt: new Date().toISOString(),
-      mustChangePass: false, activated: false,
-      reactivatedAt: new Date().toISOString(),
-      requiresPaymentConfirmation: true   // admin debe confirmar pago antes de activar
+      mustChangePass: false, activated: false
     });
     document.getElementById('deleted-gate').style.display = 'none';
     window._reactivationUser = null;
