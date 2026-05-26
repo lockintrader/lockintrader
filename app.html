@@ -2319,6 +2319,12 @@ function showAuthTab(tab) {
   // Limpiar URL sin recargar para que el usuario no comparta parámetros sensibles
   if (plan || email) {
     try { window.history.replaceState({}, '', window.location.pathname); } catch(e) {}
+    // Si hay sesión activa de un usuario anterior, cerrarla para que el
+    // formulario de registro quede limpio y no salte a pending-gate
+    try {
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')
+        .then(({ getAuth, signOut }) => { try { signOut(getAuth()); } catch(e) {} });
+    } catch(e) {}
   }
 })();
 
@@ -2565,7 +2571,7 @@ async function doRegister() {
       plan,
       createdAt:     new Date().toISOString(),
       mustChangePass: true,
-      activated:     false,
+      activated:     'pending',
       tempPass:      pass     // admin enviará este pass al aprobar
     });
     _registering = false;
@@ -2892,7 +2898,7 @@ async function doReactivateAccount() {
       email: authUser.email, nombres, apellidos,
       displayName: nombres + ' ' + apellidos,
       plan, createdAt: new Date().toISOString(),
-      mustChangePass: false, activated: false
+      mustChangePass: false, activated: 'pending'
     });
     document.getElementById('deleted-gate').style.display = 'none';
     window._reactivationUser = null;
