@@ -2089,7 +2089,7 @@
 <!-- ====================== FIREBASE SDK ====================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, inMemoryPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, linkWithCredential, updatePassword }
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, linkWithCredential, updatePassword }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteField }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -2111,8 +2111,8 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
-// Use NONE persistence — user must log in every page load, no auto-login
-setPersistence(auth, inMemoryPersistence).catch(() => {});
+// Use LOCAL persistence — session survives page reloads and browser restarts
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 // Expose to global scope so non-module script can call them
 window._fbAuth = auth;
