@@ -785,7 +785,10 @@ window.renderUsersTable = () => {
     let actions = `<button class="action-btn btn-detail" onclick="openModal('${u.uid}')">GESTIONAR</button>`;
     actions += ` <button class="action-btn btn-view" onclick="openUserTradesModal('${u.uid}')">TRADES</button>`;
     if (status==='pending') actions += ` <button class="action-btn btn-approve" onclick="confirmApprove('${u.uid}')">✓ APROBAR</button>`;
-    else if (status==='active') actions += ` <button class="action-btn btn-block" onclick="confirmBlock('${u.uid}')">BLOQUEAR</button>`;
+    else if (status==='active') {
+      actions += ` <button class="action-btn btn-block" onclick="confirmBlock('${u.uid}')">BLOQUEAR</button>`;
+      if (u.tempPass) actions += ` <button class="action-btn btn-approve" style="font-size:7px;" onclick="confirmResendWelcome('${u.uid}')" title="Reenviar correo de bienvenida con credenciales">✉ REENVIAR ACCESO</button>`;
+    }
     else actions += ` <button class="action-btn btn-unblock" onclick="confirmApprove('${u.uid}')">RESTAURAR</button>`;
     actions += ` <button class="action-btn btn-delete" onclick="confirmDeleteUser('${u.uid}')">🗑</button>`;
     const noteHtml = u.note ? `<div class="cell-note" title="${escHtml(u.note)}">📝 ${escHtml(u.note)}</div>` : '';
@@ -1106,6 +1109,40 @@ window.confirmBlock = (uid) => {
   const name = u ? (((u.nombres||'')+' '+(u.apellidos||'')).trim()||u.email||uid) : uid;
   showConfirm('🚫','Bloquear usuario',`¿Bloquear el acceso de <strong>${escHtml(name)}</strong>?`,
     async () => { await updateDoc(doc(db,'users',uid),{activated:false}); showToast('Usuario bloqueado.','success'); }, true);
+};
+
+window.confirmResendWelcome = (uid) => {
+  const u = allUsers.find(x=>x.uid===uid);
+  if (!u) return;
+  const name = (((u.nombres||'')+' '+(u.apellidos||'')).trim()||u.displayName||u.email||uid);
+  showConfirm('✉️','Reenviar correo de acceso',
+    `¿Reenviar el correo de bienvenida con credenciales a <strong>${escHtml(name)}</strong>?<br><span style="font-size:9px;color:var(--text3);margin-top:6px;display:block;">Se enviará el correo con el usuario y contraseña temporal guardados.</span>`,
+    async () => {
+      if (!u.email) { showToast('El usuario no tiene correo registrado.', 'error'); return; }
+      if (!u.tempPass) { showToast('⚠️ No hay contraseña temporal guardada para este usuario. Usa "Resetear contraseña" desde GESTIONAR.', 'error'); return; }
+      const firstName  = (u.nombres || u.displayName?.split(' ')[0] || 'Trader').trim();
+      const plan       = u.plan || 'trimestral';
+      const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
+      const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
+      const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
+      try {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          to_email:   u.email,
+          to_name:    firstName,
+          user_email: u.email,
+          user_pass:  u.tempPass,
+          plan_label: planLabels[plan] || 'Trimestral',
+          plan_price: planPrices[plan] || '$15',
+          plan_per:   planPeriod[plan] || '3 meses',
+          year:       new Date().getFullYear()
+        });
+        showToast('✉️ Correo de acceso reenviado a ' + u.email, 'success');
+      } catch(e) {
+        console.error('[EmailJS resend]', e);
+        showToast('Error al reenviar: ' + (e?.text || e?.message || 'error'), 'error');
+      }
+    });
 };
 function showConfirm(icon, title, msg, cb, danger=false) {
   _confirmCb = cb;

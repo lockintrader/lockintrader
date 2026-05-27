@@ -2573,17 +2573,23 @@ async function doLogin() {
   err.textContent = '';
   if (!isValidEmail(email)) { err.textContent = 'Ingresa un correo válido.'; return; }
   if (!pass) { err.textContent = 'Ingresa tu contraseña.'; return; }
+  // Disable button to prevent double-clicks
+  const loginBtn = document.querySelector('.login-btn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.style.opacity = '0.7'; }
   try {
     document.getElementById('login-error').textContent = 'Ingresando…';
     _manualLogin = true;
     await window._fbSignIn(email, pass);
     // onAuthStateChanged will call _onFirebaseLogin
+    // _manualLogin is reset inside _onFirebaseLogin after processing
   } catch(e) {
+    _manualLogin = false;
+    if (loginBtn) { loginBtn.disabled = false; loginBtn.style.opacity = ''; }
     const msg = e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential'
       ? 'Correo o contraseña incorrectos.'
       : e.code === 'auth/wrong-password' ? 'Contraseña incorrecta.'
       : e.code === 'auth/too-many-requests' ? 'Demasiados intentos. Espera un momento.'
-      : 'Error al ingresar. Intenta de nuevo.';
+      : 'Error al ingresar (' + (e.code || 'desconocido') + '). Intenta de nuevo.';
     err.textContent = msg;
   }
 }
@@ -3009,10 +3015,18 @@ window._onFirebaseLogin = async (user) => {
   const _landingPlan = sessionStorage.getItem('selectedPlan');
   if (_landingPlan) return;
 
+  // Helper: restaura el botón y muestra error si el login falla después del signIn
+  function _loginFailed(msg) {
+    _manualLogin = false;
+    const errEl = document.getElementById('login-error');
+    if (errEl) errEl.textContent = msg || 'Error al ingresar. Intenta de nuevo.';
+    const loginBtn = document.querySelector('#form-login .login-btn');
+    if (loginBtn) { loginBtn.disabled = false; loginBtn.style.opacity = ''; }
+  }
+
   _fbUID = user.uid;
   _setCloudStatus('ok');
   currentUser = user.email;
-  document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
 
   let displayName = user.email.split('@')[0].toUpperCase();
@@ -3020,10 +3034,14 @@ window._onFirebaseLogin = async (user) => {
   try {
     userData = await window._fbLoadData(user.uid);
     if (userData && userData.displayName) displayName = userData.displayName.toUpperCase();
-  } catch(e) {}
+  } catch(e) {
+    _loginFailed('Error al cargar datos. Verifica tu conexión e intenta de nuevo.');
+    return;
+  }
 
   // GATE 1: doc no existe → cuenta eliminada por admin
   if (!userData) {
+    _manualLogin = false;
     document.getElementById('login-page').style.display = 'none';
     showDeletedAccountGate(user);
     return;
@@ -3034,12 +3052,17 @@ window._onFirebaseLogin = async (user) => {
 
   // GATE 2: no aprobado — activated debe ser explícitamente true
   if (userData.activated !== true) {
+    _manualLogin = false;
     document.getElementById('login-page').style.display = 'none';
     showPendingGate(user.email);
     return;
   }
 
-  // Acceso concedido
+  // Acceso concedido — limpiar flags
+  _manualLogin = false;
+  const loginBtnOk = document.querySelector('#form-login .login-btn');
+  if (loginBtnOk) { loginBtnOk.disabled = false; loginBtnOk.style.opacity = ''; }
+
   document.getElementById('login-page').style.display = 'none';
   if (userData.mustChangePass) {
     showChangePassModal(() => showWelcomeSplash(user.email, displayName), userData.tempPass || null);
