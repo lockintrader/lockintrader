@@ -2605,7 +2605,7 @@ function selectPlan(plan, btn) {
 }
 
 const PLAN_LABELS = { trimestral: 'Trimestral — $15/3 meses', semestral: 'Semestral — $20/6 meses', anual: 'Anual — $40/año' };
-const PLAN_PRICES = { trimestral: '$15', semestral: '$20', anual: '$40' };
+const PLAN_PRICES = { trimestral: '$15', semestral: '$25', anual: '$45' };
 const PLAN_PERIOD = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
 
 // ── Genera contraseña aleatoria segura ──
@@ -6794,7 +6794,7 @@ async function sendEmail({ to, subject, html }) {
 
 async function sendWelcomeEmail(email, nombres, plan, accessPass) {
   const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
-  const planPrices = { trimestral: '$15', semestral: '$20', anual: '$40' };
+  const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
   const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
   const planColors = { trimestral: '#6C7FD8', semestral: '#4AAFD4', anual: '#B4BED2' };
   const planLabel  = planLabels[plan]  || 'Trimestral';

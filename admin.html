@@ -1063,7 +1063,7 @@ window.confirmApprove = (uid) => {
         const userPass   = u.tempPass || null;   // Guardada en Firestore al registrarse
         const plan       = u.plan || 'trimestral';
         const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
-        const planPrices = { trimestral: '$15', semestral: '$20', anual: '$40' };
+        const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
         const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
         const planLabel  = planLabels[plan] || 'Trimestral';
         const planPrice  = planPrices[plan] || '$15';

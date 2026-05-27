@@ -1004,29 +1004,8 @@
       <div class="plan-card">
         <div class="plan-name">PLAN TRIMESTRAL</div>
         <div class="plan-price"><sup>$</sup>15</div>
-        <div class="plan-period">/ 3 MESES</div>
+        <div class="plan-period">/ 3 MESES DE ACCESO</div>
         <div class="plan-equiv">Equivale a <strong>$5.00/mes</strong></div>
-        <hr class="plan-divider">
-        <ul class="plan-features">
-          <li>Trades ilimitados</li>
-          <li>Dashboard con estadísticas básicas</li>
-          <li>Calendario de trading</li>
-          <li>Setups etiquetados ICT/SMC</li>
-          <li class="muted">Adjuntar capturas por trade</li>
-          <li class="muted">Gráfico TradingView integrado</li>
-          <li class="muted">Exportación de datos</li>
-          <li class="muted">Soporte prioritario</li>
-        </ul>
-        <button class="plan-btn outline" onclick="openModal('trimestral')">EMPEZAR →</button>
-      </div>
-
-      <!-- Semestral — Featured -->
-      <div class="plan-card featured">
-        <div class="plan-popular">MÁS POPULAR</div>
-        <div class="plan-name">PLAN SEMESTRAL</div>
-        <div class="plan-price"><sup>$</sup>20</div>
-        <div class="plan-period">/ 6 MESES</div>
-        <div class="plan-equiv">Equivale a <strong>$3.33/mes</strong></div>
         <hr class="plan-divider">
         <ul class="plan-features">
           <li>Trades ilimitados</li>
@@ -1036,18 +1015,21 @@
           <li>Adjuntar capturas por trade</li>
           <li>Gráfico TradingView integrado</li>
           <li>Exportación de datos</li>
-          <li class="muted">Soporte prioritario</li>
+          <li>Soporte por correo</li>
         </ul>
-        <button class="plan-btn primary" onclick="openModal('semestral')">EMPEZAR →</button>
+        <div style="font-size:9px;color:var(--text3);line-height:1.6;margin-bottom:20px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:6px;border:0.5px solid var(--border);">
+          🔒 Pagas el derecho de acceso a tu diario por <strong style="color:var(--text2);">3 meses</strong>. Al vencer deberás renovar para continuar.
+        </div>
+        <button class="plan-btn outline" onclick="openModal('trimestral')">EMPEZAR →</button>
       </div>
 
-      <!-- Anual -->
-      <div class="plan-card gold-plan">
-        <div class="plan-popular gold">MEJOR VALOR</div>
-        <div class="plan-name">PLAN ANUAL</div>
-        <div class="plan-price"><sup>$</sup>40</div>
-        <div class="plan-period">/ 12 MESES</div>
-        <div class="plan-equiv">Equivale a <strong>$3.33/mes</strong></div>
+      <!-- Semestral — Featured -->
+      <div class="plan-card featured">
+        <div class="plan-popular">MÁS POPULAR</div>
+        <div class="plan-name">PLAN SEMESTRAL</div>
+        <div class="plan-price"><sup>$</sup>25</div>
+        <div class="plan-period">/ 6 MESES DE ACCESO</div>
+        <div class="plan-equiv">Equivale a <strong>$4.17/mes</strong></div>
         <hr class="plan-divider">
         <ul class="plan-features">
           <li>Trades ilimitados</li>
@@ -1059,6 +1041,33 @@
           <li>Exportación de datos</li>
           <li>Soporte prioritario</li>
         </ul>
+        <div style="font-size:9px;color:var(--text3);line-height:1.6;margin-bottom:20px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:6px;border:0.5px solid var(--border);">
+          🔒 Pagas el derecho de acceso a tu diario por <strong style="color:var(--text2);">6 meses</strong>. Al vencer deberás renovar para continuar.
+        </div>
+        <button class="plan-btn primary" onclick="openModal('semestral')">EMPEZAR →</button>
+      </div>
+
+      <!-- Anual -->
+      <div class="plan-card gold-plan">
+        <div class="plan-popular gold">MEJOR VALOR</div>
+        <div class="plan-name">PLAN ANUAL</div>
+        <div class="plan-price"><sup>$</sup>45</div>
+        <div class="plan-period">/ 12 MESES DE ACCESO</div>
+        <div class="plan-equiv">Equivale a <strong>$3.75/mes</strong></div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>Trades ilimitados</li>
+          <li>Dashboard con estadísticas completas</li>
+          <li>Calendario de trading</li>
+          <li>Setups etiquetados ICT/SMC</li>
+          <li>Adjuntar capturas por trade</li>
+          <li>Gráfico TradingView integrado</li>
+          <li>Exportación de datos</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <div style="font-size:9px;color:var(--text3);line-height:1.6;margin-bottom:20px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:6px;border:0.5px solid var(--border);">
+          🔒 Pagas el derecho de acceso a tu diario por <strong style="color:var(--text2);">12 meses</strong>. Al vencer deberás renovar para continuar.
+        </div>
         <button class="plan-btn gold-btn" onclick="openModal('anual')">EMPEZAR →</button>
       </div>
 
@@ -1263,8 +1272,8 @@
 <script>
   const PLANS = {
     trimestral: { label:'PLAN TRIMESTRAL', period:'3 meses de acceso completo', price:'$15', paypal:'https://www.paypal.com/paypalme/lockintrader/15' },
-    semestral:  { label:'PLAN SEMESTRAL',  period:'6 meses de acceso completo', price:'$20', paypal:'https://www.paypal.com/paypalme/lockintrader/20' },
-    anual:      { label:'PLAN ANUAL',      period:'12 meses · Mejor valor',     price:'$40', paypal:'https://www.paypal.com/paypalme/lockintrader/40' },
+    semestral:  { label:'PLAN SEMESTRAL',  period:'6 meses de acceso completo', price:'$25', paypal:'https://www.paypal.com/paypalme/lockintrader/25' },
+    anual:      { label:'PLAN ANUAL',      period:'12 meses · Mejor valor',     price:'$45', paypal:'https://www.paypal.com/paypalme/lockintrader/45' },
   };
   let currentPlan = 'semestral', currentMethod = 'paypal';
 
