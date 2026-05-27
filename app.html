@@ -2453,27 +2453,81 @@ function showChangePassModal(onDone, tempPass) {
   if (existing) existing.remove();
   const modal = document.createElement('div');
   modal.id = 'change-pass-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(5,5,12,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
   modal.innerHTML = `
-    <div style="background:#0F0F18;border:1px solid #1E1E30;border-radius:16px;padding:32px;width:100%;max-width:380px;font-family:'Space Mono',monospace;">
-      <div style="font-size:11px;letter-spacing:0.15em;color:#343548;margin-bottom:8px;">LOCKIN TRADING JOURNAL</div>
-      <div style="font-size:20px;font-weight:700;color:#E8ECF5;margin-bottom:6px;font-family:'Syne',sans-serif;">CREA TU CONTRASEÑA</div>
-      <div style="font-size:11px;color:#555870;margin-bottom:24px;line-height:1.6;">Es tu primer ingreso. Elige una contraseña personal para acceder en el futuro.</div>
-      <div style="font-size:9px;letter-spacing:0.1em;color:#343548;margin-bottom:6px;">NUEVA CONTRASEÑA</div>
-      <input id="cp-new" type="password" placeholder="mínimo 8 caracteres"
-        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:11px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:12px;box-sizing:border-box;"
-        oninput="this.style.borderColor='#1E1E30'">
-      <div style="font-size:9px;letter-spacing:0.1em;color:#343548;margin-bottom:6px;">CONFIRMAR CONTRASEÑA</div>
-      <input id="cp-confirm" type="password" placeholder="repite la contraseña"
-        style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:11px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:16px;box-sizing:border-box;"
-        oninput="this.style.borderColor='#1E1E30'">
-      <div id="cp-err" style="font-size:10px;color:#FF5470;margin-bottom:12px;min-height:16px;"></div>
+    <div style="background:#0C0C17;border:1px solid #1E1E30;border-radius:20px;padding:36px 32px;width:100%;max-width:400px;font-family:'Space Mono',monospace;box-shadow:0 32px 80px rgba(0,0,0,0.6);">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;">
+        <div style="width:36px;height:36px;background:#141420;border:1px solid #1E1E30;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4BED2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <div style="font-size:9px;letter-spacing:0.16em;color:#343548;">LOCKIN TRADING JOURNAL</div>
+          <div style="font-size:16px;font-weight:700;color:#E8ECF5;letter-spacing:0.04em;">CREA TU CONTRASEÑA</div>
+        </div>
+      </div>
+
+      <div style="background:#141420;border:1px solid #1E1E30;border-radius:10px;padding:14px 16px;margin-bottom:24px;">
+        <div style="font-size:10px;color:#555870;line-height:1.7;">Es tu primer ingreso. Elige una contraseña <span style="color:#B4BED2;font-weight:700;">personal y segura</span> — la usarás cada vez que accedas a LockIn.</div>
+      </div>
+
+      <!-- Campo nueva contraseña -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:9px;letter-spacing:0.12em;color:#555870;margin-bottom:6px;">NUEVA CONTRASEÑA</div>
+        <div style="position:relative;">
+          <input id="cp-new" type="password" placeholder="mínimo 8 caracteres" autocomplete="new-password"
+            style="width:100%;background:#141420;border:1px solid #1E1E30;border-radius:10px;padding:12px 44px 12px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
+            oninput="cpStrength(this.value)">
+          <button type="button" onclick="cpToggle('cp-new','cp-eye1')" tabindex="-1"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#343548;">
+            <svg id="cp-eye1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <!-- Barra de fortaleza -->
+        <div style="display:flex;gap:4px;margin-top:8px;" id="cp-bars">
+          <div id="cpb1" style="flex:1;height:3px;border-radius:2px;background:#1E1E30;transition:background 0.3s;"></div>
+          <div id="cpb2" style="flex:1;height:3px;border-radius:2px;background:#1E1E30;transition:background 0.3s;"></div>
+          <div id="cpb3" style="flex:1;height:3px;border-radius:2px;background:#1E1E30;transition:background 0.3s;"></div>
+          <div id="cpb4" style="flex:1;height:3px;border-radius:2px;background:#1E1E30;transition:background 0.3s;"></div>
+        </div>
+        <div id="cp-strength-label" style="font-size:9px;color:#343548;margin-top:5px;letter-spacing:0.08em;min-height:14px;"></div>
+      </div>
+
+      <!-- Recomendaciones -->
+      <div id="cp-tips" style="background:#0F0F18;border:1px solid #1E1E30;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:9px;letter-spacing:0.1em;color:#343548;margin-bottom:8px;">RECOMENDACIONES</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div id="tip-len"  style="font-size:10px;color:#343548;display:flex;align-items:center;gap:7px;"><span id="tip-len-icon">○</span> Mínimo 8 caracteres</div>
+          <div id="tip-num"  style="font-size:10px;color:#343548;display:flex;align-items:center;gap:7px;"><span id="tip-num-icon">○</span> Al menos un número</div>
+          <div id="tip-sym"  style="font-size:10px;color:#343548;display:flex;align-items:center;gap:7px;"><span id="tip-sym-icon">○</span> Un símbolo (!@#$%...)</div>
+          <div id="tip-upp"  style="font-size:10px;color:#343548;display:flex;align-items:center;gap:7px;"><span id="tip-upp-icon">○</span> Una letra mayúscula</div>
+        </div>
+      </div>
+
+      <!-- Campo confirmar -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:9px;letter-spacing:0.12em;color:#555870;margin-bottom:6px;">CONFIRMAR CONTRASEÑA</div>
+        <div style="position:relative;">
+          <input id="cp-confirm" type="password" placeholder="repite la contraseña" autocomplete="new-password"
+            style="width:100%;background:#141420;border:1px solid #1E1E30;border-radius:10px;padding:12px 44px 12px 14px;font-size:12px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
+            oninput="document.getElementById('cp-confirm').style.borderColor='#1E1E30'">
+          <button type="button" onclick="cpToggle('cp-confirm','cp-eye2')" tabindex="-1"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0;color:#343548;">
+            <svg id="cp-eye2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="cp-err" style="font-size:10px;color:#FF5470;margin-bottom:14px;min-height:16px;line-height:1.5;"></div>
+
       <button onclick="submitChangePass()" id="cp-btn"
-        style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:8px;padding:13px;font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;">
+        style="width:100%;background:#B4BED2;color:#09090F;border:none;border-radius:10px;padding:14px;font-size:11px;font-weight:700;letter-spacing:0.12em;cursor:pointer;font-family:'Space Mono',monospace;transition:opacity 0.2s;">
         GUARDAR CONTRASEÑA →
       </button>
-      <div style="text-align:center;margin-top:14px;">
-        <button onclick="skipChangePass()" style="background:none;border:none;color:#343548;font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;">
+
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="skipChangePass()" style="background:none;border:none;color:#2a2a3a;font-size:9px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;transition:color 0.2s;" onmouseover="this.style.color='#555870'" onmouseout="this.style.color='#2a2a3a'">
           OMITIR POR AHORA
         </button>
       </div>
@@ -2484,11 +2538,50 @@ function showChangePassModal(onDone, tempPass) {
   window._changePassTempPass = tempPass || null;
 }
 
+function cpToggle(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const ico = document.getElementById(iconId);
+  if (!inp) return;
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  ico.style.color = isHidden ? '#B4BED2' : '#343548';
+}
+
+function cpStrength(val) {
+  const hasLen = val.length >= 8;
+  const hasNum = /\d/.test(val);
+  const hasSym = /[^a-zA-Z0-9]/.test(val);
+  const hasUpp = /[A-Z]/.test(val);
+  const score  = [hasLen, hasNum, hasSym, hasUpp].filter(Boolean).length;
+  const colors = ['#FF5470','#E8A838','#4AAFD4','#54C878'];
+  const labels = ['','DÉBIL','REGULAR','BUENA','FUERTE'];
+  const bars   = ['cpb1','cpb2','cpb3','cpb4'];
+  bars.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.style.background = i < score ? colors[score - 1] : '#1E1E30';
+  });
+  const lbl = document.getElementById('cp-strength-label');
+  if (lbl) { lbl.textContent = val.length > 0 ? labels[score] : ''; lbl.style.color = score > 0 ? colors[score-1] : '#343548'; }
+  // Tips
+  const tipFn = (id, iconId, ok) => {
+    const t = document.getElementById(id); const ic = document.getElementById(iconId);
+    if (t)  t.style.color  = ok ? '#54C878' : '#343548';
+    if (ic) ic.textContent = ok ? '✓' : '○';
+  };
+  tipFn('tip-len','tip-len-icon', hasLen);
+  tipFn('tip-num','tip-num-icon', hasNum);
+  tipFn('tip-sym','tip-sym-icon', hasSym);
+  tipFn('tip-upp','tip-upp-icon', hasUpp);
+  // Input border
+  const inp = document.getElementById('cp-new');
+  if (inp && val.length > 0) inp.style.borderColor = colors[score - 1] || '#1E1E30';
+}
+
 async function submitChangePass() {
-  const newPass    = document.getElementById('cp-new').value;
-  const confirm    = document.getElementById('cp-confirm').value;
-  const errEl      = document.getElementById('cp-err');
-  const btn        = document.getElementById('cp-btn');
+  const newPass = document.getElementById('cp-new').value;
+  const confirm = document.getElementById('cp-confirm').value;
+  const errEl   = document.getElementById('cp-err');
+  const btn     = document.getElementById('cp-btn');
   if (newPass.length < 8) {
     document.getElementById('cp-new').style.borderColor = '#FF5470';
     errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.'; return;
@@ -2498,30 +2591,37 @@ async function submitChangePass() {
     errEl.textContent = 'Las contraseñas no coinciden.'; return;
   }
   errEl.textContent = '';
-  btn.textContent = 'GUARDANDO…'; btn.disabled = true;
+  btn.textContent = 'GUARDANDO…'; btn.disabled = true; btn.style.opacity = '0.7';
   try {
-    const auth = window._fbAuth || (typeof getAuth !== 'undefined' ? getAuth() : null);
-    if (auth && auth.currentUser) {
-      // Reautenticar con la contraseña temporal antes de cambiar (requerido por Firebase)
-      if (window._changePassTempPass) {
-        try { await window._fbReauthEmail(window._changePassTempPass); } catch(reauthErr) {
-          // Si falla reauth, igual intentamos updatePassword (puede funcionar si la sesión es reciente)
-          console.warn('[reauth]', reauthErr.code);
-        }
-      }
-      await updatePassword(auth.currentUser, newPass);
+    const auth = window._fbAuth;
+    if (!auth || !auth.currentUser) throw new Error('no-auth');
+
+    // Reautenticar con la contraseña temporal (obligatorio en Firebase con inMemoryPersistence)
+    const tempP = window._changePassTempPass;
+    if (tempP) {
+      await window._fbReauthEmail(tempP);
     }
-    // Marcar en Firestore que ya cambió la contraseña
-    const uid = auth && auth.currentUser ? auth.currentUser.uid : null;
-    if (uid && window._fbSaveData) await window._fbSaveData(uid, { mustChangePass: false });
-    if (uid && window._fbClearTempPass) { try { await window._fbClearTempPass(uid); } catch(_) {} }
+    await updatePassword(auth.currentUser, newPass);
+
+    // Marcar en Firestore: ya cambió la contraseña, limpiar tempPass
+    const uid = auth.currentUser.uid;
+    if (window._fbSaveData) await window._fbSaveData(uid, { mustChangePass: false });
+    if (window._fbClearTempPass) { try { await window._fbClearTempPass(uid); } catch(_) {} }
+
     document.getElementById('change-pass-modal').remove();
     if (window._changePassCallback) window._changePassCallback();
   } catch(e) {
-    btn.textContent = 'GUARDAR CONTRASEÑA →'; btn.disabled = false;
-    errEl.textContent = e.code === 'auth/requires-recent-login'
-      ? 'Por seguridad, cierra sesión e ingresa de nuevo para cambiar la contraseña.'
-      : 'Error al guardar. Intenta de nuevo.';
+    btn.textContent = 'GUARDAR CONTRASEÑA →'; btn.disabled = false; btn.style.opacity = '1';
+    console.error('[changePass]', e.code, e.message);
+    if (e.code === 'auth/requires-recent-login') {
+      errEl.textContent = 'Sesión expirada. Cierra sesión, ingresa de nuevo y vuelve a intentarlo.';
+    } else if (e.code === 'auth/weak-password') {
+      errEl.textContent = 'Contraseña muy débil. Usa al menos 6 caracteres.';
+    } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+      errEl.textContent = 'No se pudo verificar tu sesión. Cierra sesión e intenta de nuevo.';
+    } else {
+      errEl.textContent = 'Error: ' + (e.code || e.message || 'desconocido') + '. Intenta de nuevo.';
+    }
   }
 }
 
