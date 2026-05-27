@@ -208,6 +208,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .pwd-value { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--amber); background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px; padding: 6px 10px; letter-spacing: 0.08em; user-select: all; cursor: text; }
 .pwd-value.hidden { filter: blur(5px); user-select: none; cursor: pointer; transition: filter .2s; }
 .pwd-value.hidden:hover { filter: blur(3px); }
+/* ── ACCESOS SECTION ── */
+.acceso-card { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: 2fr 2fr 1.5fr auto; gap: 16px; align-items: center; transition: background .15s; margin-bottom: 10px; }
+.acceso-card:hover { background: var(--bg3); }
+.acceso-label { font-size: 8px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 4px; }
+.acceso-pass { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--amber); background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px; padding: 5px 10px; letter-spacing: 0.08em; user-select: all; cursor: text; display: inline-block; }
+.acceso-pass.hidden { filter: blur(4px); user-select: none; cursor: pointer; transition: filter .2s; }
+.acceso-pass.hidden:hover { filter: blur(2px); }
+.btn-send-acceso { padding: 9px 16px; border-radius: 8px; background: rgba(84,200,120,.1); color: var(--green); border: 1px solid rgba(84,200,120,.3); font-size: 9px; letter-spacing: 0.07em; font-family: 'Space Mono', monospace; cursor: pointer; font-weight: 700; transition: all .15s; white-space: nowrap; }
+.btn-send-acceso:hover { background: rgba(84,200,120,.2); }
+.btn-send-acceso:disabled { opacity: .5; cursor: default; }
+.acceso-nopass { font-size: 10px; color: var(--text3); font-style: italic; }
 
 /* ANALYTICS SECTION */
 .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
@@ -362,6 +373,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
       <button class="nav-tab" onclick="showSection('trades',this)"><span class="nav-tab-icon">📊</span><span class="nav-tab-label">TRADES</span></button>
       <button class="nav-tab" onclick="showSection('images',this)"><span class="nav-tab-icon">🖼️</span><span class="nav-tab-label">IMÁGENES</span></button>
       <button class="nav-tab" onclick="showSection('passwords',this)"><span class="nav-tab-icon">🔑</span><span class="nav-tab-label">CONTRASEÑAS</span></button>
+      <button class="nav-tab" onclick="showSection('accesos',this)"><span class="nav-tab-icon">✉️</span><span class="nav-tab-label">ACCESOS</span></button>
       <button class="nav-tab" onclick="showSection('analytics',this)"><span class="nav-tab-icon">📈</span><span class="nav-tab-label">ESTADÍSTICAS</span></button>
     </div>
 
@@ -420,6 +432,24 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
       </div>
       <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:10px;color:var(--amber);line-height:1.7;">⚠️ Solo se muestran las contraseñas que los usuarios ingresaron al registrarse. Si el usuario cambió su contraseña después, usa "Enviar Reset". Los usuarios de Google no tienen contraseña guardada.</div>
       <div id="passwords-list"></div>
+    </div>
+
+    <!-- ACCESOS — Reenvío de credenciales -->
+    <div class="section" id="sec-accesos">
+      <div class="section-hdr">
+        <div>
+          <div class="section-title">Reenvío de Accesos</div>
+          <div class="section-count">Envía las credenciales de inicio de sesión a usuarios activos</div>
+        </div>
+        <input class="search-input" type="text" id="accesos-search" placeholder="Buscar por nombre o correo…" oninput="renderAccesosSection()" style="max-width:260px;">
+      </div>
+
+      <div style="background:rgba(180,190,210,.06);border:1px solid rgba(180,190,210,.15);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:10px;color:var(--accent);line-height:1.8;">
+        ✉️ &nbsp;Desde aquí puedes reenviar el correo de bienvenida con usuario y contraseña temporal a cualquier usuario activo.<br>
+        <span style="color:var(--text3);">Solo aparecen usuarios con <strong style="color:var(--accent);">contraseña temporal guardada</strong>. Si no aparece un usuario, usa <strong style="color:var(--accent);">Reset de contraseña</strong> desde su perfil en GESTIONAR.</span>
+      </div>
+
+      <div id="accesos-list"></div>
     </div>
 
     <!-- ESTADÍSTICAS -->
@@ -693,6 +723,7 @@ function startRealtimeListener() {
       if (sec === 'sec-trades')    renderTradesSection();
       if (sec === 'sec-images')    renderImagesSection();
       if (sec === 'sec-passwords') renderPasswordsSection();
+      if (sec === 'sec-accesos')   renderAccesosSection();
       if (sec === 'sec-analytics') renderAnalytics();
     },
     err => {
@@ -751,6 +782,7 @@ window.showSection = (name, btn) => {
   if (name==='trades')    renderTradesSection();
   if (name==='images')    renderImagesSection();
   if (name==='passwords') renderPasswordsSection();
+  if (name==='accesos')   renderAccesosSection();
   if (name==='analytics') renderAnalytics();
 };
 
@@ -1285,6 +1317,91 @@ window.renderPasswordsSection = () => {
       <div><div class="pwd-label">CONTRASEÑA</div><div class="pwd-value hidden" onclick="this.classList.toggle('hidden')" title="Clic para revelar">${escHtml(u.password)}</div></div>
     </div>`;
   }).join('');
+};
+
+// ── SECCIÓN ACCESOS — Reenvío de credenciales ──
+window.renderAccesosSection = () => {
+  const q = (document.getElementById('accesos-search').value||'').toLowerCase();
+  // Mostrar todos los usuarios activos (con o sin tempPass) para dar opción de reset
+  const users = allUsers.filter(u =>
+    getStatus(u) === 'active' &&
+    (!q || (u.email||'').toLowerCase().includes(q) || ((u.nombres||'')+(u.apellidos||'')).toLowerCase().includes(q))
+  );
+  const list = document.getElementById('accesos-list');
+  if (!users.length) { list.innerHTML = '<div class="empty-state">No hay usuarios activos.</div>'; return; }
+  list.innerHTML = users.map(u => {
+    const name  = ((u.nombres||'')+' '+(u.apellidos||'')).trim()||u.displayName||u.email||u.uid;
+    const plan  = u.plan || 'trimestral';
+    const hasPass = !!u.tempPass;
+    const passHtml = hasPass
+      ? `<div class="acceso-pass hidden" onclick="this.classList.toggle('hidden')" title="Clic para revelar">${escHtml(u.tempPass)}</div>`
+      : `<span class="acceso-nopass">Ya cambió su clave</span>`;
+    const btnHtml = hasPass
+      ? `<button class="btn-send-acceso" id="btn-acceso-${u.uid}" onclick="sendAccesoEmail('${u.uid}')">✉ ENVIAR ACCESO</button>`
+      : `<button class="btn-send-acceso" style="background:rgba(74,175,212,.1);color:var(--blue);border-color:rgba(74,175,212,.3);" onclick="doSendResetAcceso('${u.uid}')">📧 ENVIAR RESET</button>`;
+    return `<div class="acceso-card">
+      <div>
+        <div class="acceso-label">USUARIO</div>
+        <div class="cell-name">${escHtml(name)}</div>
+        <div class="cell-email" style="margin-top:3px;">${escHtml(u.email||'—')}</div>
+      </div>
+      <div>
+        <div class="acceso-label">CONTRASEÑA TEMPORAL</div>
+        ${passHtml}
+        ${!hasPass ? '<div style="font-size:8px;color:var(--text3);margin-top:4px;">El usuario ya usó su clave temporal</div>' : ''}
+      </div>
+      <div>
+        <div class="acceso-label">PLAN</div>
+        <span class="plan-badge plan-${plan}">${plan.toUpperCase()}</span>
+      </div>
+      <div style="text-align:right;">
+        ${btnHtml}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.sendAccesoEmail = async (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u || !u.email || !u.tempPass) { showToast('Datos incompletos para este usuario.', 'error'); return; }
+  const btn = document.getElementById('btn-acceso-' + uid);
+  if (btn) { btn.disabled = true; btn.textContent = 'ENVIANDO…'; }
+  const firstName  = (u.nombres || u.displayName?.split(' ')[0] || 'Trader').trim();
+  const plan       = u.plan || 'trimestral';
+  const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
+  const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
+  const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
+  try {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:   u.email,
+      to_name:    firstName,
+      user_email: u.email,
+      user_pass:  u.tempPass,
+      plan_label: planLabels[plan] || 'Trimestral',
+      plan_price: planPrices[plan] || '$15',
+      plan_per:   planPeriod[plan] || '3 meses',
+      year:       new Date().getFullYear()
+    });
+    showToast('✉️ Correo de acceso enviado a ' + u.email, 'success');
+    if (btn) { btn.textContent = '✓ ENVIADO'; btn.style.background = 'rgba(84,200,120,.18)'; }
+    setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = '✉ ENVIAR ACCESO'; btn.style.background = ''; } }, 4000);
+  } catch(e) {
+    console.error('[sendAccesoEmail]', e);
+    showToast('Error al enviar: ' + (e?.text || e?.message || 'desconocido'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '✉ ENVIAR ACCESO'; }
+  }
+};
+
+window.doSendResetAcceso = async (uid) => {
+  const u = allUsers.find(x => x.uid === uid);
+  if (!u?.email) return;
+  try {
+    await sendPasswordResetEmail(auth, u.email);
+    showToast('📧 Reset de contraseña enviado a ' + u.email, 'success');
+  } catch(e) {
+    showToast('Error al enviar reset: ' + e.message, 'error');
+  }
 };
 
 // ── TRADE CARD HTML ──
