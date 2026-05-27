@@ -2374,14 +2374,17 @@ window._fbClearTempPass = async (uid) => {
 
 // Auth state observer — bridges Firebase auth into the existing app logic
 // Flag: solo permitir entrada si el login fue manual (no automático por localStorage)
-let _manualLogin = false;
+// NOTA: _manualLogin/_registering/_googleVerifying se declaran en el script clásico
+// y se exponen en window para que este módulo los lea en tiempo real.
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     window._fbCurrentUID   = user.uid;
     window._fbCurrentEmail = user.email;
     // Si la sesión viene de localStorage (auto) y no fue un login manual, cerrarla
-    if (!_manualLogin && !_registering && !_googleVerifying && !sessionStorage.getItem('selectedPlan')) {
+    // IMPORTANTE: leer window._manualLogin (no la copia local del módulo) para
+    // capturar el valor actualizado por el script clásico en tiempo real
+    if (!window._manualLogin && !window._registering && !window._googleVerifying && !sessionStorage.getItem('selectedPlan')) {
       await signOut(auth);
       return;
     }
@@ -2444,6 +2447,10 @@ if (window._fbMarkReady) window._fbMarkReady();
 // ====================== AUTH (Firebase) ======================
 let currentUser = null; // stores email (display)
 let _fbUID = null;      // stores Firebase UID (for Firestore)
+
+// Flags de control de flujo — expuestos en window para que el módulo ES los lea en tiempo real
+let _manualLogin = false;
+Object.defineProperty(window, '_manualLogin', { get: () => _manualLogin, set: v => { _manualLogin = v; }, configurable: true });
 
 function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
@@ -2812,6 +2819,7 @@ function skipChangePass() {
 // _registering bloquea _onFirebaseLogin durante el registro
 // Evita race condition: signUp dispara onAuthStateChanged antes de que setDoc termine
 let _registering = false;
+Object.defineProperty(window, '_registering', { get: () => _registering, set: v => { _registering = v; }, configurable: true });
 
 async function doRegister() {
   const nombres   = document.getElementById('r-nombres').value.trim();
@@ -2871,6 +2879,7 @@ async function doRegister() {
 
 // Flag to prevent onAuthStateChanged from auto-entering app during Google verification
 let _googleVerifying = false;
+Object.defineProperty(window, '_googleVerifying', { get: () => _googleVerifying, set: v => { _googleVerifying = v; }, configurable: true });
 
 async function doGoogleSignIn() {
   // Called from the LOGIN tab — only allows existing users
