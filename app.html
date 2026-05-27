@@ -1253,11 +1253,11 @@
             <span>TRIMESTRAL</span>
           </button>
           <button type="button" onclick="selectPlan('semestral',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
-            <span style="font-size:13px;font-weight:700;color:var(--text2);">$20</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">$25</span>
             <span>SEMESTRAL</span>
           </button>
           <button type="button" onclick="selectPlan('anual',this)" style="flex:1;padding:10px 6px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:9px;letter-spacing:0.1em;cursor:pointer;font-family:'Space Mono',monospace;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:3px;">
-            <span style="font-size:13px;font-weight:700;color:var(--text2);">$40</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">$45</span>
             <span>ANUAL</span>
           </button>
         </div>
@@ -2528,8 +2528,8 @@ function applyLandingParams() {
   if (plan) {
     const planLabels = {
       trimestral: 'TRIMESTRAL · $15 · 3 meses',
-      semestral:  'SEMESTRAL · $20 · 6 meses',
-      anual:      'ANUAL · $40 · 12 meses'
+      semestral:  'SEMESTRAL · $25 · 6 meses',
+      anual:      'ANUAL · $45 · 12 meses'
     };
     const wrap = document.getElementById('plan-selector-wrap');
     if (wrap) {
@@ -2604,7 +2604,7 @@ function selectPlan(plan, btn) {
   btn.querySelector('span:first-child').style.color = 'var(--accent)';
 }
 
-const PLAN_LABELS = { trimestral: 'Trimestral — $15/3 meses', semestral: 'Semestral — $20/6 meses', anual: 'Anual — $40/año' };
+const PLAN_LABELS = { trimestral: 'Trimestral — $15/3 meses', semestral: 'Semestral — $25/6 meses', anual: 'Anual — $45/año' };
 const PLAN_PRICES = { trimestral: '$15', semestral: '$25', anual: '$45' };
 const PLAN_PERIOD = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
 
@@ -3130,8 +3130,8 @@ function showDeletedAccountGate(authUser) {
         style="width:100%;background:#141420;border:0.5px solid #1E1E30;border-radius:8px;padding:10px 12px;font-size:11px;color:#E8ECF5;font-family:'Space Mono',monospace;outline:none;margin-bottom:14px;box-sizing:border-box;cursor:pointer;">
         <option value="">— Selecciona un plan —</option>
         <option value="trimestral">Trimestral · $15 · 3 meses</option>
-        <option value="semestral">Semestral · $20 · 6 meses</option>
-        <option value="anual">Anual · $40 · 12 meses</option>
+        <option value="semestral">Semestral · $25 · 6 meses</option>
+        <option value="anual">Anual · $45 · 12 meses</option>
       </select>
       <div id="rr-err" style="font-size:10px;color:#FF5470;margin-bottom:10px;min-height:14px;"></div>
       <button onclick="doReactivateAccount()"
