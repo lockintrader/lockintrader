@@ -1096,22 +1096,11 @@
       <div class="login-form-label">CONTRASEÑA</div>
       <input class="login-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
       <button class="login-btn" onclick="doLogin()">INGRESAR →</button>
-      <div class="login-sep"></div>
-      <button class="google-btn" onclick="doGoogleSignIn()">
-        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.5 30.2 0 24 0 14.7 0 6.7 5.4 2.7 13.3l7.9 6.1C12.5 13.2 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l8-6.1z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.7 42.6 14.7 48 24 48z"/></svg>
-        CONTINUAR CON GOOGLE
-      </button>
       <div class="login-error" id="login-error"></div>
     </div>
 
     <!-- REGISTER FORM -->
     <div id="form-register" style="display:none;">
-      <button class="google-btn" onclick="doGoogleRegister()" style="margin-bottom:4px;">
-        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.5 30.2 0 24 0 14.7 0 6.7 5.4 2.7 13.3l7.9 6.1C12.5 13.2 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.6 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l8-6.1z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.7 2.2-6.2 0-11.5-4.2-13.4-9.9l-8 6.1C6.7 42.6 14.7 48 24 48z"/></svg>
-        REGISTRARSE CON GOOGLE
-      </button>
-      <div style="display:flex;align-items:center;gap:10px;margin:12px 0;"><div style="flex:1;height:0.5px;background:var(--border2);"></div><span style="font-size:9px;color:var(--text3);letter-spacing:0.1em;">O CON CORREO</span><div style="flex:1;height:0.5px;background:var(--border2);"></div></div>
-
       <!-- Fila 1: Nombres + Apellidos -->
       <div style="display:flex;gap:10px;margin-bottom:12px;">
         <div style="flex:1;">
@@ -2459,7 +2448,7 @@ function _genRandomPass() {
 }
 
 // ── Modal cambio de contraseña en primer login ──
-function showChangePassModal(onDone) {
+function showChangePassModal(onDone, tempPass) {
   const existing = document.getElementById('change-pass-modal');
   if (existing) existing.remove();
   const modal = document.createElement('div');
@@ -2492,6 +2481,7 @@ function showChangePassModal(onDone) {
   `;
   document.body.appendChild(modal);
   window._changePassCallback = onDone;
+  window._changePassTempPass = tempPass || null;
 }
 
 async function submitChangePass() {
@@ -2512,6 +2502,13 @@ async function submitChangePass() {
   try {
     const auth = window._fbAuth || (typeof getAuth !== 'undefined' ? getAuth() : null);
     if (auth && auth.currentUser) {
+      // Reautenticar con la contraseña temporal antes de cambiar (requerido por Firebase)
+      if (window._changePassTempPass) {
+        try { await window._fbReauthEmail(window._changePassTempPass); } catch(reauthErr) {
+          // Si falla reauth, igual intentamos updatePassword (puede funcionar si la sesión es reciente)
+          console.warn('[reauth]', reauthErr.code);
+        }
+      }
       await updatePassword(auth.currentUser, newPass);
     }
     // Marcar en Firestore que ya cambió la contraseña
@@ -2691,11 +2688,7 @@ function _googleEnterApp(user, data) {
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
-  if (data && data.mustChangePass) {
-    showChangePassModal(() => showWelcomeSplash(email, displayName));
-  } else {
-    showWelcomeSplash(email, displayName);
-  }
+  showWelcomeSplash(email, displayName);
 }
 
 
@@ -2775,7 +2768,7 @@ window._onFirebaseLogin = async (user) => {
   // Acceso concedido
   document.getElementById('login-page').style.display = 'none';
   if (userData.mustChangePass) {
-    showChangePassModal(() => showWelcomeSplash(user.email, displayName));
+    showChangePassModal(() => showWelcomeSplash(user.email, displayName), userData.tempPass || null);
   } else {
     showWelcomeSplash(user.email, displayName);
   }
