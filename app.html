@@ -2120,6 +2120,7 @@ window._fbDb   = db;
 window._fbSignIn  = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
 window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 window._fbSignOut = () => signOut(auth);
+window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
 window._fbSignInWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   return result;
@@ -2601,7 +2602,7 @@ async function submitChangePass() {
     if (tempP) {
       await window._fbReauthEmail(tempP);
     }
-    await updatePassword(auth.currentUser, newPass);
+    await window._fbUpdatePassword(newPass);
 
     // Marcar en Firestore: ya cambió la contraseña, limpiar tempPass
     const uid = auth.currentUser.uid;
