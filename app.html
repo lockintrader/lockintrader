@@ -2373,13 +2373,21 @@ window._fbClearTempPass = async (uid) => {
 };
 
 // Auth state observer — bridges Firebase auth into the existing app logic
-onAuthStateChanged(auth, (user) => {
+// Flag: solo permitir entrada si el login fue manual (no automático por localStorage)
+let _manualLogin = false;
+
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    window._fbCurrentUID  = user.uid;
+    window._fbCurrentUID   = user.uid;
     window._fbCurrentEmail = user.email;
+    // Si la sesión viene de localStorage (auto) y no fue un login manual, cerrarla
+    if (!_manualLogin && !_registering && !_googleVerifying && !sessionStorage.getItem('selectedPlan')) {
+      await signOut(auth);
+      return;
+    }
     if (window._onFirebaseLogin) window._onFirebaseLogin(user);
   } else {
-    window._fbCurrentUID  = null;
+    window._fbCurrentUID   = null;
     window._fbCurrentEmail = null;
     if (window._onFirebaseLogout) window._onFirebaseLogout();
   }
@@ -2567,6 +2575,7 @@ async function doLogin() {
   if (!pass) { err.textContent = 'Ingresa tu contraseña.'; return; }
   try {
     document.getElementById('login-error').textContent = 'Ingresando…';
+    _manualLogin = true;
     await window._fbSignIn(email, pass);
     // onAuthStateChanged will call _onFirebaseLogin
   } catch(e) {
@@ -2822,6 +2831,7 @@ async function doRegister() {
 
   try {
     _registering = true;
+    _manualLogin = true;
     const cred = await window._fbSignUp(email, pass);
     const uid  = cred.user.uid;
     await window._fbSaveData(uid, {
