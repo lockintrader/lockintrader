@@ -3253,6 +3253,11 @@ window._onFirebaseLogout = () => {
   currentUser = null;
   _fbUID = null;
   _setCloudStatus('error');
+  // Limpiar mensaje "Ingresando…" y reactivar botón al cerrar sesión
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.textContent = '';
+  const loginBtn = document.querySelector('#form-login .login-btn');
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.style.opacity = ''; }
 };
 
 function loginSuccess(email) {
@@ -3347,11 +3352,6 @@ function startWelcomeChart() {
 function doLogout() {
   trades = []; journals = [];
   if (overviewChartInstance) { overviewChartInstance.destroy(); overviewChartInstance = null; }
-
-async function doLogoutToHome() {
-  try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
-  window.location.href = 'https://lockintrader.com';
-}
   if (opsDonutInstance) { opsDonutInstance.destroy(); opsDonutInstance = null; }
   if (benefitsChartInstance) { benefitsChartInstance.destroy(); benefitsChartInstance = null; }
   if (consistencyGaugeInstance) { consistencyGaugeInstance.destroy(); consistencyGaugeInstance = null; }
@@ -3360,11 +3360,21 @@ async function doLogoutToHome() {
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('l-user').value = '';
   document.getElementById('l-pass').value = '';
+  // Limpiar mensaje "Ingresando…" y reactivar botón
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.textContent = '';
+  const loginBtn = document.querySelector('#form-login .login-btn');
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.style.opacity = ''; }
   document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('nav-home').classList.add('active');
   document.getElementById('page-home').classList.add('active');
   if (window._fbSignOut) window._fbSignOut();
+}
+
+async function doLogoutToHome() {
+  try { if (window._fbSignOut) await window._fbSignOut(); } catch(e) {}
+  window.location.href = 'https://lockintrader.com';
 }
 
 // Session check handled by Firebase onAuthStateChanged — show login by default
