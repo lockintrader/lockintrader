@@ -2284,7 +2284,7 @@
 <!-- ====================== FIREBASE SDK ====================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, linkWithCredential, updatePassword, sendPasswordResetEmail }
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, reauthenticateWithCredential, reauthenticateWithPopup, EmailAuthProvider, linkWithCredential, updatePassword }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteField }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -2316,6 +2316,7 @@ window._fbSignIn  = (email, pass) => signInWithEmailAndPassword(auth, email, pas
 window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 window._fbSignOut = () => signOut(auth);
 window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
+window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
 window._fbSignInWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   return result;
@@ -7075,7 +7076,7 @@ async function doForgotPassword() {
 
   try {
     // Firebase genera y envía el link seguro de reset
-    await sendPasswordResetEmail(window._fbAuth, email);
+    await window._fbSendPasswordReset(email);
 
     // EmailJS envía el correo personalizado con diseño LockIn
     emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
@@ -7083,7 +7084,7 @@ async function doForgotPassword() {
       to_email:   email,
       to_name:    email.split('@')[0],
       user_email: email,
-      reset_link: 'Revisa el correo de Firebase para el enlace seguro.',
+      reset_link: '(ver correo de Firebase)',
       year:       new Date().getFullYear()
     });
 
