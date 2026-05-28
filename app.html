@@ -1237,8 +1237,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
     </div>
-    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:6px;">Recuperar contraseña</div>
-    <div style="font-size:10px;color:var(--text3);text-align:center;letter-spacing:0.05em;line-height:1.7;margin-bottom:24px;">Ingresa tu correo y te enviaremos instrucciones para restablecerla.</div>
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:24px;">Recuperar contraseña</div>
     <div id="forgot-form-state">
       <div class="login-form-label">CORREO ELECTRÓNICO</div>
       <input class="login-input" type="email" id="forgot-email" placeholder="tu@correo.com" autocomplete="email" onkeydown="if(event.key==='Enter')doForgotPassword()">
@@ -2317,6 +2316,16 @@ window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email,
 window._fbSignOut = () => signOut(auth);
 window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
 window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
+window._fbMarkMustChangePass = async (email) => {
+  // Busca el usuario en Firestore por email y marca mustChangePass: true
+  const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+  const q = query(collection(db, 'users'), where('email', '==', email));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const userDoc = snap.docs[0];
+    await setDoc(doc(db, 'users', userDoc.id), { mustChangePass: true }, { merge: true });
+  }
+};
 window._fbSignInWithGoogle = async () => {
   const result = await signInWithPopup(auth, googleProvider);
   return result;
@@ -7075,27 +7084,32 @@ async function doForgotPassword() {
   btn.textContent = 'ENVIANDO...'; btn.disabled = true;
 
   try {
-    // Firebase genera y envía el link seguro de reset
+    // 1 — Firebase envía el link real de reset
     await window._fbSendPasswordReset(email);
 
-    // EmailJS envía el correo personalizado con diseño LockIn
+    // 2 — Marcar en Firestore que debe cambiar contraseña al siguiente ingreso
+    try { await window._fbMarkMustChangePass(email); } catch(_) {}
+
+    // 3 — EmailJS envía el correo personalizado con diseño LockIn
     emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
     await emailjs.send(EMAILJS_SERVICE_ID_RESET, EMAILJS_TEMPLATE_RESET_ID, {
       to_email:   email,
       to_name:    email.split('@')[0],
       user_email: email,
-      reset_link: '(ver correo de Firebase)',
+      reset_link: 'Revisa tu correo — el enlace de restablecimiento llegó en un mensaje separado de Firebase.',
       year:       new Date().getFullYear()
     });
 
     document.getElementById('forgot-success-msg').innerHTML =
-      'Revisa tu bandeja de entrada (y spam) en<br><strong style="color:var(--accent);">' + email + '</strong>.<br><br>El enlace expira en <span style="color:var(--accent);">30 minutos</span>.';
+      'Revisa tu bandeja de entrada en<br><strong style="color:var(--accent);">' + email + '</strong>.<br><br>' +
+      'Usa el enlace para restablecer tu contraseña. El enlace expira en <span style="color:var(--accent);">30 minutos</span>.';
     document.getElementById('forgot-form-state').style.display = 'none';
     document.getElementById('forgot-success-state').style.display = 'block';
 
   } catch(e) {
     console.error('[ForgotPassword]', e);
-    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-email' || e.code === 'auth/invalid-credential') {
+    if (['auth/user-not-found','auth/invalid-email','auth/invalid-credential'].includes(e.code)) {
+      // No revelar si el correo existe o no
       document.getElementById('forgot-success-msg').innerHTML =
         'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, recibirás las instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
       document.getElementById('forgot-form-state').style.display = 'none';
