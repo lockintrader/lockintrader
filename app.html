@@ -1229,29 +1229,135 @@
     </div>
 
 <!-- ══ MODAL: RECUPERAR CONTRASEÑA ══ -->
-<div id="forgot-modal-overlay" onclick="if(event.target===this)closeForgotModal()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.82);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:32px;width:100%;max-width:360px;position:relative;animation:dropFadeIn 0.2s ease;">
-    <button onclick="closeForgotModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;padding:4px 6px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">✕</button>
-    <div style="display:flex;justify-content:center;margin-bottom:20px;">
-      <div style="width:52px;height:52px;border-radius:50%;background:rgba(180,190,210,0.07);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-    </div>
-    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:24px;">Recuperar contraseña</div>
+<!-- ══ FORGOT PASSWORD MODAL ══════════════════════════════════════════ -->
+<style>
+/* ── Forgot modal chart animation ── */
+@keyframes forgot-bar-grow {
+  0%   { transform: scaleY(0.15); opacity: 0.3; }
+  50%  { transform: scaleY(1);    opacity: 1;   }
+  100% { transform: scaleY(0.15); opacity: 0.3; }
+}
+@keyframes forgot-line-draw {
+  0%   { stroke-dashoffset: 300; opacity: 0.4; }
+  60%  { stroke-dashoffset: 0;   opacity: 1;   }
+  100% { stroke-dashoffset: 0;   opacity: 1;   }
+}
+@keyframes forgot-pulse-ring {
+  0%   { transform: scale(0.85); opacity: 0.6; }
+  50%  { transform: scale(1.08); opacity: 1;   }
+  100% { transform: scale(0.85); opacity: 0.6; }
+}
+@keyframes forgot-dot-blink {
+  0%,100% { opacity: 0.2; } 50% { opacity: 1; }
+}
+@keyframes forgot-scan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(220%); opacity: 0; }
+}
+@keyframes forgot-success-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  70%  { transform: scale(1.12); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.forgot-bar {
+  transform-origin: bottom;
+  animation: forgot-bar-grow 1.6s ease-in-out infinite;
+}
+.forgot-line { stroke-dasharray: 300; animation: forgot-line-draw 2s ease forwards; }
+.forgot-dot1 { animation: forgot-dot-blink 1.2s 0.0s infinite; }
+.forgot-dot2 { animation: forgot-dot-blink 1.2s 0.3s infinite; }
+.forgot-dot3 { animation: forgot-dot-blink 1.2s 0.6s infinite; }
+.forgot-scan-line { animation: forgot-scan 1.8s ease-in-out infinite; }
+.forgot-success-icon { animation: forgot-success-pop 0.45s cubic-bezier(.22,1,.36,1) forwards; }
+</style>
+
+<div id="forgot-modal-overlay" onclick="if(event.target===this)closeForgotModal()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px);">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 32px 32px;width:100%;max-width:360px;position:relative;animation:dropFadeIn 0.22s ease;overflow:hidden;">
+
+    <!-- Corner accent -->
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.4;"></div>
+
+    <!-- Close button -->
+    <button onclick="closeForgotModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1;padding:4px 6px;transition:color .15s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">✕</button>
+
+    <!-- ── STATE 1: Form ── -->
     <div id="forgot-form-state">
+      <div style="display:flex;justify-content:center;margin-bottom:18px;">
+        <div style="width:54px;height:54px;border-radius:50%;background:rgba(180,190,210,0.06);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:6px;">Recuperar contraseña</div>
+      <div style="font-size:10px;color:var(--text3);text-align:center;letter-spacing:0.06em;margin-bottom:24px;">Te enviaremos una contraseña temporal a tu correo</div>
       <div class="login-form-label">CORREO ELECTRÓNICO</div>
       <input class="login-input" type="email" id="forgot-email" placeholder="tu@correo.com" autocomplete="email" onkeydown="if(event.key==='Enter')doForgotPassword()">
       <div id="forgot-error" style="font-size:11px;color:var(--red);min-height:16px;margin-bottom:10px;"></div>
-      <button onclick="doForgotPassword()" id="forgot-btn" class="login-btn">ENVIAR INSTRUCCIONES →</button>
+      <button onclick="doForgotPassword()" id="forgot-btn" class="login-btn">ENVIAR CONTRASEÑA TEMPORAL →</button>
     </div>
-    <div id="forgot-success-state" style="display:none;text-align:center;">
-      <div style="width:48px;height:48px;border-radius:50%;background:rgba(180,190,210,0.1);border:1px solid rgba(180,190,210,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
+    <!-- ── STATE 2: Loading with animated charts ── -->
+    <div id="forgot-loading-state" style="display:none;text-align:center;padding:8px 0;">
+      <div style="font-size:9px;color:var(--text3);letter-spacing:0.15em;margin-bottom:20px;text-transform:uppercase;">Procesando solicitud</div>
+
+      <!-- Chart animation container -->
+      <div style="position:relative;width:220px;height:100px;margin:0 auto 24px;overflow:hidden;">
+
+        <!-- Bar chart background bars -->
+        <svg viewBox="0 0 220 100" width="220" height="100" style="position:absolute;inset:0;">
+          <!-- Grid lines -->
+          <line x1="0" y1="25" x2="220" y2="25" stroke="rgba(180,190,210,0.06)" stroke-width="1"/>
+          <line x1="0" y1="50" x2="220" y2="50" stroke="rgba(180,190,210,0.06)" stroke-width="1"/>
+          <line x1="0" y1="75" x2="220" y2="75" stroke="rgba(180,190,210,0.06)" stroke-width="1"/>
+
+          <!-- Animated bars -->
+          <rect class="forgot-bar" x="10"  y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.18)" style="animation-delay:0.0s;"/>
+          <rect class="forgot-bar" x="34"  y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.25)" style="animation-delay:0.2s;"/>
+          <rect class="forgot-bar" x="58"  y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.18)" style="animation-delay:0.4s;"/>
+          <rect class="forgot-bar" x="82"  y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.30)" style="animation-delay:0.6s;"/>
+          <rect class="forgot-bar" x="106" y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.20)" style="animation-delay:0.2s;"/>
+          <rect class="forgot-bar" x="130" y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.28)" style="animation-delay:0.5s;"/>
+          <rect class="forgot-bar" x="154" y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.18)" style="animation-delay:0.1s;"/>
+          <rect class="forgot-bar" x="178" y="20" width="16" height="80" rx="3" fill="rgba(180,190,210,0.22)" style="animation-delay:0.35s;"/>
+
+          <!-- Line chart overlay -->
+          <polyline class="forgot-line" points="10,72 34,55 58,68 82,38 106,58 130,30 154,48 178,35 210,42"
+            fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+
+          <!-- Scan line -->
+          <rect class="forgot-scan-line" x="0" y="0" width="220" height="2" fill="rgba(180,190,210,0.15)" rx="1"/>
+        </svg>
       </div>
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;">¡Correo enviado!</div>
-      <div id="forgot-success-msg" style="font-size:11px;color:var(--text3);line-height:1.75;margin-bottom:22px;"></div>
-      <button onclick="closeForgotModal()" style="width:100%;padding:9px;border-radius:10px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">CERRAR</button>
+
+      <!-- Loading label with animated dots -->
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:0.08em;display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:8px;">
+        <span id="forgot-loading-label">Verificando cuenta</span>
+        <span class="forgot-dot1" style="color:var(--accent);">·</span>
+        <span class="forgot-dot2" style="color:var(--accent);">·</span>
+        <span class="forgot-dot3" style="color:var(--accent);">·</span>
+      </div>
+      <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;">No cierres esta ventana</div>
     </div>
+
+    <!-- ── STATE 3: Success ── -->
+    <div id="forgot-success-state" style="display:none;text-align:center;">
+      <div class="forgot-success-icon" style="width:56px;height:56px;border-radius:50%;background:rgba(180,190,210,0.08);border:1px solid rgba(180,190,210,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">¡Contraseña enviada!</div>
+      <div id="forgot-success-msg" style="font-size:11px;color:var(--text3);line-height:1.8;margin-bottom:24px;"></div>
+      <div style="background:rgba(180,190,210,0.05);border:0.5px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:20px;text-align:left;">
+        <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:6px;">PRÓXIMOS PASOS</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.8;">
+          <span style="color:var(--accent);">1.</span> Revisa tu bandeja de entrada<br>
+          <span style="color:var(--accent);">2.</span> Inicia sesión con la contraseña temporal<br>
+          <span style="color:var(--accent);">3.</span> Crea tu nueva contraseña segura
+        </div>
+      </div>
+      <button onclick="closeForgotModal()" style="width:100%;padding:9px;border-radius:10px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:11px;letter-spacing:0.08em;cursor:pointer;font-family:'Space Mono',monospace;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">ENTENDIDO →</button>
+    </div>
+
   </div>
 </div>
 
@@ -7055,15 +7161,32 @@ async function enviarSugerencia() {
 
 <script>
 // ══ RECUPERAR CONTRASEÑA ════════════════════════════════════════════
+// Usa el mismo servicio/template que el admin para el correo de bienvenida
+// así el usuario recibe un correo con el mismo diseño LockIn
 const EMAILJS_SERVICE_ID_RESET  = 'service_65o2qmc';
-const EMAILJS_TEMPLATE_RESET_ID = 'template_612jb5c';
+const EMAILJS_TEMPLATE_RESET_ID = 'template_gp3nbor';   // mismo template que welcome
 const EMAILJS_PUBLIC_KEY_RESET  = 'w6n_ZnHmKE2fJ4a7O';
+
+// Genera contraseña temporal segura (igual que el registro)
+function _genTempPassReset() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+  let p = '';
+  for (let i = 0; i < 10; i++) p += chars[Math.floor(Math.random() * chars.length)];
+  return p;
+}
+
+// Actualiza el label del loading animado
+function _forgotSetLabel(text) {
+  const el = document.getElementById('forgot-loading-label');
+  if (el) el.textContent = text;
+}
 
 function openForgotModal() {
   document.getElementById('forgot-modal-overlay').style.display = 'flex';
   document.getElementById('forgot-email').value = '';
   document.getElementById('forgot-error').textContent = '';
-  document.getElementById('forgot-form-state').style.display = 'block';
+  document.getElementById('forgot-form-state').style.display  = 'block';
+  document.getElementById('forgot-loading-state').style.display = 'none';
   document.getElementById('forgot-success-state').style.display = 'none';
   setTimeout(() => document.getElementById('forgot-email').focus(), 120);
 }
@@ -7075,52 +7198,106 @@ function closeForgotModal() {
 async function doForgotPassword() {
   const email = document.getElementById('forgot-email').value.trim();
   const errEl = document.getElementById('forgot-error');
-  const btn   = document.getElementById('forgot-btn');
   errEl.textContent = '';
 
   if (!email) { errEl.textContent = 'Ingresa tu correo electrónico.'; return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Correo no válido.'; return; }
 
-  btn.textContent = 'ENVIANDO...'; btn.disabled = true;
+  // Mostrar loading con animación de charts
+  document.getElementById('forgot-form-state').style.display  = 'none';
+  document.getElementById('forgot-loading-state').style.display = 'block';
+  _forgotSetLabel('Verificando cuenta');
 
   try {
-    // 1 — Firebase envía el link real de reset
-    await window._fbSendPasswordReset(email);
+    // ── 1. Buscar usuario en Firestore por email ──────────────────────
+    _forgotSetLabel('Buscando en el sistema');
+    let userId   = null;
+    let userData = null;
+    let firstName = email.split('@')[0];
 
-    // 2 — Marcar en Firestore que debe cambiar contraseña al siguiente ingreso
-    try { await window._fbMarkMustChangePass(email); } catch(_) {}
+    // Intentar búsqueda en Firestore usando la función del módulo firebase
+    try {
+      const { collection, query, where, getDocs } =
+        await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const db = window._fbDb;
+      if (db) {
+        const q    = query(collection(db, 'users'), where('email', '==', email));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          userId   = docSnap.id;
+          userData = docSnap.data();
+          firstName = (userData.nombres || userData.displayName?.split(' ')[0] || email.split('@')[0]).trim();
+        }
+      }
+    } catch(dbErr) { console.warn('[ForgotPass] Firestore lookup:', dbErr); }
 
-    // 3 — EmailJS envía el correo personalizado con diseño LockIn
+    // ── 2. Generar nueva contraseña temporal ─────────────────────────
+    _forgotSetLabel('Generando acceso temporal');
+    await new Promise(r => setTimeout(r, 600)); // pequeña pausa para UX
+    const newTempPass = _genTempPassReset();
+
+    // ── 3. Guardar en Firestore si encontramos al usuario ────────────
+    if (userId && window._fbSaveData) {
+      _forgotSetLabel('Actualizando credenciales');
+      try {
+        await window._fbSaveData(userId, {
+          tempPass:       newTempPass,
+          mustChangePass: true
+        });
+      } catch(saveErr) { console.warn('[ForgotPass] Save tempPass:', saveErr); }
+    }
+
+    // ── 4. Firebase reset link (para que puedan usar la nueva pass) ──
+    try { await window._fbSendPasswordReset(email); } catch(_) {}
+
+    // ── 5. Enviar correo con contraseña temporal vía EmailJS ─────────
+    _forgotSetLabel('Enviando correo seguro');
+    await new Promise(r => setTimeout(r, 400));
+
+    const plan      = userData?.plan || 'trimestral';
+    const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
+    const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
+    const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
+
     emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
     await emailjs.send(EMAILJS_SERVICE_ID_RESET, EMAILJS_TEMPLATE_RESET_ID, {
       to_email:   email,
-      to_name:    email.split('@')[0],
+      to_name:    firstName,
       user_email: email,
-      reset_link: 'Revisa tu correo — el enlace de restablecimiento llegó en un mensaje separado de Firebase.',
+      user_pass:  newTempPass,
+      plan_label: planLabels[plan] || 'Trimestral',
+      plan_price: planPrices[plan] || '$15',
+      plan_per:   planPeriod[plan] || '3 meses',
       year:       new Date().getFullYear()
     });
 
+    // ── 6. Mostrar éxito ─────────────────────────────────────────────
     document.getElementById('forgot-success-msg').innerHTML =
-      'Revisa tu bandeja de entrada en<br><strong style="color:var(--accent);">' + email + '</strong>.<br><br>' +
-      'Usa el enlace para restablecer tu contraseña. El enlace expira en <span style="color:var(--accent);">30 minutos</span>.';
-    document.getElementById('forgot-form-state').style.display = 'none';
+      'Revisa tu bandeja de entrada en<br>' +
+      '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
+      'Inicia sesión con la contraseña temporal que te enviamos y luego ' +
+      'crea una nueva contraseña segura.';
+    document.getElementById('forgot-loading-state').style.display = 'none';
     document.getElementById('forgot-success-state').style.display = 'block';
 
   } catch(e) {
     console.error('[ForgotPassword]', e);
-    if (['auth/user-not-found','auth/invalid-email','auth/invalid-credential'].includes(e.code)) {
-      // No revelar si el correo existe o no
+    document.getElementById('forgot-loading-state').style.display = 'none';
+    document.getElementById('forgot-form-state').style.display    = 'block';
+
+    if (['auth/user-not-found','auth/invalid-email','auth/invalid-credential'].includes(e?.code)) {
+      // No revelar si el correo existe — mostrar éxito genérico igual
       document.getElementById('forgot-success-msg').innerHTML =
-        'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, recibirás las instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
-      document.getElementById('forgot-form-state').style.display = 'none';
+        'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, ' +
+        'recibirás tu contraseña temporal en breve.<br><br>Revisa también tu carpeta de spam.';
+      document.getElementById('forgot-form-state').style.display  = 'none';
       document.getElementById('forgot-success-state').style.display = 'block';
-    } else if (e.code === 'auth/too-many-requests') {
-      errEl.textContent = 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+    } else if (e?.code === 'auth/too-many-requests') {
+      document.getElementById('forgot-error').textContent = 'Demasiados intentos. Espera unos minutos.';
     } else {
-      errEl.textContent = 'Error al enviar. Intenta de nuevo.';
+      document.getElementById('forgot-error').textContent = 'Error al procesar. Intenta de nuevo.';
     }
-  } finally {
-    btn.textContent = 'ENVIAR INSTRUCCIONES →'; btn.disabled = false;
   }
 }
 </script>
