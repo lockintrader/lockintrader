@@ -7177,7 +7177,7 @@ async function enviarSugerencia() {
 //   reset link — que SÍ actualiza Firebase Auth — y avisamos al usuario.
 //
 const EMAILJS_SERVICE_ID_RESET  = 'service_65o2qmc';
-const EMAILJS_TEMPLATE_RESET_ID = 'template_gp3nbor';
+const EMAILJS_TEMPLATE_RESET_ID = 'template_612jb5c';
 const EMAILJS_PUBLIC_KEY_RESET  = 'w6n_ZnHmKE2fJ4a7O';
 
 function _forgotSetLabel(text) {
@@ -7215,7 +7215,7 @@ async function doForgotPassword() {
   try {
     // ── 1. Buscar usuario en Firestore ───────────────────────────────
     _forgotSetLabel('Buscando en el sistema');
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 500));
 
     let userId    = null;
     let userData  = null;
@@ -7237,62 +7237,54 @@ async function doForgotPassword() {
       }
     } catch(dbErr) { console.warn('[ForgotPass] Firestore lookup:', dbErr); }
 
-    _forgotSetLabel('Preparando acceso temporal');
-    await new Promise(r => setTimeout(r, 500));
+    // ── 2. Firebase reset link — la ÚNICA forma de cambiar la pass ───
+    // sendPasswordResetEmail le manda al usuario un link que actualiza
+    // Firebase Auth directamente. No necesitamos conocer la pass actual.
+    _forgotSetLabel('Generando enlace seguro');
+    await new Promise(r => setTimeout(r, 400));
+    await window._fbSendPasswordReset(email);
 
-    const plan       = userData?.plan || 'trimestral';
-    const planLabels = { trimestral: 'Trimestral', semestral: 'Semestral', anual: 'Anual' };
-    const planPrices = { trimestral: '$15', semestral: '$25', anual: '$45' };
-    const planPeriod = { trimestral: '3 meses', semestral: '6 meses', anual: '1 año' };
-
-    const existingTempPass = userData?.tempPass || null;
-
-    if (existingTempPass) {
-      // ── CASO A: Usuario tiene tempPass → reenviarla ────────────────
-      // Esta es la contraseña real en Firebase Auth. Solo la reenviamos.
-      _forgotSetLabel('Enviando contraseña temporal');
-      await new Promise(r => setTimeout(r, 400));
-
-      // Marcar mustChangePass: true por si lo habían omitido antes
-      if (userId && window._fbSaveData) {
-        try { await window._fbSaveData(userId, { mustChangePass: true }); } catch(_) {}
-      }
-
-      emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
-      await emailjs.send(EMAILJS_SERVICE_ID_RESET, EMAILJS_TEMPLATE_RESET_ID, {
-        to_email:    email,
-        to_name:     firstName,
-        user_email:  email,
-        user_pass:   existingTempPass,
-        plan_label:  planLabels[plan] || 'Trimestral',
-        plan_price:  planPrices[plan] || '$15',
-        plan_per:    planPeriod[plan] || '3 meses',
-        year:        new Date().getFullYear(),
-        // Variables extra para que el template sepa que es un reset
-        email_tipo:  'RESTABLECIMIENTO DE CONTRASEÑA',
-        email_msg:   'Recibimos una solicitud para restablecer el acceso a tu cuenta LockIn. A continuación encontrarás tu contraseña temporal:'
-      });
-
-      document.getElementById('forgot-success-msg').innerHTML =
-        'Revisa tu bandeja de entrada en<br>' +
-        '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
-        'Te enviamos tu contraseña temporal. Inicia sesión con ella y ' +
-        'crea una nueva contraseña segura.';
-
-    } else {
-      // ── CASO B: Ya cambió su contraseña → Firebase reset link ──────
-      // No tenemos la contraseña actual, Firebase debe mandar el reset link
-      _forgotSetLabel('Enviando enlace de restablecimiento');
-      await window._fbSendPasswordReset(email);
-
-      document.getElementById('forgot-success-msg').innerHTML =
-        'Revisa tu bandeja de entrada en<br>' +
-        '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
-        'Te enviamos un enlace para crear una nueva contraseña. ' +
-        '<span style="color:var(--accent);">El enlace expira en 30 minutos.</span>';
+    // ── 3. Marcar en Firestore: limpiar tempPass obsoleta ────────────
+    // Cuando regrese, si usa la nueva contraseña del link no habrá mustChangePass.
+    // Si aún tenía tempPass guardada, la limpiamos para evitar confusiones futuras.
+    if (userId && window._fbSaveData) {
+      _forgotSetLabel('Actualizando cuenta');
+      try {
+        // Limpiar tempPass obsoleta; NO marcamos mustChangePass aquí
+        // porque el usuario ya va a crear su contraseña desde el link de Firebase
+        const { deleteField } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        await setDoc(doc(window._fbDb, 'users', userId),
+          { tempPass: deleteField(), mustChangePass: false }, { merge: true });
+      } catch(e) { console.warn('[ForgotPass] Firestore cleanup:', e); }
     }
 
-    // ── Mostrar éxito ────────────────────────────────────────────────
+    // ── 4. Enviar correo de notificación vía EmailJS (diseño LockIn) ─
+    _forgotSetLabel('Enviando notificación');
+    await new Promise(r => setTimeout(r, 300));
+    try {
+      emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
+      await emailjs.send(EMAILJS_SERVICE_ID_RESET, EMAILJS_TEMPLATE_RESET_ID, {
+        to_email:   email,
+        to_name:    firstName,
+        user_email: email,
+        // user_pass queda en blanco — el link de Firebase es el que manda
+        user_pass:  '(Usa el enlace que llegó en el correo de Firebase)',
+        plan_label: 'Restablecimiento de contraseña',
+        plan_price: '',
+        plan_per:   '',
+        year:       new Date().getFullYear(),
+        email_tipo: 'RESTABLECIMIENTO DE CONTRASEÑA',
+        email_msg:  'Haz clic en el enlace que llegó en el correo de Firebase para crear tu nueva contraseña.'
+      });
+    } catch(ejsErr) { console.warn('[ForgotPass] EmailJS notify:', ejsErr); /* No bloquear si falla */ }
+
+    // ── 5. Mostrar éxito ─────────────────────────────────────────────
+    document.getElementById('forgot-success-msg').innerHTML =
+      'Revisa tu bandeja de entrada en<br>' +
+      '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
+      'Haz clic en el <span style="color:var(--accent);">enlace del correo</span> para crear tu nueva contraseña. ' +
+      'El enlace expira en <span style="color:var(--accent);">30 minutos</span>.';
     document.getElementById('forgot-loading-state').style.display = 'none';
     document.getElementById('forgot-success-state').style.display = 'block';
 
@@ -7302,7 +7294,6 @@ async function doForgotPassword() {
     document.getElementById('forgot-form-state').style.display    = 'block';
 
     if (['auth/user-not-found','auth/invalid-email','auth/invalid-credential'].includes(e?.code)) {
-      // No revelar si el correo existe
       document.getElementById('forgot-success-msg').innerHTML =
         'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, ' +
         'recibirás instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
