@@ -2428,7 +2428,7 @@ window._fbSignIn  = (email, pass) => signInWithEmailAndPassword(auth, email, pas
 window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 window._fbSignOut = () => signOut(auth);
 window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
-window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email, { url: 'https://lockintrader.com/changepassword', handleCodeInApp: false });
+window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
 window._fbMarkMustChangePass = async (email) => {
   // Busca el usuario en Firestore por email y marca mustChangePass: true
   const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
@@ -7237,21 +7237,17 @@ async function doForgotPassword() {
       }
     } catch(dbErr) { console.warn('[ForgotPass] Firestore lookup:', dbErr); }
 
-    // ── 2. Firebase reset link — la ÚNICA forma de cambiar la pass ───
-    // sendPasswordResetEmail le manda al usuario un link que actualiza
-    // Firebase Auth directamente. No necesitamos conocer la pass actual.
+    // ── 2. Firebase reset link — apunta a lockintrader.com/changepassword ──
+    // Firebase manda el correo con el link que incluye el oobCode.
+    // El link redirige a changepassword.html donde el usuario elige su nueva clave.
     _forgotSetLabel('Generando enlace seguro');
     await new Promise(r => setTimeout(r, 400));
     await window._fbSendPasswordReset(email);
 
-    // ── 3. Marcar en Firestore: limpiar tempPass obsoleta ────────────
-    // Cuando regrese, si usa la nueva contraseña del link no habrá mustChangePass.
-    // Si aún tenía tempPass guardada, la limpiamos para evitar confusiones futuras.
+    // ── 3. Limpiar tempPass en Firestore ─────────────────────────────
     if (userId && window._fbSaveData) {
       _forgotSetLabel('Actualizando cuenta');
       try {
-        // Limpiar tempPass obsoleta; NO marcamos mustChangePass aquí
-        // porque el usuario ya va a crear su contraseña desde el link de Firebase
         const { deleteField } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
         const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
         await setDoc(doc(window._fbDb, 'users', userId),
@@ -7259,27 +7255,7 @@ async function doForgotPassword() {
       } catch(e) { console.warn('[ForgotPass] Firestore cleanup:', e); }
     }
 
-    // ── 4. Enviar correo de notificación vía EmailJS (diseño LockIn) ─
-    _forgotSetLabel('Enviando notificación');
-    await new Promise(r => setTimeout(r, 300));
-    try {
-      emailjs.init(EMAILJS_PUBLIC_KEY_RESET);
-      await emailjs.send(EMAILJS_SERVICE_ID_RESET, EMAILJS_TEMPLATE_RESET_ID, {
-        to_email:   email,
-        to_name:    firstName,
-        user_email: email,
-        // user_pass queda en blanco — el link de Firebase es el que manda
-        user_pass:  '(Usa el enlace que llegó en el correo de Firebase)',
-        plan_label: 'Restablecimiento de contraseña',
-        plan_price: '',
-        plan_per:   '',
-        year:       new Date().getFullYear(),
-        email_tipo: 'RESTABLECIMIENTO DE CONTRASEÑA',
-        email_msg:  'Haz clic en el enlace que llegó en el correo de Firebase para crear tu nueva contraseña.'
-      });
-    } catch(ejsErr) { console.warn('[ForgotPass] EmailJS notify:', ejsErr); /* No bloquear si falla */ }
-
-    // ── 5. Mostrar éxito ─────────────────────────────────────────────
+    // ── 4. Mostrar éxito ─────────────────────────────────────────────
     document.getElementById('forgot-success-msg').innerHTML =
       'Revisa tu bandeja de entrada en<br>' +
       '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
