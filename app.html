@@ -2428,7 +2428,10 @@ window._fbSignIn  = (email, pass) => signInWithEmailAndPassword(auth, email, pas
 window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 window._fbSignOut = () => signOut(auth);
 window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
-window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
+window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email, {
+  url: 'https://lockintrader.com/changepassword.html',
+  handleCodeInApp: false
+});
 window._fbMarkMustChangePass = async (email) => {
   // Busca el usuario en Firestore por email y marca mustChangePass: true
   const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
