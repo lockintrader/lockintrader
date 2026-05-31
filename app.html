@@ -2428,10 +2428,7 @@ window._fbSignIn  = (email, pass) => signInWithEmailAndPassword(auth, email, pas
 window._fbSignUp  = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 window._fbSignOut = () => signOut(auth);
 window._fbUpdatePassword = (newPass) => updatePassword(auth.currentUser, newPass);
-window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email, {
-  url: 'https://lockintrader.com/changepassword.html',
-  handleCodeInApp: false
-});
+window._fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
 window._fbMarkMustChangePass = async (email) => {
   // Busca el usuario en Firestore por email y marca mustChangePass: true
   const { collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
@@ -7210,79 +7207,70 @@ async function doForgotPassword() {
   if (!email) { errEl.textContent = 'Ingresa tu correo electrónico.'; return; }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Correo no válido.'; return; }
 
-  // Mostrar loading con animación de charts
-  document.getElementById('forgot-form-state').style.display   = 'none';
+  document.getElementById('forgot-form-state').style.display    = 'none';
   document.getElementById('forgot-loading-state').style.display = 'block';
   _forgotSetLabel('Verificando cuenta');
 
   try {
-    // ── 1. Buscar usuario en Firestore ───────────────────────────────
+    // ── 1. Buscar usuario en Firestore ──────────────────────────────
     _forgotSetLabel('Buscando en el sistema');
     await new Promise(r => setTimeout(r, 500));
 
-    let userId    = null;
-    let userData  = null;
-    let firstName = email.split('@')[0];
+    let firstName = 'Trader';
+    let usuarioExiste = false;
 
     try {
       const { collection, query, where, getDocs } =
         await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-      const db = window._fbDb;
-      if (db) {
-        const q    = query(collection(db, 'users'), where('email', '==', email));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          const d  = snap.docs[0];
-          userId   = d.id;
-          userData = d.data();
-          firstName = (userData.nombres || userData.displayName?.split(' ')[0] || email.split('@')[0]).trim();
-        }
+      const db   = window._fbDb;
+      const q    = query(collection(db, 'users'), where('email', '==', email));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        usuarioExiste = true;
+        const data = snap.docs[0].data();
+        firstName  = (data.nombres || data.displayName?.split(' ')[0] || email.split('@')[0]).trim();
       }
-    } catch(dbErr) { console.warn('[ForgotPass] Firestore lookup:', dbErr); }
+    } catch(dbErr) { console.warn('[ForgotPass] Firestore:', dbErr); }
 
-    // ── 2. Firebase reset link — apunta a lockintrader.com/changepassword ──
-    // Firebase manda el correo con el link que incluye el oobCode.
-    // El link redirige a changepassword.html donde el usuario elige su nueva clave.
-    _forgotSetLabel('Generando enlace seguro');
-    await new Promise(r => setTimeout(r, 400));
-    await window._fbSendPasswordReset(email);
-
-    // ── 3. Limpiar tempPass en Firestore ─────────────────────────────
-    if (userId && window._fbSaveData) {
-      _forgotSetLabel('Actualizando cuenta');
-      try {
-        const { deleteField } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-        const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-        await setDoc(doc(window._fbDb, 'users', userId),
-          { tempPass: deleteField(), mustChangePass: false }, { merge: true });
-      } catch(e) { console.warn('[ForgotPass] Firestore cleanup:', e); }
+    // Si no existe mostramos éxito igual (no revelar si el correo está registrado)
+    if (!usuarioExiste) {
+      document.getElementById('forgot-loading-state').style.display = 'none';
+      document.getElementById('forgot-success-state').style.display = 'block';
+      document.getElementById('forgot-success-msg').innerHTML =
+        'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, ' +
+        'recibirás instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
+      return;
     }
 
-    // ── 4. Mostrar éxito ─────────────────────────────────────────────
+    // ── 2. Enviar correo via EmailJS ────────────────────────────────
+    _forgotSetLabel('Enviando correo');
+    await new Promise(r => setTimeout(r, 400));
+
+    await emailjs.send(
+      'service_65o2qmc',
+      'template_612jb5c',
+      {
+        to_name:    firstName,
+        to_email:   email,
+        user_email: email,
+        year:       new Date().getFullYear()
+      },
+      'w6n_ZnHmKE2fJ4a7O'
+    );
+
+    // ── 3. Mostrar éxito ────────────────────────────────────────────
+    document.getElementById('forgot-loading-state').style.display = 'none';
+    document.getElementById('forgot-success-state').style.display = 'block';
     document.getElementById('forgot-success-msg').innerHTML =
       'Revisa tu bandeja de entrada en<br>' +
       '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
-      'Haz clic en el <span style="color:var(--accent);">enlace del correo</span> para crear tu nueva contraseña. ' +
-      'El enlace expira en <span style="color:var(--accent);">30 minutos</span>.';
-    document.getElementById('forgot-loading-state').style.display = 'none';
-    document.getElementById('forgot-success-state').style.display = 'block';
+      'Haz clic en el <span style="color:var(--accent);">botón del correo</span> para restablecer tu contraseña.';
 
   } catch(e) {
     console.error('[ForgotPassword]', e);
     document.getElementById('forgot-loading-state').style.display = 'none';
     document.getElementById('forgot-form-state').style.display    = 'block';
-
-    if (['auth/user-not-found','auth/invalid-email','auth/invalid-credential'].includes(e?.code)) {
-      document.getElementById('forgot-success-msg').innerHTML =
-        'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, ' +
-        'recibirás instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
-      document.getElementById('forgot-form-state').style.display   = 'none';
-      document.getElementById('forgot-success-state').style.display = 'block';
-    } else if (e?.code === 'auth/too-many-requests') {
-      document.getElementById('forgot-error').textContent = 'Demasiados intentos. Espera unos minutos.';
-    } else {
-      document.getElementById('forgot-error').textContent = 'Error al procesar. Intenta de nuevo.';
-    }
+    document.getElementById('forgot-error').textContent = 'Error al enviar. Intenta de nuevo.';
   }
 }
 </script>
