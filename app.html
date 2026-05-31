@@ -7253,6 +7253,7 @@ async function doForgotPassword() {
         to_name:    firstName,
         to_email:   email,
         user_email: email,
+        reset_link: 'https://lockintrader.com/changepassword.html?email=' + encodeURIComponent(email),
         year:       new Date().getFullYear()
       },
       'w6n_ZnHmKE2fJ4a7O'
