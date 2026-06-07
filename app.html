@@ -7168,14 +7168,19 @@ async function enviarSugerencia() {
 </script>
 
 <script>
-// ══ RECUPERAR CONTRASEÑA ════════════════════════════════════════════
+// ══ RECUPERAR CONTRASEÑA — OPCIÓN B (Token seguro) ══════════════════
 //
-// LÓGICA CORRECTA:
-//   La contraseña que Firebase Auth guarda para el usuario ES la tempPass
-//   que se generó al registrarse (y que el admin le envió).
-//   Si el usuario AÚN tiene esa tempPass (no la ha cambiado), la reenviamos.
-//   Si ya la cambió (tempPass fue borrada de Firestore), mandamos un Firebase
-//   reset link — que SÍ actualiza Firebase Auth — y avisamos al usuario.
+// FLUJO:
+//   1. Usuario ingresa su correo en el modal.
+//   2. Se busca el usuario en Firestore.
+//   3. Se genera un token UUID + expiración de 1 hora y se guarda en Firestore
+//      en el documento del usuario: { resetToken, resetTokenExpires }.
+//   4. Se envía el link vía EmailJS:
+//      https://lockintrader.com/changepassword?token=<UUID>
+//   5. changepassword.html lee el token, lo valida contra Firestore,
+//      obtiene el email, y permite cambiar la contraseña usando
+//      signInWithEmailAndPassword (con tempPass si existe) o
+//      sendPasswordResetEmail como fallback.
 //
 const EMAILJS_SERVICE_ID_RESET  = 'service_65o2qmc';
 const EMAILJS_TEMPLATE_RESET_ID = 'template_612jb5c';
@@ -7190,7 +7195,7 @@ function openForgotModal() {
   document.getElementById('forgot-modal-overlay').style.display = 'flex';
   document.getElementById('forgot-email').value = '';
   document.getElementById('forgot-error').textContent = '';
-  document.getElementById('forgot-form-state').style.display   = 'block';
+  document.getElementById('forgot-form-state').style.display    = 'block';
   document.getElementById('forgot-loading-state').style.display = 'none';
   document.getElementById('forgot-success-state').style.display = 'none';
   setTimeout(() => document.getElementById('forgot-email').focus(), 120);
@@ -7217,56 +7222,72 @@ async function doForgotPassword() {
     _forgotSetLabel('Buscando en el sistema');
     await new Promise(r => setTimeout(r, 500));
 
-    let firstName = 'Trader';
+    let firstName    = 'Trader';
     let usuarioExiste = false;
+    let userDocId    = null;
 
     try {
-      const { collection, query, where, getDocs } =
+      const { collection, query, where, getDocs, doc, setDoc } =
         await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
       const db   = window._fbDb;
       const q    = query(collection(db, 'users'), where('email', '==', email));
       const snap = await getDocs(q);
+
       if (!snap.empty) {
         usuarioExiste = true;
-        const data = snap.docs[0].data();
-        firstName  = (data.nombres || data.displayName?.split(' ')[0] || email.split('@')[0]).trim();
-      }
-    } catch(dbErr) { console.warn('[ForgotPass] Firestore:', dbErr); }
+        const docSnap = snap.docs[0];
+        userDocId     = docSnap.id;
+        const data    = docSnap.data();
+        firstName     = (data.nombres || data.displayName?.split(' ')[0] || email.split('@')[0]).trim();
 
-    // Si no existe mostramos éxito igual (no revelar si el correo está registrado)
-    if (!usuarioExiste) {
-      document.getElementById('forgot-loading-state').style.display = 'none';
-      document.getElementById('forgot-success-state').style.display = 'block';
+        // ── 2. Generar token seguro con expiración de 1 hora ───────
+        _forgotSetLabel('Generando enlace seguro');
+        await new Promise(r => setTimeout(r, 300));
+
+        const resetToken   = crypto.randomUUID();
+        const expiresAt    = Date.now() + 60 * 60 * 1000; // 1 hora
+
+        await setDoc(doc(db, 'users', userDocId), {
+          resetToken,
+          resetTokenExpires: expiresAt
+        }, { merge: true });
+
+        // ── 3. Enviar correo con token ──────────────────────────────
+        _forgotSetLabel('Enviando correo');
+        await new Promise(r => setTimeout(r, 400));
+
+        const resetLink = 'https://lockintrader.com/changepassword?token=' + encodeURIComponent(resetToken);
+
+        await emailjs.send(
+          EMAILJS_SERVICE_ID_RESET,
+          EMAILJS_TEMPLATE_RESET_ID,
+          {
+            to_name:    firstName,
+            to_email:   email,
+            user_email: email,
+            reset_link: resetLink,
+            year:       new Date().getFullYear()
+          },
+          EMAILJS_PUBLIC_KEY_RESET
+        );
+      }
+    } catch(dbErr) { console.warn('[ForgotPass] Firestore/EmailJS:', dbErr); }
+
+    // Siempre mostramos éxito (no revelar si el correo existe o no)
+    document.getElementById('forgot-loading-state').style.display = 'none';
+    document.getElementById('forgot-success-state').style.display = 'block';
+
+    if (usuarioExiste) {
+      document.getElementById('forgot-success-msg').innerHTML =
+        'Revisa tu bandeja de entrada en<br>' +
+        '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
+        'Haz clic en el <span style="color:var(--accent);">botón del correo</span> para restablecer tu contraseña.<br>' +
+        '<span style="font-size:9px;color:var(--text3);">El enlace expira en 1 hora.</span>';
+    } else {
       document.getElementById('forgot-success-msg').innerHTML =
         'Si existe una cuenta con <strong style="color:var(--accent);">' + email + '</strong>, ' +
         'recibirás instrucciones en breve.<br><br>Revisa también tu carpeta de spam.';
-      return;
     }
-
-    // ── 2. Enviar correo via EmailJS ────────────────────────────────
-    _forgotSetLabel('Enviando correo');
-    await new Promise(r => setTimeout(r, 400));
-
-    await emailjs.send(
-      'service_65o2qmc',
-      'template_612jb5c',
-      {
-        to_name:    firstName,
-        to_email:   email,
-        user_email: email,
-        reset_link: 'https://lockintrader.com/changepassword?email=' + encodeURIComponent(email),
-        year:       new Date().getFullYear()
-      },
-      'w6n_ZnHmKE2fJ4a7O'
-    );
-
-    // ── 3. Mostrar éxito ────────────────────────────────────────────
-    document.getElementById('forgot-loading-state').style.display = 'none';
-    document.getElementById('forgot-success-state').style.display = 'block';
-    document.getElementById('forgot-success-msg').innerHTML =
-      'Revisa tu bandeja de entrada en<br>' +
-      '<strong style="color:var(--accent);">' + email + '</strong><br><br>' +
-      'Haz clic en el <span style="color:var(--accent);">botón del correo</span> para restablecer tu contraseña.';
 
   } catch(e) {
     console.error('[ForgotPassword]', e);
