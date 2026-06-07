@@ -7227,11 +7227,19 @@ async function doForgotPassword() {
     let userDocId    = null;
 
     try {
-      const { collection, query, where, getDocs, doc, setDoc } =
-        await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-      const db   = window._fbDb;
-      const q    = query(collection(db, 'users'), where('email', '==', email));
-      const snap = await getDocs(q);
+      const fsModule = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const fsCollection = fsModule.collection;
+      const fsQuery      = fsModule.query;
+      const fsWhere      = fsModule.where;
+      const fsGetDocs    = fsModule.getDocs;
+      const fsDoc        = fsModule.doc;
+      const fsSetDoc     = fsModule.setDoc;
+
+      const db = window._fbDb;
+      if (!db) throw new Error('Firebase no inicializado. Recarga la página e intenta de nuevo.');
+
+      const q    = fsQuery(fsCollection(db, 'users'), fsWhere('email', '==', email));
+      const snap = await fsGetDocs(q);
 
       if (!snap.empty) {
         usuarioExiste = true;
@@ -7244,13 +7252,11 @@ async function doForgotPassword() {
         _forgotSetLabel('Generando enlace seguro');
         await new Promise(r => setTimeout(r, 300));
 
-        const resetToken   = crypto.randomUUID();
-        const expiresAt    = Date.now() + 60 * 60 * 1000; // 1 hora
+        const resetToken = crypto.randomUUID();
+        const expiresAt  = Date.now() + 60 * 60 * 1000; // 1 hora
 
-        await setDoc(doc(db, 'users', userDocId), {
-          resetToken,
-          resetTokenExpires: expiresAt
-        }, { merge: true });
+        const userRef = fsDoc(db, 'users', userDocId);
+        await fsSetDoc(userRef, { resetToken, resetTokenExpires: expiresAt }, { merge: true });
 
         // ── 3. Enviar correo con token ──────────────────────────────
         _forgotSetLabel('Enviando correo');
@@ -7271,7 +7277,10 @@ async function doForgotPassword() {
           EMAILJS_PUBLIC_KEY_RESET
         );
       }
-    } catch(dbErr) { console.warn('[ForgotPass] Firestore/EmailJS:', dbErr); }
+    } catch(dbErr) {
+      console.error('[ForgotPass] Firestore/EmailJS:', dbErr);
+      throw dbErr;
+    }
 
     // Siempre mostramos éxito (no revelar si el correo existe o no)
     document.getElementById('forgot-loading-state').style.display = 'none';
