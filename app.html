@@ -3215,25 +3215,37 @@ window._onFirebaseLogin = async (user) => {
   // Solo persistir email si el doc existe (no recrea doc borrado)
   try { await window._fbSaveData(user.uid, { email: user.email }); } catch(e) {}
 
+  // Acceso al formulario concedido — limpiar flags del botón de login
+  _manualLogin = false;
+  const loginBtnOk = document.querySelector('#form-login .login-btn');
+  if (loginBtnOk) { loginBtnOk.disabled = false; loginBtnOk.style.opacity = ''; }
+  document.getElementById('login-page').style.display = 'none';
+
+  // Qué mostrar después de resolver la contraseña (si aplicaba)
+  const proceedAfterPassword = () => {
+    if (userData.activated !== true) {
+      showPendingGate(user.email);
+    } else {
+      showWelcomeSplash(user.email, displayName);
+    }
+  };
+
+  // GATE 1.5: contraseña pendiente de cambio — se evalúa ANTES del gate de
+  // activación, para que un usuario nuevo (activated:'pending') pueda crear
+  // su contraseña usando el link de "olvidaste tu contraseña" / primer login.
+  if (userData.mustChangePass) {
+    showChangePassModal(proceedAfterPassword, userData.tempPass || null);
+    return;
+  }
+
   // GATE 2: no aprobado — activated debe ser explícitamente true
   if (userData.activated !== true) {
-    _manualLogin = false;
-    document.getElementById('login-page').style.display = 'none';
     showPendingGate(user.email);
     return;
   }
 
-  // Acceso concedido — limpiar flags
-  _manualLogin = false;
-  const loginBtnOk = document.querySelector('#form-login .login-btn');
-  if (loginBtnOk) { loginBtnOk.disabled = false; loginBtnOk.style.opacity = ''; }
-
-  document.getElementById('login-page').style.display = 'none';
-  if (userData.mustChangePass) {
-    showChangePassModal(() => showWelcomeSplash(user.email, displayName), userData.tempPass || null);
-  } else {
-    showWelcomeSplash(user.email, displayName);
-  }
+  // Acceso concedido
+  showWelcomeSplash(user.email, displayName);
 };
 
 function showPendingGate(email) {
