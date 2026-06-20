@@ -478,7 +478,31 @@
     .account-bar-item { min-width: unset !important; }
 
     /* DM body height adjust */
-    .dm-body { height: calc(100vh - 220px) !important; }
+  
+  /* ── Readonly inline panel ── */
+  @keyframes dro-fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .dro-ikpi {
+    background:var(--bg3); border:0.5px solid var(--border2);
+    border-radius:10px; padding:14px 16px;
+  }
+  .dro-ikpi-label { font-size:8px; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:6px; }
+  .dro-ikpi-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; line-height:1; }
+  .dro-ikpi-sub { font-size:8px; color:var(--text3); margin-top:4px; }
+  .dro-itrade {
+    background:var(--bg3); border:0.5px solid var(--border2);
+    border-radius:10px; padding:13px 15px; margin-bottom:7px;
+    display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+    cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .dro-itrade:hover { border-color:rgba(180,190,210,0.4); background:rgba(255,255,255,0.02); }
+  .dro-itrade.win  { border-left:2.5px solid rgba(74,222,128,0.5); }
+  .dro-itrade.loss { border-left:2.5px solid rgba(255,84,112,0.5); }
+  .dro-itrade.be   { border-left:2.5px solid rgba(180,190,210,0.25); }
+  .dro-rule-bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .dro-rule-bar-track { flex:1; height:5px; background:var(--bg3); border-radius:999px; overflow:hidden; }
+  .dro-rule-bar-fill { height:100%; border-radius:999px; transition:width 0.6s ease; }
+
+  .dm-body { height: calc(100vh - 220px) !important; }
 
     /* Chart container */
     #tv-widget-container, #chartContainer { height: 300px !important; }
@@ -682,33 +706,36 @@
   /* ── Trade detail modal (vista compacta de un trade guardado) ── */
   #trade-detail-overlay {
     display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.82); z-index: 180;
+    background: rgba(0,0,0,0.93); z-index: 180;
     align-items: center; justify-content: center; padding: 20px;
-    backdrop-filter: blur(4px);
+    overflow: hidden;
   }
   #trade-detail-overlay.show { display: flex; }
+
+  /* Animación de velas en el FONDO del overlay (negro) */
+  .td-overlay-bg { position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .td-overlay-candles {
+    position:absolute; left:0; right:0; bottom:0; width:100%; height:55%;
+    opacity:0.10; animation: tdCandleFloat 8s ease-in-out infinite;
+  }
+  .td-overlay-candles .wick { stroke:#8a93a3; stroke-width:1.4; }
+  .td-overlay-scan {
+    position:absolute; top:-30%; left:-25%; width:35%; height:160%;
+    background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.04) 50%, transparent 65%);
+    animation: tdScan 9s linear infinite;
+  }
+  @keyframes tdCandleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  @keyframes tdScan { 0% { transform: translateX(-10%); } 100% { transform: translateX(340%); } }
+
+  /* Modal limpio, sin animaciones internas */
   #trade-detail-modal {
-    background:
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 30px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 30px),
-      radial-gradient(ellipse at 10% 0%, rgba(122,170,255,0.09), transparent 55%),
-      radial-gradient(ellipse at 100% 100%, rgba(74,222,128,0.08), transparent 50%),
-      var(--bg2);
+    background: var(--bg2);
     border: 1px solid var(--border2);
     border-radius: 14px; width: 96vw; max-width: 940px;
     max-height: 92vh; overflow: hidden; padding: 22px 26px;
-    position: relative; display: flex; flex-direction: column;
+    position: relative; z-index: 1; display: flex; flex-direction: column;
   }
-  .td-bg-decor { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
-  .td-bg-candles { position:absolute; left:0; right:0; bottom:0; width:100%; height:48%; opacity:0.16; animation: tdCandleFloat 8s ease-in-out infinite; }
-  .td-bg-candles .wick { stroke:#8a93a3; stroke-width:1.4; }
-  .td-bg-scan {
-    position:absolute; top:-30%; left:-25%; width:45%; height:160%;
-    background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.06) 50%, transparent 65%);
-    animation: tdScan 7s linear infinite;
-  }
-  @keyframes tdCandleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  @keyframes tdScan { 0% { transform: translateX(-10%); } 100% { transform: translateX(320%); } }
+  .td-bg-decor { display:none; }
   .td-header, .td-body { position:relative; z-index:1; }
   .td-close {
     position: absolute; top: 14px; right: 14px;
@@ -737,12 +764,27 @@
   .td-stat { background:var(--bg3); border:1px solid var(--border2); border-radius:10px; padding:14px; text-align:center; }
   .td-stat-label { font-size:9px; color:var(--text3); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px; }
   .td-stat-val { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--text); }
-  .td-note-label { font-size:9px; color:var(--text3); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px; }
-  .td-note { background:var(--bg3); border-radius:10px; padding:14px 16px; font-size:12px; color:var(--text2); line-height:1.7; border-left:2px solid var(--border2); white-space:pre-wrap; overflow-y:auto; flex:1; min-height:0; }
+  /* Meta info: fecha y cuenta en el header */
+  .td-meta-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; width:100%; }
+  .td-meta-item { display:flex; align-items:center; gap:5px; font-family:'Space Mono',monospace; font-size:9px; color:var(--text3); letter-spacing:0.1em; }
+  .td-meta-val { color:#8B90A8; }
+
+  /* Sección reglas dentro del modal */
+  .td-rules-wrap { flex-shrink:0; }
+  .td-rules-label { font-size:9px; color:#8B90A8; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px; }
+  .td-rules-list { display:flex; flex-direction:column; gap:5px; }
+  .td-rule-row { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:7px; background:var(--bg3); border:0.5px solid var(--border2); }
+  .td-rule-check { width:14px; height:14px; border-radius:3px; border:1.5px solid var(--border2); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:9px; }
+  .td-rule-check.ok { background:rgba(74,222,128,0.15); border-color:rgba(74,222,128,0.4); color:#4ADE80; }
+  .td-rule-check.fail { background:rgba(255,84,112,0.10); border-color:rgba(255,84,112,0.3); color:var(--red); }
+  .td-rule-text { font-size:10px; color:#C8CDDE; flex:1; line-height:1.4; }
+  .td-rules-empty { font-size:10px; color:var(--text3); font-style:italic; padding:4px 0; }
+  .td-note-label { font-size:9px; color:#8B90A8; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px; }
+  .td-note { background:var(--bg3); border-radius:10px; padding:14px 16px; font-size:12px; color:#C8CDDE; line-height:1.7; border-left:2px solid #2E2E48; white-space:pre-wrap; overflow-y:auto; flex:1; min-height:0; }
   .td-note-wrap { display:flex; flex-direction:column; flex:1; min-height:0; }
   .td-back-btn {
-    width:100%; padding:13px; border-radius:8px; border:0.5px solid var(--border2);
-    background:transparent; color:var(--text2); font-size:11px; cursor:pointer;
+    width:100%; padding:13px; border-radius:8px; border:0.5px solid #2E2E48;
+    background:transparent; color:#C8CDDE; font-size:11px; cursor:pointer;
     font-family:'Space Mono',monospace; letter-spacing:0.12em; transition:all .15s; flex-shrink:0;
   }
   .td-back-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -896,6 +938,7 @@
     height: 100%;
     scrollbar-width: thin;
     scrollbar-color: var(--border2) transparent;
+    position: relative;
   }
   .dm-col-left::-webkit-scrollbar { width: 5px; }
   .dm-col-left::-webkit-scrollbar-track { background: transparent; }
@@ -2250,9 +2293,55 @@
       <!-- ── LEFT: Trade inputs ── -->
       <div class="dm-col-left">
 
-        <!-- READ-ONLY BANNER -->
-        <div id="dm-readonly-banner" style="display:none; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border2); border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:11px; color:var(--text3); letter-spacing:0.06em;">
-          <span style="font-size:9px;letter-spacing:0.08em;">SOLO LECTURA</span> Este día ya no puede editarse
+        <!-- READ-ONLY INLINE PANEL -->
+        <div id="dm-readonly-banner" style="display:none; position:absolute; inset:0; z-index:10; overflow:hidden;">
+          <!-- Fondo animado velas -->
+          <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;">
+            <div id="dro-inline-scan" style="position:absolute;top:-30%;left:-20%;width:30%;height:160%;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,0.04) 50%,transparent 65%);animation:tdScan 11s linear infinite;"></div>
+            <svg style="position:absolute;left:0;right:0;bottom:0;width:100%;height:50%;opacity:0.09;animation:tdCandleFloat 10s ease-in-out infinite;" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <line stroke="#8a93a3" stroke-width="1.2" x1="50" y1="140" x2="50" y2="230"/><rect x="38" y="155" width="24" height="45" rx="1.5" fill="#FF5470"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="120" y1="110" x2="120" y2="195"/><rect x="108" y="128" width="24" height="40" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="190" y1="95" x2="190" y2="185"/><rect x="178" y="115" width="24" height="48" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="260" y1="120" x2="260" y2="210"/><rect x="248" y="140" width="24" height="42" rx="1.5" fill="#FF5470"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="330" y1="100" x2="330" y2="190"/><rect x="318" y="118" width="24" height="44" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="400" y1="85" x2="400" y2="170"/><rect x="388" y="102" width="24" height="38" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="470" y1="115" x2="470" y2="205"/><rect x="458" y="130" width="24" height="50" rx="1.5" fill="#FF5470"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="540" y1="90" x2="540" y2="180"/><rect x="528" y="108" width="24" height="42" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="610" y1="105" x2="610" y2="200"/><rect x="598" y="122" width="24" height="46" rx="1.5" fill="#FF5470"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="680" y1="80" x2="680" y2="165"/><rect x="668" y="98" width="24" height="40" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="750" y1="110" x2="750" y2="200"/><rect x="738" y="128" width="24" height="44" rx="1.5" fill="#4ADE80"/>
+              <line stroke="#8a93a3" stroke-width="1.2" x1="820" y1="95" x2="820" y2="185"/><rect x="808" y="112" width="24" height="40" rx="1.5" fill="#FF5470"/>
+            </svg>
+          </div>
+          <!-- Contenido del panel -->
+          <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:24px 28px;gap:18px;overflow-y:auto;animation:dro-fadeIn 0.4s ease;">
+            <!-- Título + badge -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0;">
+              <div>
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:#555870;letter-spacing:0.14em;margin-bottom:6px;">SOLO LECTURA · RESUMEN DEL DÍA</div>
+                <div id="dro-inline-title" style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);letter-spacing:0.01em;line-height:1.1;"></div>
+                <div id="dro-inline-acct" style="font-family:'Space Mono',monospace;font-size:9px;color:#555870;letter-spacing:0.1em;margin-top:5px;"></div>
+              </div>
+              <div id="dro-inline-pnl-badge" style="text-align:right;flex-shrink:0;"></div>
+            </div>
+            <!-- KPIs -->
+            <div id="dro-inline-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex-shrink:0;"></div>
+            <!-- Separador -->
+            <div style="height:1px;background:var(--border);flex-shrink:0;"></div>
+            <!-- Sección de reglas globales del día -->
+            <div id="dro-inline-rules-section" style="flex-shrink:0;display:none;">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">ADHERENCIA A REGLAS</div>
+              <div id="dro-inline-rules-bar"></div>
+              <div style="height:1px;background:var(--border);margin-top:14px;"></div>
+            </div>
+            <!-- Nota del día / journal -->
+            <div id="dro-inline-journal" style="flex-shrink:0;display:none;">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">NOTA DEL DÍA</div>
+              <div id="dro-inline-journal-text" style="font-size:11px;color:#C8CDDE;line-height:1.7;background:var(--bg3);border-radius:8px;padding:12px 14px;border-left:2px solid #2E2E48;white-space:pre-wrap;"></div>
+            </div>
+            <!-- P&L cuenta global -->
+            <div id="dro-inline-account" style="margin-top:auto;flex-shrink:0;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;"></div>
+          </div>
         </div>
 
         <div id="dm-trade-form">
@@ -2477,10 +2566,10 @@
 
 <!-- TRADE DETAIL MODAL -->
 <div id="trade-detail-overlay" onclick="closeTradeDetailModal(event)">
-  <div id="trade-detail-modal" onclick="event.stopPropagation()">
-    <div class="td-bg-decor" aria-hidden="true">
-      <div class="td-bg-scan"></div>
-      <svg class="td-bg-candles" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Animación de velas en el fondo negro del overlay -->
+  <div class="td-overlay-bg" aria-hidden="true">
+    <div class="td-overlay-scan"></div>
+    <svg class="td-overlay-candles" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
         <line class="wick" x1="28.1" y1="158.8" x2="28.1" y2="218.5"/>
         <rect x="16.3" y="165.6" width="23.6" height="33.8" rx="1.5" fill="#FF5470"/>
         <line class="wick" x1="84.4" y1="141.1" x2="84.4" y2="187.7"/>
@@ -2513,8 +2602,9 @@
         <rect x="803.8" y="127.1" width="23.6" height="26.7" rx="1.5" fill="#FF5470"/>
         <line class="wick" x1="871.9" y1="116.8" x2="871.9" y2="187.7"/>
         <rect x="860.1" y="131.6" width="23.6" height="36.0" rx="1.5" fill="#4ADE80"/>
-      </svg>
-    </div>
+    </svg>
+  </div>
+  <div id="trade-detail-modal" onclick="event.stopPropagation()">
     <button class="td-close" onclick="closeTradeDetailModal()">✕</button>
     <div class="td-header" id="td-header"></div>
     <div class="td-body" id="td-body">
@@ -2528,6 +2618,10 @@
             <div class="td-stat-label">P&amp;L</div>
             <div class="td-stat-val" id="td-pnl">—</div>
           </div>
+        </div>
+        <div class="td-rules-wrap" id="td-rules-wrap" style="display:none;">
+          <div class="td-rules-label">REGLAS DEL TRADE</div>
+          <div class="td-rules-list" id="td-rules-list"></div>
         </div>
         <div class="td-note-wrap" id="td-note-wrap" style="display:none;">
           <div class="td-note-label">NOTA DEL TRADE</div>
@@ -5327,7 +5421,8 @@ function refreshDayModal() {
   const readonlyBanner = document.getElementById('dm-readonly-banner');
   if (locked) {
     tradeForm.style.display = 'none';
-    if (readonlyBanner) readonlyBanner.style.display = 'flex';
+    if (readonlyBanner) readonlyBanner.style.display = 'block';
+    setTimeout(() => renderDayReadonlyInline(dateStr), 60);
   } else {
     tradeForm.style.display = '';
     if (readonlyBanner) readonlyBanner.style.display = 'none';
@@ -6123,11 +6218,30 @@ function openTradeDetailModal(tradeId) {
 
   const pnlColor = t.pnl > 0 ? '#4ADE80' : (t.pnl < 0 ? 'var(--red)' : 'var(--text2)');
 
+  // Fecha formateada
+  const tradeDate = t.date ? (() => {
+    const [y,m,d] = t.date.split('-');
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+  })() : '';
+
+  // ID de cuenta
+  const acctId = (typeof accountConfig !== 'undefined' && accountConfig && accountConfig.id) ? accountConfig.id : '';
+  const acctFirm = (typeof accountConfig !== 'undefined' && accountConfig && accountConfig.firm) ? accountConfig.firm : '';
+
   document.getElementById('td-header').innerHTML = `
-    <span class="td-trade-num">TRADE #${tradeNum}</span>
-    <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
-    <span style="font-weight:600;color:#e0e0e0;font-size:13px;">${t.symbol}</span>
-    <span class="badge ${t.result}">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[t.result]||t.result}</span>
+    <div style="display:flex;flex-direction:column;gap:4px;width:100%;padding-right:36px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span class="td-trade-num">TRADE #${tradeNum}</span>
+        <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
+        <span style="font-weight:600;color:#e0e0e0;font-size:13px;">${t.symbol}</span>
+        <span class="badge ${t.result}">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[t.result]||t.result}</span>
+      </div>
+      <div class="td-meta-row">
+        ${tradeDate ? `<span class="td-meta-item">📅 <span class="td-meta-val">${tradeDate}</span></span>` : ''}
+        ${acctId ? `<span class="td-meta-item">🔑 <span class="td-meta-val">${acctId}${acctFirm ? ' · ' + acctFirm : ''}</span></span>` : ''}
+      </div>
+    </div>
   `;
 
   // Mostrar PUNTOS o TICKS tal como los registró el usuario.
@@ -6154,6 +6268,32 @@ function openTradeDetailModal(tradeId) {
   const pnlEl = document.getElementById('td-pnl');
   pnlEl.textContent = (t.pnl >= 0 ? '+' : '') + '$' + Math.abs(t.pnl).toLocaleString();
   pnlEl.style.color = pnlColor;
+
+  // ── Reglas del trade ──
+  const rulesWrap = document.getElementById('td-rules-wrap');
+  const rulesList = document.getElementById('td-rules-list');
+  loadRules();
+  // Nota: JSON serializa claves como string, por eso usamos String(r.id) para la comparación
+  const rc = t.rulesChecked || {};
+  const rcHasData = Object.keys(rc).length > 0;
+  if (tradingRules.length) {
+    rulesWrap.style.display = '';
+    if (rcHasData) {
+      rulesList.innerHTML = tradingRules.map(r => {
+        const key = String(r.id);
+        const checked = rc[key] === true || rc[r.id] === true;
+        return `<div class="td-rule-row">
+          <div class="td-rule-check ${checked ? 'ok' : 'fail'}">${checked ? '✓' : '✕'}</div>
+          <div class="td-rule-text">${r.text}</div>
+        </div>`;
+      }).join('');
+    } else {
+      rulesList.innerHTML = '<div class="td-rules-empty">Reglas no registradas para este trade</div>';
+    }
+  } else {
+    rulesWrap.style.display = 'none';
+    rulesList.innerHTML = '';
+  }
 
   const hasNote = t.tradeNote && t.tradeNote.trim();
   document.getElementById('td-note-wrap').style.display = hasNote ? '' : 'none';
@@ -7534,6 +7674,449 @@ if (typeof switchPage === 'function') {
     if (_pageToMbn[page]) mbnSetActive(_pageToMbn[page]);
     mobileCloseSidebar();
   };
+}
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- MODAL MODO LECTURA — Resumen del día                          -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<style>
+#day-readonly-overlay {
+  display:none; position:fixed; inset:0; z-index:190;
+  background:rgba(0,0,0,0.88); align-items:center; justify-content:center;
+  padding:16px; overflow:hidden;
+}
+#day-readonly-overlay.show { display:flex; }
+
+/* Fondo animado igual al trade detail */
+.dro-bg { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.dro-bg-scan {
+  position:absolute; top:-30%; left:-20%; width:30%; height:160%;
+  background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,0.03) 50%,transparent 65%);
+  animation:tdScan 11s linear infinite;
+}
+.dro-bg-candles {
+  position:absolute; left:0; right:0; bottom:0; width:100%; height:45%;
+  opacity:0.08; animation:tdCandleFloat 10s ease-in-out infinite;
+}
+.dro-bg-candles .wick { stroke:#8a93a3; stroke-width:1.2; }
+
+#day-readonly-modal {
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  width:100%; max-width:820px;
+  max-height:90vh;
+  display:flex; flex-direction:column;
+  position:relative; z-index:1;
+  overflow:hidden;
+}
+
+/* Header del modal */
+.dro-header {
+  padding:20px 24px 0;
+  display:flex; flex-direction:column; gap:14px; flex-shrink:0;
+}
+.dro-title-row {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+}
+.dro-title {
+  font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
+  color:var(--text); letter-spacing:0.02em; line-height:1.2;
+}
+.dro-subtitle {
+  font-family:'Space Mono',monospace; font-size:9px; color:var(--text3);
+  letter-spacing:0.12em; margin-top:4px;
+}
+.dro-close {
+  background:none; border:1px solid var(--border2); color:var(--text2);
+  width:28px; height:28px; border-radius:7px; cursor:pointer;
+  font-size:12px; display:flex; align-items:center; justify-content:center;
+  transition:all .15s; flex-shrink:0;
+}
+.dro-close:hover { border-color:var(--red); color:var(--red); }
+
+/* KPIs del día */
+.dro-kpi-row {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+  padding:0 24px;
+}
+.dro-kpi {
+  background:var(--bg3); border:0.5px solid var(--border2);
+  border-radius:10px; padding:12px 14px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.dro-kpi-label {
+  font-size:8px; color:var(--text3); letter-spacing:0.12em;
+  text-transform:uppercase; margin-bottom:6px;
+}
+.dro-kpi-val {
+  font-family:'Syne',sans-serif; font-size:20px; font-weight:800;
+  line-height:1;
+}
+.dro-kpi-sub { font-size:8px; color:var(--text3); margin-top:4px; }
+
+/* Divider */
+.dro-divider {
+  height:1px; background:var(--border); margin:0 24px; flex-shrink:0;
+}
+
+/* Lista de trades */
+.dro-trades-section {
+  padding:16px 24px 20px;
+  overflow-y:auto; flex:1; min-height:0;
+}
+.dro-section-label {
+  font-size:9px; color:var(--text3); letter-spacing:0.14em;
+  text-transform:uppercase; margin-bottom:12px;
+}
+.dro-trade-card {
+  background:var(--bg3); border:0.5px solid var(--border2);
+  border-radius:10px; padding:14px 16px; margin-bottom:8px;
+  cursor:pointer; transition:border-color .15s, background .15s;
+  display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+}
+.dro-trade-card:hover {
+  border-color:rgba(180,190,210,0.35);
+  background:rgba(255,255,255,0.02);
+}
+.dro-trade-card:last-child { margin-bottom:0; }
+.dro-trade-num {
+  font-family:'Space Mono',monospace; font-size:9px; font-weight:700;
+  color:var(--text3); letter-spacing:0.12em; min-width:52px;
+}
+.dro-trade-info { display:flex; flex-direction:column; gap:5px; }
+.dro-trade-badges { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.dro-trade-meta { font-size:9px; color:var(--text3); letter-spacing:0.04em; }
+.dro-trade-note-preview {
+  font-size:9px; color:#8B90A8; margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:340px;
+}
+.dro-trade-pnl {
+  font-family:'Syne',sans-serif; font-size:18px; font-weight:700;
+  text-align:right; white-space:nowrap;
+}
+.dro-trade-pnl-pts {
+  font-size:9px; color:var(--text3); text-align:right; margin-top:3px;
+  font-family:'Space Mono',monospace;
+}
+/* Barra lateral de color por resultado */
+.dro-trade-card.win  { border-left:2.5px solid rgba(74,222,128,0.5); }
+.dro-trade-card.loss { border-left:2.5px solid rgba(255,84,112,0.5); }
+.dro-trade-card.be   { border-left:2.5px solid rgba(180,190,210,0.3); }
+
+/* Footer — info de cuenta */
+.dro-footer {
+  border-top:1px solid var(--border); padding:12px 24px;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0; gap:12px; flex-wrap:wrap;
+}
+.dro-acct-info {
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.dro-acct-chip {
+  font-family:'Space Mono',monospace; font-size:9px;
+  color:var(--text3); letter-spacing:0.08em;
+}
+.dro-acct-chip span { color:#8B90A8; margin-left:4px; }
+</style>
+
+<div id="day-readonly-overlay" onclick="closeDayReadonlyModal(event)">
+  <!-- Fondo animado -->
+  <div class="dro-bg" aria-hidden="true">
+    <div class="dro-bg-scan"></div>
+    <svg class="dro-bg-candles" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <line class="wick" x1="50" y1="140" x2="50" y2="230"/><rect x="38" y="155" width="24" height="45" rx="1.5" fill="#FF5470"/>
+      <line class="wick" x1="120" y1="110" x2="120" y2="195"/><rect x="108" y="128" width="24" height="40" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="190" y1="95" x2="190" y2="185"/><rect x="178" y="115" width="24" height="48" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="260" y1="120" x2="260" y2="210"/><rect x="248" y="140" width="24" height="42" rx="1.5" fill="#FF5470"/>
+      <line class="wick" x1="330" y1="100" x2="330" y2="190"/><rect x="318" y="118" width="24" height="44" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="400" y1="85" x2="400" y2="170"/><rect x="388" y="102" width="24" height="38" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="470" y1="115" x2="470" y2="205"/><rect x="458" y="130" width="24" height="50" rx="1.5" fill="#FF5470"/>
+      <line class="wick" x1="540" y1="90" x2="540" y2="180"/><rect x="528" y="108" width="24" height="42" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="610" y1="105" x2="610" y2="200"/><rect x="598" y="122" width="24" height="46" rx="1.5" fill="#FF5470"/>
+      <line class="wick" x1="680" y1="80" x2="680" y2="165"/><rect x="668" y="98" width="24" height="40" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="750" y1="110" x2="750" y2="200"/><rect x="738" y="128" width="24" height="44" rx="1.5" fill="#4ADE80"/>
+      <line class="wick" x1="820" y1="95" x2="820" y2="185"/><rect x="808" y="112" width="24" height="40" rx="1.5" fill="#FF5470"/>
+    </svg>
+  </div>
+
+  <div id="day-readonly-modal" onclick="event.stopPropagation()">
+    <!-- Header -->
+    <div class="dro-header">
+      <div class="dro-title-row">
+        <div>
+          <div class="dro-title" id="dro-title">— / — / —</div>
+          <div class="dro-subtitle" id="dro-subtitle">RESUMEN DEL DÍA · MODO LECTURA</div>
+        </div>
+        <button class="dro-close" onclick="closeDayReadonlyModal()">✕</button>
+      </div>
+      <!-- KPIs -->
+      <div class="dro-kpi-row" id="dro-kpi-row"></div>
+    </div>
+
+    <div class="dro-divider" style="margin-top:16px;"></div>
+
+    <!-- Lista de trades -->
+    <div class="dro-trades-section">
+      <div class="dro-section-label">OPERACIONES DEL DÍA</div>
+      <div id="dro-trades-list"></div>
+    </div>
+
+    <!-- Footer de cuenta -->
+    <div class="dro-footer" id="dro-footer"></div>
+  </div>
+</div>
+
+<script>
+function openDayReadonlyModal() {
+  const dateStr = currentDayDate;
+  if (!dateStr) return;
+
+  // Fecha formateada
+  const [y, m, d] = dateStr.split('-');
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const dow = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const dateObj = new Date(dateStr + 'T12:00:00');
+  document.getElementById('dro-title').textContent = `${dow[dateObj.getDay()]} ${parseInt(d)} de ${months[parseInt(m)-1]}, ${y}`;
+
+  // Trades del día
+  const dayTrades = getDayTrades(dateStr);
+  const ordered   = [...dayTrades].reverse(); // #1 = primero del día
+
+  // ── KPIs ──
+  const totalPnl  = dayTrades.reduce((s,t) => s+t.pnl, 0);
+  const wins      = dayTrades.filter(t => t.result==='win'||t.result==='cmw').length;
+  const losses    = dayTrades.filter(t => t.result==='loss'||t.result==='cml').length;
+  const bes       = dayTrades.filter(t => t.result==='be').length;
+  const winrate   = dayTrades.length ? Math.round(wins/dayTrades.length*100) : 0;
+  const pnlColor  = totalPnl > 0 ? '#4ADE80' : totalPnl < 0 ? 'var(--red)' : 'var(--text2)';
+  const bestTrade = dayTrades.length ? Math.max(...dayTrades.map(t=>t.pnl)) : 0;
+  const worstTrade= dayTrades.length ? Math.min(...dayTrades.map(t=>t.pnl)) : 0;
+
+  document.getElementById('dro-kpi-row').innerHTML = `
+    <div class="dro-kpi">
+      <div class="dro-kpi-label">P&L DEL DÍA</div>
+      <div class="dro-kpi-val" style="color:${pnlColor}">${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toLocaleString()}</div>
+      <div class="dro-kpi-sub">${dayTrades.length} trade${dayTrades.length!==1?'s':''}</div>
+    </div>
+    <div class="dro-kpi">
+      <div class="dro-kpi-label">WIN RATE</div>
+      <div class="dro-kpi-val" style="color:${winrate>=60?'#4ADE80':winrate>=40?'#E8A838':'var(--red)'}">${winrate}%</div>
+      <div class="dro-kpi-sub">${wins}W · ${losses}L · ${bes}BE</div>
+    </div>
+    <div class="dro-kpi">
+      <div class="dro-kpi-label">MEJOR TRADE</div>
+      <div class="dro-kpi-val" style="color:#4ADE80">${bestTrade>=0?'+':''}$${Math.abs(bestTrade).toLocaleString()}</div>
+      <div class="dro-kpi-sub">del día</div>
+    </div>
+    <div class="dro-kpi">
+      <div class="dro-kpi-label">PEOR TRADE</div>
+      <div class="dro-kpi-val" style="color:var(--red)">${worstTrade<=0?'-':''}$${Math.abs(worstTrade).toLocaleString()}</div>
+      <div class="dro-kpi-sub">del día</div>
+    </div>
+  `;
+
+  // ── Lista de trades ──
+  const resultLabel = {win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'};
+  const resultClass = {win:'win',loss:'loss',be:'be',cmw:'win',cml:'loss'};
+
+  document.getElementById('dro-trades-list').innerHTML = ordered.length
+    ? ordered.map((t, i) => {
+        const pnlC  = t.pnl > 0 ? '#4ADE80' : t.pnl < 0 ? 'var(--red)' : 'var(--text2)';
+        const hasNote = t.tradeNote && t.tradeNote.trim();
+        const hasImg  = t.tradeImages && t.tradeImages.length;
+        const rc = t.rulesChecked || {};
+        loadRules();
+        const rTotal   = tradingRules.length;
+        const rChecked = rTotal ? tradingRules.filter(r => rc[String(r.id)]===true||rc[r.id]===true).length : 0;
+        const rulesStr = rTotal ? `✓ ${rChecked}/${rTotal} reglas` : '';
+        const rColor   = !rTotal ? 'var(--text3)' : rChecked===rTotal ? '#4ADE80' : rChecked>=rTotal*0.6 ? '#E8A838' : 'var(--red)';
+
+        let pts = '';
+        if (t.resultUnits !== undefined && t.resultUnits !== null) {
+          pts = (t.resultUnits>=0?'+':'')+t.resultUnits+' '+(t.resultUnit==='ticks'?'ticks':'pts');
+        }
+
+        return `<div class="dro-trade-card ${resultClass[t.result]||'be'}" onclick="closeDayReadonlyModal();setTimeout(()=>openTradeDetailModal('${t.id}'),120)">
+          <div class="dro-trade-num">TRADE #${i+1}</div>
+          <div class="dro-trade-info">
+            <div class="dro-trade-badges">
+              <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
+              <span style="font-weight:600;color:#e0e0e0;font-size:12px;">${t.symbol}</span>
+              <span class="badge ${t.result}">${resultLabel[t.result]||t.result}</span>
+              ${hasNote ? `<span style="font-size:10px;opacity:0.5;" title="Tiene nota">📝</span>` : ''}
+              ${hasImg  ? `<span style="font-size:10px;opacity:0.5;" title="Tiene imagen">🖼</span>` : ''}
+              ${rulesStr ? `<span style="font-size:8px;padding:2px 7px;border-radius:999px;border:0.5px solid ${rColor};color:${rColor};">${rulesStr}</span>` : ''}
+            </div>
+            ${hasNote ? `<div class="dro-trade-note-preview">📌 ${t.tradeNote}</div>` : ''}
+          </div>
+          <div>
+            <div class="dro-trade-pnl" style="color:${pnlC}">${t.pnl>=0?'+':''}$${Math.abs(t.pnl).toLocaleString()}</div>
+            ${pts ? `<div class="dro-trade-pnl-pts">${pts}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:11px;color:var(--text3);padding:20px 0;text-align:center;">Sin operaciones registradas este día</div>';
+
+  // ── Footer — info de cuenta ──
+  const ac = (typeof accountConfig !== 'undefined' && accountConfig) ? accountConfig : {};
+  const activeTrades = getActiveTrades();
+  const accPnl  = activeTrades.reduce((s,t) => s+t.pnl, 0);
+  const accPnlC = accPnl >= 0 ? '#4ADE80' : 'var(--red)';
+  const ddTotal = (typeof getMaxDrawdown === 'function') ? getMaxDrawdown() : (ac.ddDolar || 0);
+  const ddUsed  = activeTrades.filter(t=>t.pnl<0).reduce((s,t)=>s+Math.abs(t.pnl),0);
+  const ddPct   = ddTotal ? Math.min(100, Math.round(ddUsed/ddTotal*100)) : 0;
+
+  document.getElementById('dro-footer').innerHTML = `
+    <div class="dro-acct-info">
+      ${ac.id   ? `<div class="dro-acct-chip">ID<span>${ac.id}</span></div>` : ''}
+      ${ac.firm ? `<div class="dro-acct-chip">FIRMA<span>${ac.firm}</span></div>` : ''}
+      ${ac.name ? `<div class="dro-acct-chip">CUENTA<span>${ac.name}</span></div>` : ''}
+      ${ac.size ? `<div class="dro-acct-chip">BALANCE<span>$${Number(ac.size).toLocaleString()}</span></div>` : ''}
+      ${ac.dd   ? `<div class="dro-acct-chip">DD MÁX<span>${ac.dd}%</span></div>` : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);">P&L CUENTA</div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:${accPnlC}">${accPnl>=0?'+':''}$${Math.abs(accPnl).toLocaleString()}</div>
+      ${ddTotal ? `<div style="font-size:8px;color:var(--text3);padding:3px 8px;border-radius:6px;border:0.5px solid var(--border2);">DD ${ddPct}%</div>` : ''}
+    </div>
+  `;
+
+  document.getElementById('day-readonly-overlay').classList.add('show');
+}
+
+function closeDayReadonlyModal(e) {
+  if (e && e.target !== document.getElementById('day-readonly-overlay')) return;
+  document.getElementById('day-readonly-overlay').classList.remove('show');
+}
+</script>
+
+<script>
+// ══ READONLY INLINE PANEL ═══════════════════════════════════════════
+function renderDayReadonlyInline(dateStr) {
+  if (!dateStr) dateStr = currentDayDate;
+  if (!dateStr) return;
+
+  // Fecha formateada
+  const [y, m, d] = dateStr.split('-');
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const dow = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const dateObj = new Date(dateStr + 'T12:00:00');
+  const titleEl = document.getElementById('dro-inline-title');
+  if (titleEl) titleEl.textContent = dow[dateObj.getDay()] + ' ' + parseInt(d) + ' de ' + months[parseInt(m)-1] + ', ' + y;
+
+  // Cuenta
+  const ac = (typeof accountConfig !== 'undefined' && accountConfig) ? accountConfig : {};
+  const acctEl = document.getElementById('dro-inline-acct');
+  if (acctEl) {
+    const parts = [ac.id, ac.firm, ac.name].filter(Boolean);
+    acctEl.textContent = parts.join(' · ');
+  }
+
+  // Trades del día
+  const dayTrades = getDayTrades(dateStr);
+  const ordered   = [...dayTrades].reverse();
+
+  // KPIs
+  const totalPnl = dayTrades.reduce((s,t) => s+t.pnl, 0);
+  const wins     = dayTrades.filter(t => t.result==='win'||t.result==='cmw').length;
+  const losses   = dayTrades.filter(t => t.result==='loss'||t.result==='cml').length;
+  const bes      = dayTrades.filter(t => t.result==='be').length;
+  const winrate  = dayTrades.length ? Math.round(wins/dayTrades.length*100) : 0;
+  const pnlColor = totalPnl > 0 ? '#4ADE80' : totalPnl < 0 ? 'var(--red)' : 'var(--text2)';
+
+  // Badge P&L grande
+  const badgeEl = document.getElementById('dro-inline-pnl-badge');
+  if (badgeEl) badgeEl.innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:${pnlColor};line-height:1;">
+      ${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toLocaleString()}
+    </div>
+    <div style="font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-top:4px;text-align:right;">P&L DEL DÍA</div>
+  `;
+
+  // KPIs grid
+  const kpisEl = document.getElementById('dro-inline-kpis');
+  if (kpisEl) kpisEl.innerHTML = `
+    <div class="dro-ikpi">
+      <div class="dro-ikpi-label">WIN RATE</div>
+      <div class="dro-ikpi-val" style="color:${winrate>=60?'#4ADE80':winrate>=40?'#E8A838':'var(--red)'}">${winrate}%</div>
+      <div class="dro-ikpi-sub">${wins}W · ${losses}L · ${bes}BE</div>
+    </div>
+    <div class="dro-ikpi">
+      <div class="dro-ikpi-label">MEJOR TRADE</div>
+      <div class="dro-ikpi-val" style="color:#4ADE80">${dayTrades.length?((Math.max(...dayTrades.map(t=>t.pnl))>=0?'+$':'-$')+Math.abs(Math.max(...dayTrades.map(t=>t.pnl))).toLocaleString()):'—'}</div>
+      <div class="dro-ikpi-sub">del día</div>
+    </div>
+    <div class="dro-ikpi">
+      <div class="dro-ikpi-label">OPERACIONES</div>
+      <div class="dro-ikpi-val" style="color:var(--text)">${dayTrades.length}</div>
+      <div class="dro-ikpi-sub">trade${dayTrades.length!==1?'s':''}</div>
+    </div>
+  `;
+
+  // Reglas — adherencia promedio del día
+  loadRules();
+  const rulesSection = document.getElementById('dro-inline-rules-section');
+  const rulesBar     = document.getElementById('dro-inline-rules-bar');
+  const tradesWithRules = dayTrades.filter(t => t.rulesChecked && Object.keys(t.rulesChecked).length);
+  if (rulesSection && rulesBar && tradingRules.length && tradesWithRules.length) {
+    rulesSection.style.display = '';
+    const rTotal = tradingRules.length;
+    let html = '';
+    tradingRules.forEach(r => {
+      const key = String(r.id);
+      const followed = tradesWithRules.filter(t => t.rulesChecked[key]===true||t.rulesChecked[r.id]===true).length;
+      const pct = Math.round(followed/tradesWithRules.length*100);
+      const color = pct>=80?'#4ADE80':pct>=50?'#E8A838':'var(--red)';
+      html += `<div class="dro-rule-bar-row">
+        <div style="font-size:9px;color:#8B90A8;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.text}</div>
+        <div class="dro-rule-bar-track"><div class="dro-rule-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+        <div style="font-size:8px;font-family:'Space Mono',monospace;color:${color};width:28px;text-align:right;">${pct}%</div>
+      </div>`;
+    });
+    rulesBar.innerHTML = html;
+  } else if (rulesSection) {
+    rulesSection.style.display = 'none';
+  }
+
+  // Nota/journal del día
+  const journalSection = document.getElementById('dro-inline-journal');
+  const journalText    = document.getElementById('dro-inline-journal-text');
+  let dayNote = '';
+  try {
+    if (typeof journals !== 'undefined') {
+      const j = journals.find(j => j.date === dateStr);
+      if (j && j.note && j.note.trim()) dayNote = j.note.trim();
+    }
+  } catch(e){}
+  if (journalSection && journalText) {
+    if (dayNote) {
+      journalSection.style.display = '';
+      journalText.textContent = dayNote;
+    } else {
+      journalSection.style.display = 'none';
+    }
+  }
+
+  // Footer — P&L acumulado cuenta
+  const activeTrades = getActiveTrades();
+  const accPnl  = activeTrades.reduce((s,t) => s+t.pnl, 0);
+  const accPnlC = accPnl>=0?'#4ADE80':'var(--red)';
+  const ddTotal = (typeof getMaxDrawdown === 'function') ? getMaxDrawdown() : (ac.ddDolar || 0);
+  const ddUsed  = activeTrades.filter(t=>t.pnl<0).reduce((s,t)=>s+Math.abs(t.pnl),0);
+  const ddPct   = ddTotal ? Math.min(100, Math.round(ddUsed/ddTotal*100)) : 0;
+  const acctInfoEl = document.getElementById('dro-inline-account');
+  if (acctInfoEl) acctInfoEl.innerHTML = `
+    ${ac.size?`<div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:0.08em;">BALANCE BASE<span style="color:#8B90A8;margin-left:6px;">$${Number(ac.size).toLocaleString()}</span></div>`:''}
+    ${ac.dd?`<div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:0.08em;">DD MÁX<span style="color:#8B90A8;margin-left:6px;">${ac.dd}%</span></div>`:''}
+    ${ddTotal?`<div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:0.08em;">DD USADO<span style="color:${ddPct>80?'var(--red)':ddPct>50?'#E8A838':'#8B90A8'};margin-left:6px;">${ddPct}%</span></div>`:''}
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <div style="font-family:'Space Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:0.08em;">P&L CUENTA</div>
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:${accPnlC};">${accPnl>=0?'+':''}$${Math.abs(accPnl).toLocaleString()}</div>
+    </div>
+  `;
 }
 </script>
 
