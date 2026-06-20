@@ -679,6 +679,78 @@
   .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
   .lightbox-close { position: fixed; top: 20px; right: 24px; background: none; border: none; color: #7a7260; font-size: 22px; cursor: pointer; font-family: monospace; }
 
+  /* ── Trade detail modal (vista compacta de un trade guardado) ── */
+  #trade-detail-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.82); z-index: 180;
+    align-items: center; justify-content: center; padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  #trade-detail-overlay.show { display: flex; }
+  #trade-detail-modal {
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 30px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.028) 0, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 30px),
+      radial-gradient(ellipse at 10% 0%, rgba(122,170,255,0.09), transparent 55%),
+      radial-gradient(ellipse at 100% 100%, rgba(74,222,128,0.08), transparent 50%),
+      var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 14px; width: 96vw; max-width: 940px;
+    max-height: 92vh; overflow: hidden; padding: 22px 26px;
+    position: relative; display: flex; flex-direction: column;
+  }
+  .td-bg-decor { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .td-bg-candles { position:absolute; left:0; right:0; bottom:0; width:100%; height:48%; opacity:0.16; animation: tdCandleFloat 8s ease-in-out infinite; }
+  .td-bg-candles .wick { stroke:#8a93a3; stroke-width:1.4; }
+  .td-bg-scan {
+    position:absolute; top:-30%; left:-25%; width:45%; height:160%;
+    background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.06) 50%, transparent 65%);
+    animation: tdScan 7s linear infinite;
+  }
+  @keyframes tdCandleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes tdScan { 0% { transform: translateX(-10%); } 100% { transform: translateX(320%); } }
+  .td-header, .td-body { position:relative; z-index:1; }
+  .td-close {
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: 1px solid var(--border2);
+    color: var(--text2); width: 28px; height: 28px; border-radius: 7px;
+    cursor: pointer; font-size: 12px; display:flex; align-items:center; justify-content:center;
+    transition: all .15s; z-index: 2;
+  }
+  .td-close:hover { border-color: var(--red); color: var(--red); }
+  .td-header { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom: 16px; padding-right: 36px; flex-shrink:0; }
+  .td-trade-num { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; color:var(--accent); letter-spacing:0.16em; opacity:0.8; }
+
+  /* Cuerpo horizontal: datos a la izquierda, imagen a la derecha */
+  .td-body { display:grid; grid-template-columns: 1fr 1.3fr; gap:24px; align-items:stretch; min-height:0; flex:1; }
+  .td-body.td-no-image { grid-template-columns: 1fr; max-width: 380px; width:100%; margin: 0 auto; }
+  .td-panel-image { display:flex; align-items:center; justify-content:center; min-width:0; min-height:0; background:var(--bg3); border:1px solid var(--border2); border-radius:12px; overflow:hidden; }
+  .td-images { width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:8px; }
+  .td-img { max-width:100%; max-height: min(64vh, 560px); width:auto; height:auto; object-fit:contain; border-radius:8px; cursor:zoom-in; display:block; margin:0 auto; }
+  /* Panel de info con fondo sólido — la animación del fondo queda detrás, no se asoma entre los elementos */
+  .td-panel-info {
+    display:flex; flex-direction:column; gap:14px; min-width:0; min-height:0;
+    background: rgba(11,14,18,0.72); border:1px solid var(--border2); border-radius:12px; padding:16px;
+  }
+
+  .td-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; flex-shrink:0; }
+  .td-stat { background:var(--bg3); border:1px solid var(--border2); border-radius:10px; padding:14px; text-align:center; }
+  .td-stat-label { font-size:9px; color:var(--text3); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px; }
+  .td-stat-val { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--text); }
+  .td-note-label { font-size:9px; color:var(--text3); letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px; }
+  .td-note { background:var(--bg3); border-radius:10px; padding:14px 16px; font-size:12px; color:var(--text2); line-height:1.7; border-left:2px solid var(--border2); white-space:pre-wrap; overflow-y:auto; flex:1; min-height:0; }
+  .td-note-wrap { display:flex; flex-direction:column; flex:1; min-height:0; }
+  .td-back-btn {
+    width:100%; padding:13px; border-radius:8px; border:0.5px solid var(--border2);
+    background:transparent; color:var(--text2); font-size:11px; cursor:pointer;
+    font-family:'Space Mono',monospace; letter-spacing:0.12em; transition:all .15s; flex-shrink:0;
+  }
+  .td-back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Lista compacta de trades guardados ── */
+  .trade-list-row { cursor:pointer; transition: border-color .15s, background .15s; }
+  .trade-list-row:hover { border-color: var(--accent) !important; background: rgba(255,255,255,0.03); }
+
   /* ========== CALENDAR JOURNAL (v2 — modern, full week) ========== */
   .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   .cal-month { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); }
@@ -2252,7 +2324,35 @@
           <div class="dm-section">
             <div class="dm-section-label">NOTA DEL TRADE</div>
             <textarea class="dm-input" id="dm-j-text" placeholder="Setup, razonamiento, errores o aciertos..." style="resize:vertical; min-height:80px; width:100%;"></textarea>
-            <div style="font-size:9px; color:var(--text3); letter-spacing:0.1em; margin-top:10px; margin-bottom:6px;">CAPTURAS / CHARTS</div>
+          </div>
+
+          <!-- RESULTADO TOTAL (debajo de nota del trade) -->
+          <div class="dm-section">
+            <div class="dm-section-label">RESULTADO</div>
+            <div class="dm-result-toggle">
+              <button class="dm-result-btn" id="btn-winner" onclick="setResult('win')">✓ GANADOR</button>
+              <button class="dm-result-btn" id="btn-be"     onclick="setResult('be')">◈ BREAK EVEN</button>
+              <button class="dm-result-btn" id="btn-loser"  onclick="setResult('loss')">✕ PERDEDOR</button>
+            </div>
+            <div class="dm-pnl-total">
+              <span class="dm-pnl-total-label">P&L ESTIMADO</span>
+              <span class="dm-pnl-total-val val-pos" id="dm-pnl-total-display">$0.00</span>
+            </div>
+          </div>
+
+          <!-- CHECKLIST DE REGLAS (debajo de resultado) -->
+          <div class="dm-section" id="dm-rules-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <div class="dm-section-label" style="margin-bottom:0;">REGLAS</div>
+              <div id="dm-rules-badge" style="font-size:9px;padding:2px 8px;border-radius:999px;background:var(--accent-badge-bg);color:var(--accent);font-weight:700;letter-spacing:0.08em;">0/0</div>
+            </div>
+            <div id="dm-rules-list"></div>
+          </div>
+
+          <!-- AGREGAR IMAGEN (última opción del formulario) -->
+          <div class="dm-section">
+            <div class="dm-section-label">AGREGAR IMAGEN</div>
+            <div style="font-size:9px; color:var(--text3); letter-spacing:0.1em; margin-bottom:6px;">CAPTURAS / CHARTS</div>
             <div class="img-upload-area" id="dm-drop-zone"
                  onclick="document.getElementById('dm-j-images').click()"
                  ondragover="dmHandleDragOver(event)"
@@ -2262,6 +2362,15 @@
             </div>
             <input type="file" id="dm-j-images" accept="image/*" multiple style="display:none" onchange="dmHandleFileSelect(event)">
             <div class="img-preview-wrap" id="dm-img-preview"></div>
+          </div>
+
+          <!-- ACCIONES (debajo de agregar imagen — última sección del formulario) -->
+          <div class="dm-section" style="margin-bottom:0;">
+            <div class="dm-section-label">ACCIONES</div>
+            <div style="font-size:10px;color:var(--text3);line-height:1.6;margin-bottom:14px;">Revisa la configuración, resultado, reglas e imagen antes de guardar.</div>
+            <!-- GUARDAR -->
+            <button class="dm-save-btn" onclick="dmSaveAll()">GUARDAR TRADE →</button>
+            <button onclick="closeDayModalBtn()" style="width:100%;padding:11px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:10px;cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:0.1em;transition:all 0.2s;margin-top:8px;" onmouseover="this.style.borderColor='var(--text2)';this.style.color='var(--text2)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)'">CERRAR</button>
           </div>
 
         </div><!-- /dm-trade-form -->
@@ -2277,45 +2386,18 @@
           <button id="dm-add-tp-btn"></button>
         </div>
 
-        <!-- DIVIDER between form and history — siempre visible aunque el form esté oculto -->
-        <div id="dm-history-divider" style="border-top:1px solid var(--border2); margin: 16px 0;"></div>
+      </div><!-- /dm-col-left -->
 
-        <!-- VIEW: existing trades — fuera del form para mostrarse en días bloqueados -->
+      <!-- ── RIGHT: Operaciones del día (historial de trades guardados) ── -->
+      <div class="dm-col-right">
+
+        <!-- DIVIDER (mantenido por compatibilidad con refreshDayModal) -->
+        <div id="dm-history-divider" style="display:none;"></div>
+
+        <!-- VIEW: existing trades — siempre visible, incluso en días bloqueados -->
         <div id="dm-trades-section"></div>
         <!-- VIEW: existing journal note + images (legacy) -->
         <div id="dm-journal-section"></div>
-
-      </div><!-- /dm-col-left -->
-
-      <!-- ── RIGHT: Result, notes, tags, rules ── -->
-      <div class="dm-col-right">
-
-        <!-- RESULTADO TOTAL -->
-        <div class="dm-section" style="margin-bottom:0;">
-          <div class="dm-section-label">RESULTADO</div>
-          <div class="dm-result-toggle">
-            <button class="dm-result-btn" id="btn-winner" onclick="setResult('win')">✓ GANADOR</button>
-            <button class="dm-result-btn" id="btn-be"     onclick="setResult('be')">◈ BREAK EVEN</button>
-            <button class="dm-result-btn" id="btn-loser"  onclick="setResult('loss')">✕ PERDEDOR</button>
-          </div>
-          <div class="dm-pnl-total">
-            <span class="dm-pnl-total-label">P&L ESTIMADO</span>
-            <span class="dm-pnl-total-val val-pos" id="dm-pnl-total-display">$0.00</span>
-          </div>
-        </div>
-
-        <!-- CHECKLIST DE REGLAS -->
-        <div class="dm-section" id="dm-rules-section" style="margin-bottom:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div class="dm-section-label" style="margin-bottom:0;">REGLAS</div>
-            <div id="dm-rules-badge" style="font-size:9px;padding:2px 8px;border-radius:999px;background:var(--accent-badge-bg);color:var(--accent);font-weight:700;letter-spacing:0.08em;">0/0</div>
-          </div>
-          <div id="dm-rules-list"></div>
-        </div>
-
-        <!-- GUARDAR -->
-        <button class="dm-save-btn" onclick="dmSaveAll()">GUARDAR TRADE →</button>
-        <button onclick="closeDayModalBtn()" style="width:100%;padding:11px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text3);font-size:10px;cursor:pointer;font-family:'Space Mono',monospace;letter-spacing:0.1em;transition:all 0.2s;margin-top:6px;" onmouseover="this.style.borderColor='var(--text2)';this.style.color='var(--text2)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text3)'">CERRAR</button>
 
       </div><!-- /dm-col-right -->
 
@@ -2391,6 +2473,73 @@
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()">✕</button>
   <img id="lightbox-img" src="" alt="Captura">
+</div>
+
+<!-- TRADE DETAIL MODAL -->
+<div id="trade-detail-overlay" onclick="closeTradeDetailModal(event)">
+  <div id="trade-detail-modal" onclick="event.stopPropagation()">
+    <div class="td-bg-decor" aria-hidden="true">
+      <div class="td-bg-scan"></div>
+      <svg class="td-bg-candles" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <line class="wick" x1="28.1" y1="158.8" x2="28.1" y2="218.5"/>
+        <rect x="16.3" y="165.6" width="23.6" height="33.8" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="84.4" y1="141.1" x2="84.4" y2="187.7"/>
+        <rect x="72.6" y="148.4" width="23.6" height="26.6" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="140.6" y1="129.1" x2="140.6" y2="207.0"/>
+        <rect x="128.8" y="150.3" width="23.6" height="40.6" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="196.9" y1="115.9" x2="196.9" y2="178.2"/>
+        <rect x="185.1" y="137.5" width="23.6" height="33.9" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="253.1" y1="133.4" x2="253.1" y2="203.1"/>
+        <rect x="241.3" y="148.5" width="23.6" height="39.6" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="309.4" y1="118.5" x2="309.4" y2="188.8"/>
+        <rect x="297.6" y="130.4" width="23.6" height="43.6" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="365.6" y1="102.1" x2="365.6" y2="172.9"/>
+        <rect x="353.8" y="116.6" width="23.6" height="37.9" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="421.9" y1="125.8" x2="421.9" y2="181.0"/>
+        <rect x="410.1" y="134.6" width="23.6" height="27.9" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="478.1" y1="119.8" x2="478.1" y2="201.1"/>
+        <rect x="466.3" y="137.5" width="23.6" height="53.0" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="534.4" y1="125.0" x2="534.4" y2="182.0"/>
+        <rect x="522.6" y="136.5" width="23.6" height="24.6" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="590.6" y1="89.6" x2="590.6" y2="161.6"/>
+        <rect x="578.8" y="109.6" width="23.6" height="40.9" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="646.9" y1="108.6" x2="646.9" y2="185.4"/>
+        <rect x="635.1" y="128.1" width="23.6" height="36.2" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="703.1" y1="98.0" x2="703.1" y2="182.3"/>
+        <rect x="691.3" y="114.3" width="23.6" height="46.1" rx="1.5" fill="#4ADE80"/>
+        <line class="wick" x1="759.4" y1="117.1" x2="759.4" y2="203.2"/>
+        <rect x="747.6" y="128.6" width="23.6" height="53.5" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="815.6" y1="116.5" x2="815.6" y2="171.7"/>
+        <rect x="803.8" y="127.1" width="23.6" height="26.7" rx="1.5" fill="#FF5470"/>
+        <line class="wick" x1="871.9" y1="116.8" x2="871.9" y2="187.7"/>
+        <rect x="860.1" y="131.6" width="23.6" height="36.0" rx="1.5" fill="#4ADE80"/>
+      </svg>
+    </div>
+    <button class="td-close" onclick="closeTradeDetailModal()">✕</button>
+    <div class="td-header" id="td-header"></div>
+    <div class="td-body" id="td-body">
+      <div class="td-panel-info">
+        <div class="td-grid">
+          <div class="td-stat">
+            <div class="td-stat-label" id="td-qty-label">PUNTOS</div>
+            <div class="td-stat-val" id="td-qty">—</div>
+          </div>
+          <div class="td-stat">
+            <div class="td-stat-label">P&amp;L</div>
+            <div class="td-stat-val" id="td-pnl">—</div>
+          </div>
+        </div>
+        <div class="td-note-wrap" id="td-note-wrap" style="display:none;">
+          <div class="td-note-label">NOTA DEL TRADE</div>
+          <div class="td-note" id="td-note"></div>
+        </div>
+        <button class="td-back-btn" onclick="closeTradeDetailModal()">← REGRESAR</button>
+      </div>
+      <div class="td-panel-image" id="td-images-wrap" style="display:none;">
+        <div class="td-images" id="td-images"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -5109,86 +5258,21 @@ function refreshDayModal() {
       const borderColor = t.pnl > 0 ? 'rgba(74,222,128,0.2)' : (t.pnl < 0 ? 'rgba(255,84,112,0.2)' : 'var(--border2)');
       const hasNote = t.tradeNote && t.tradeNote.trim();
       const hasImgs = t.tradeImages && t.tradeImages.length;
-      const hasPartials = t.partials && t.partials.length > 0;
-
-      // Build partials rows
-      let partialsHTML = '';
-      if (hasPartials) {
-        const rows = t.partials.map((p, pi) => {
-          const pColor = p.pnl >= 0 ? '#F59E0B' : '#FF4560';
-          return `<tr>
-            <td style="padding:5px 10px 5px 0; color:#555; font-size:10px; letter-spacing:0.06em;">TP${pi+1}</td>
-            <td style="padding:5px 10px 5px 0; color:#aaa; font-size:11px; font-family:'Syne',sans-serif; font-weight:600;">${p.exit || '—'}</td>
-            <td style="padding:5px 10px 5px 0; color:#777; font-size:10px;">${p.qty}c</td>
-            <td style="padding:5px 10px 5px 0; font-size:10px; color:${pColor}; font-weight:600;">${p.points >= 0 ? '+' : ''}${p.points} pts</td>
-            <td style="padding:5px 10px 5px 0; font-size:13px; font-weight:700; font-family:'Syne',sans-serif; color:${pColor};">${p.pnl >= 0 ? '+' : ''}$${p.pnl}</td>
-            <td style="padding:5px 0;"><span class="badge ${p.result}" style="font-size:8px;">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[p.result]||p.result}</span></td>
-          </tr>`;
-        }).join('');
-        partialsHTML = `
-          <div style="margin-top:10px; border-top:0.5px solid #1e1e1e; padding-top:10px;">
-            <div style="font-size:9px; color:#3d3820; letter-spacing:0.12em; margin-bottom:6px;">SALIDAS PARCIALES</div>
-            <table style="width:100%; border-collapse:collapse;">
-              <tr style="border-bottom:0.5px solid #1a1a1a;">
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">#</th>
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">PRECIO SALIDA</th>
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">CTRS</th>
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">PUNTOS</th>
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">P&L</th>
-                <th style="font-size:9px;color:#333;text-align:left;padding-bottom:5px;font-weight:500;letter-spacing:0.08em;">RES.</th>
-              </tr>
-              ${rows}
-            </table>
-          </div>`;
-      }
 
       tradesHTML += `
-        <div style="background:var(--bg3); border:0.5px solid ${borderColor}; border-radius:10px; padding:16px; margin-bottom:10px;">
-
-          <!-- HEADER -->
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span style="font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--accent); letter-spacing:0.16em; opacity:0.7;">TRADE #${tradeNum}</span>
-              <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
-              <span style="font-weight:600; color:#e0e0e0; font-size:12px;">${t.symbol}</span>
-              <span class="badge ${t.result}">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[t.result]||t.result}</span>
-              ${t.setup && t.setup !== '—' ? `<span style="font-size:9px;color:#555;background:#111;border:0.5px solid #2a2200;border-radius:4px;padding:2px 7px;">${t.setup}</span>` : ''}
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:${pnlColor}; letter-spacing:0.02em;">${t.pnl>=0?'+':''}$${Math.abs(t.pnl).toLocaleString()}</span>
-              ${locked ? '' : `<button onclick="deleteDayTradeById(${t.id})" style="background:none;border:0.5px solid #2a2200;color:#3d3820;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:6px;font-family:'Space Mono',monospace;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='#444';this.style.borderColor='#2a2200'">✕</button>`}
-            </div>
+        <div class="trade-list-row" onclick="openTradeDetailModal('${t.id}')" style="background:var(--bg3); border:0.5px solid ${borderColor}; border-radius:10px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;">
+            <span style="font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--accent); letter-spacing:0.16em; opacity:0.7;">TRADE #${tradeNum}</span>
+            <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
+            <span style="font-weight:600; color:#e0e0e0; font-size:12px;">${t.symbol}</span>
+            <span class="badge ${t.result}">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[t.result]||t.result}</span>
+            ${hasNote ? `<span style="font-size:11px;opacity:0.55;" title="Tiene nota">📝</span>` : ''}
+            ${hasImgs ? `<span style="font-size:11px;opacity:0.55;" title="Tiene imagen">🖼️</span>` : ''}
           </div>
-
-          <!-- BASE DATA -->
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; background:#0d0d0d; border-radius:7px; padding:10px 12px;">
-            <div>
-              <div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">ENTRADA</div>
-              <div style="font-size:14px;color:#ccc;font-family:'Syne',sans-serif;font-weight:600;">${t.entry || '—'}</div>
-            </div>
-            <div>
-              <div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">STOP LOSS</div>
-              <div style="font-size:14px;color:#FF4560;font-family:'Syne',sans-serif;font-weight:600;">${t.sl || '—'} ${t.slPoints ? `<span style="font-size:10px;color:#555;">(${t.slPoints}pts)</span>` : ''}</div>
-            </div>
-            <div>
-              <div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">CONTRATOS</div>
-              <div style="font-size:14px;color:#ccc;font-family:'Syne',sans-serif;font-weight:600;">${t.qty || 1}</div>
-            </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+            <span style="font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:${pnlColor}; letter-spacing:0.02em;">${t.pnl>=0?'+':''}$${Math.abs(t.pnl).toLocaleString()}</span>
+            ${locked ? '' : `<button onclick="event.stopPropagation();deleteDayTradeById('${t.id}')" style="background:none;border:0.5px solid #2a2200;color:#3d3820;cursor:pointer;font-size:11px;padding:3px 8px;border-radius:6px;font-family:'Space Mono',monospace;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'" onmouseout="this.style.color='#444';this.style.borderColor='#2a2200'">✕</button>`}
           </div>
-
-          <!-- PARCIALES o salida simple -->
-          ${hasPartials ? partialsHTML : (t.exit ? `<div style="margin-top:10px;border-top:0.5px solid #1e1e1e;padding-top:8px;font-size:10px;color:#555;">SALIDA: <span style="color:#aaa;">${t.exit}</span>${t.points !== undefined && t.points !== 0 ? ` &nbsp; PTS: <span style="color:${t.points>=0?'#F59E0B':'#FF4560'};">${t.points>=0?'+':''}${t.points}</span>` : ''}</div>` : '')}
-
-          <!-- NOTA -->
-          ${hasNote ? `<div style="margin-top:12px;font-size:11px;color:#aaa;line-height:1.7;background:rgba(0,0,0,0.35);border-radius:7px;padding:10px 12px;border-left:2px solid ${pnlColor};">${t.tradeNote}</div>` : ''}
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;">
-            ${renderTagChips(t.tags)}
-            ${renderTradeRulesBadge(t.rulesChecked)}
-          </div>
-
-          <!-- IMAGENES -->
-          ${hasImgs ? `<div class="day-images" style="margin-top:10px;">${t.tradeImages.map(src => `<img class="day-img" src="${src}" onclick="openLightbox('${src}')">`).join('')}</div>` : ''}
-
         </div>`;
     });
 
@@ -5237,21 +5321,16 @@ function refreshDayModal() {
   const fileInput = document.getElementById('dm-j-images');
   if (fileInput) fileInput.value = '';
 
-  // Show/hide form and right column based on lock state
+  // Show/hide form based on lock state — la columna derecha (Operaciones del día)
+  // siempre permanece visible, esté el día bloqueado o no.
   const tradeForm = document.getElementById('dm-trade-form');
   const readonlyBanner = document.getElementById('dm-readonly-banner');
-  const colRight = document.querySelector('.dm-col-right');
-  const dmBody   = document.querySelector('.dm-body');
   if (locked) {
     tradeForm.style.display = 'none';
     if (readonlyBanner) readonlyBanner.style.display = 'flex';
-    if (colRight) colRight.style.display = 'none';
-    if (dmBody) dmBody.style.gridTemplateColumns = '1fr';
   } else {
     tradeForm.style.display = '';
     if (readonlyBanner) readonlyBanner.style.display = 'none';
-    if (colRight) colRight.style.display = '';
-    if (dmBody) dmBody.style.gridTemplateColumns = '';
   }
 
   // Siempre limpiar el formulario — los trades guardados se muestran abajo
@@ -5824,6 +5903,7 @@ async function dmSaveAll() {
     const tickSize = getTickSize(symbol);
     const unitMult = dmUnit === 'ticks' ? tickSize : 1;
     let totalPnl = 0;
+    let totalUnits = 0; // puntos o ticks, tal como los registró el usuario
     let overallResult = currentResult || 'win';
     let simplePartials = [];
 
@@ -5835,12 +5915,14 @@ async function dmSaveAll() {
         return { pts: units, qty: tpQty, pnl, result: tp.result };
       });
       totalPnl = parseFloat(simplePartials.reduce((s,p) => s + p.pnl, 0).toFixed(2));
+      totalUnits = parseFloat(simplePartials.reduce((s,p) => s + p.pts, 0).toFixed(2));
       const hasWin = simplePartials.some(t => t.result === 'win' || t.result === 'cmw');
       const allBE  = simplePartials.every(t => t.result === 'be');
       overallResult = allBE ? 'be' : hasWin ? 'win' : 'loss';
     } else {
       const units = parseFloat(document.getElementById('dm-simple-points').value) || 0;
       totalPnl = parseFloat(((units * unitMult) * mult * qty).toFixed(2));
+      totalUnits = units;
       overallResult = currentResult || (units > 0 ? 'win' : units < 0 ? 'loss' : 'be');
       if (units === 0 && !currentResult) return; // nothing to save
     }
@@ -5852,6 +5934,8 @@ async function dmSaveAll() {
       setup, result: overallResult,
       pnl: totalPnl,
       partials: simplePartials,
+      resultUnits: totalUnits,
+      resultUnit: dmUnit, // 'points' | 'ticks'
       tradeNote,
       tags: [...dmCurrentTags],
       rulesChecked: {...dmCheckedRules},
@@ -6025,6 +6109,68 @@ function openLightbox(src) {
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('show');
   document.getElementById('lightbox-img').src = '';
+}
+
+// ====================== TRADE DETAIL MODAL ======================
+// Vista compacta de un trade guardado: solo contratos, P&L, nota e imagen.
+// No muestra entrada ni stop loss.
+function openTradeDetailModal(tradeId) {
+  const dayTrades = getDayTrades(currentDayDate);
+  const orderedTrades = [...dayTrades].reverse(); // #1 = primero del día
+  const tradeNum = orderedTrades.findIndex(tr => tr.id === tradeId) + 1;
+  const t = dayTrades.find(tr => tr.id === tradeId);
+  if (!t) return;
+
+  const pnlColor = t.pnl > 0 ? '#4ADE80' : (t.pnl < 0 ? 'var(--red)' : 'var(--text2)');
+
+  document.getElementById('td-header').innerHTML = `
+    <span class="td-trade-num">TRADE #${tradeNum}</span>
+    <span class="badge ${t.dir==='Long'?'long':'short'}">${t.dir}</span>
+    <span style="font-weight:600;color:#e0e0e0;font-size:13px;">${t.symbol}</span>
+    <span class="badge ${t.result}">${{win:'Win',loss:'Loss',be:'BE',cmw:'Manual+',cml:'Manual−'}[t.result]||t.result}</span>
+  `;
+
+  // Mostrar PUNTOS o TICKS tal como los registró el usuario.
+  // Para trades guardados antes de este cambio (sin resultUnits guardado),
+  // se calculan los puntos a partir del P&L y el multiplicador del símbolo.
+  const qtyLabelEl = document.getElementById('td-qty-label');
+  const qtyValEl   = document.getElementById('td-qty');
+  if (t.resultUnits !== undefined && t.resultUnits !== null) {
+    qtyLabelEl.textContent = t.resultUnit === 'ticks' ? 'TICKS' : 'PUNTOS';
+    qtyValEl.textContent = (t.resultUnits >= 0 ? '+' : '') + t.resultUnits;
+  } else {
+    const mult = getSymbolMultiplier(t.symbol) || 1;
+    const qty  = t.qty || 1;
+    if (mult && qty && t.pnl !== undefined) {
+      const impliedPoints = parseFloat((t.pnl / (mult * qty)).toFixed(2));
+      qtyLabelEl.textContent = 'PUNTOS';
+      qtyValEl.textContent = (impliedPoints >= 0 ? '+' : '') + impliedPoints;
+    } else {
+      qtyLabelEl.textContent = 'CONTRATOS';
+      qtyValEl.textContent = qty;
+    }
+  }
+
+  const pnlEl = document.getElementById('td-pnl');
+  pnlEl.textContent = (t.pnl >= 0 ? '+' : '') + '$' + Math.abs(t.pnl).toLocaleString();
+  pnlEl.style.color = pnlColor;
+
+  const hasNote = t.tradeNote && t.tradeNote.trim();
+  document.getElementById('td-note-wrap').style.display = hasNote ? '' : 'none';
+  document.getElementById('td-note').textContent = hasNote ? t.tradeNote : '';
+
+  const hasImgs = t.tradeImages && t.tradeImages.length;
+  document.getElementById('td-images-wrap').style.display = hasImgs ? '' : 'none';
+  document.getElementById('td-images').innerHTML = hasImgs
+    ? t.tradeImages.map(src => `<img class="td-img" src="${src}" onclick="openLightbox('${src}')">`).join('')
+    : '';
+  document.getElementById('td-body').classList.toggle('td-no-image', !hasImgs);
+
+  document.getElementById('trade-detail-overlay').classList.add('show');
+}
+function closeTradeDetailModal(e) {
+  if (e && e.target !== document.getElementById('trade-detail-overlay')) return;
+  document.getElementById('trade-detail-overlay').classList.remove('show');
 }
 
 
