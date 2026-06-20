@@ -58,6 +58,27 @@
     background: rgba(180,190,210,0.08);
     transform: translateY(-2px);
   }
+  .symbol-choice-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, background .15s, transform .12s;
+    min-width: 92px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #E8ECF5;
+    letter-spacing: .03em;
+    backdrop-filter: blur(6px);
+  }
+  .symbol-choice-btn:hover {
+    border-color: var(--accent);
+    background: rgba(180,190,210,0.08);
+    transform: translateY(-1px);
+  }
 
   /* ========== THEME DROPDOWN BUTTON ========== */
   #theme-btn-wrap {
@@ -658,22 +679,30 @@
   .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
   .lightbox-close { position: fixed; top: 20px; right: 24px; background: none; border: none; color: #7a7260; font-size: 22px; cursor: pointer; font-family: monospace; }
 
-  /* ========== CALENDAR JOURNAL ========== */
-  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .cal-month { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: 0.06em; color: var(--text); }
-  .cal-arrow { background: transparent; border: 0.5px solid var(--border2); color: var(--text2); font-size: 16px; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-family: monospace; transition: all 0.15s; }
-  .cal-arrow:hover { color: var(--text); border-color: #555; }
-  .cal-grid { display: grid; grid-template-columns: repeat(5, 1fr) 90px; gap: 4px; }
-  .cal-dow { font-size: 10px; color: var(--text3); text-align: center; padding: 4px 0 8px; letter-spacing: 0.06em; }
+  /* ========== CALENDAR JOURNAL (v2 — modern, full week) ========== */
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .cal-month { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: 0.06em; color: var(--text); }
+  .cal-arrow {
+    background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text2); font-size: 15px;
+    width: 32px; height: 32px; border-radius: 9px; cursor: pointer; font-family: monospace;
+    transition: all 0.15s; display:flex; align-items:center; justify-content:center;
+  }
+  .cal-arrow:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-glow); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 96px; gap: 6px; }
+  .cal-dow {
+    font-size: 10px; color: var(--text3); text-align: center; padding: 4px 0 10px;
+    letter-spacing: 0.1em; font-weight: 600;
+  }
   .cal-cell {
-    min-height: 72px; border-radius: 8px; border: 0.5px solid var(--border);
+    min-height: 86px; border-radius: 10px; border: 0.5px solid var(--border);
     background: var(--bg2); cursor: pointer; position: relative;
     display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
-    transition: border-color 0.15s, background 0.15s; overflow: hidden; padding: 10px 10px 8px;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s; overflow: hidden; padding: 10px 10px 8px;
   }
-  .cal-cell:hover { border-color: rgba(255,255,255,0.15); }
+  .cal-cell:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-1px); }
   .cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
-  .cal-cell.today { border-color: var(--accent) !important; }
+  .cal-cell.empty:hover { transform: none; }
+  .cal-cell.today { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent) inset; }
   .cal-cell.has-entry { cursor: pointer; }
   .cal-cell.pnl-pos { background: rgba(74,222,128,0.10); border-color: rgba(74,222,128,0.25); }
   .cal-cell.pnl-pos .cal-day-num { color: #4ADE80; }
@@ -697,17 +726,24 @@
   /* Weekly P&L row */
   .cal-week-total {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border-radius: 8px; border: 0.5px solid rgba(123,159,212,0.18);
-    background: rgba(123,159,212,0.07);
+    border-radius: 10px; border: 0.5px solid rgba(123,159,212,0.2);
+    background: linear-gradient(160deg, rgba(123,159,212,0.10), rgba(123,159,212,0.04));
     font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
     letter-spacing: 0.06em; text-align: center; line-height: 1.4;
-    padding: 4px 2px; min-height: 70px;
+    padding: 4px 2px; min-height: 86px;
   }
-  .cal-week-total .wk-label { font-size: 7px; color:#7B9FD4; opacity:0.7; margin-bottom: 4px; letter-spacing: 0.1em; }
+  .cal-week-total .wk-label { font-size: 7px; color:#7B9FD4; opacity:0.75; margin-bottom: 4px; letter-spacing: 0.1em; }
   .cal-week-total.wk-pos { color: #4ADE80; }
   .cal-week-total.wk-neg { color: #FF4560; }
   .cal-week-total.wk-zero { color: var(--text3); }
-  .cal-week-empty { min-height: 70px; border-radius: 8px; background: rgba(123,159,212,0.04); border: 0.5px solid rgba(123,159,212,0.08); }
+  .cal-week-empty { min-height: 86px; border-radius: 10px; background: rgba(123,159,212,0.04); border: 0.5px solid rgba(123,159,212,0.08); }
+
+  @media (max-width: 760px) {
+    .cal-grid { grid-template-columns: repeat(7, minmax(0,1fr)); }
+    .cal-grid > .cal-week-total, .cal-grid > .cal-week-empty, .cal-grid > .cal-dow:last-child { display: none; }
+    .cal-cell { min-height: 58px; padding: 6px 6px 5px; }
+    .cal-pnl { font-size: 9px; }
+  }
 
   /* ========== DAY DETAIL MODAL ========== */
   /* ════════════════════════════════════════════════════════════
@@ -2096,7 +2132,7 @@
       <!-- Close -->
       <button onclick="closeDayModalBtn()" style="position:absolute;top:14px;right:16px;background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;width:30px;height:30px;border-radius:7px;z-index:3;">✕</button>
       <!-- Content -->
-      <div class="ms-content">
+      <div class="ms-content" id="ms-step-market">
         <div style="text-align:center;margin-bottom:40px;">
           <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(180,190,210,0.45);margin-bottom:12px;">NUEVO TRADE</div>
           <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#E8ECF5;letter-spacing:-.02em;line-height:1.1;">¿Qué operaste hoy?</div>
@@ -2123,6 +2159,16 @@
             <div style="font-size:10px;color:rgba(180,190,210,0.45);letter-spacing:.03em;">BTC · ETH · SOL</div>
           </button>
         </div>
+      </div>
+
+      <!-- Step 2: symbol picker (shown after a market is chosen) -->
+      <div class="ms-content" id="ms-step-symbol" style="display:none;">
+        <div style="text-align:center;margin-bottom:32px;">
+          <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(180,190,210,0.45);margin-bottom:12px;" id="ms-symbol-eyebrow">FUTUROS</div>
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#E8ECF5;letter-spacing:-.02em;line-height:1.1;">¿Qué símbolo operaste?</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:520px;" id="ms-symbol-list"></div>
+        <button onclick="backToMarketStep()" style="margin-top:28px;background:none;border:none;color:rgba(180,190,210,0.5);font-size:10px;letter-spacing:.1em;cursor:pointer;font-family:'Space Mono',monospace;">‹ CAMBIAR MERCADO</button>
       </div>
     </div>
 
@@ -2166,17 +2212,6 @@
             </div>
           </div>
 
-          <!-- MODO TOGGLE -->
-          <div class="dm-section" style="padding-bottom:0;border-bottom:none;margin-bottom:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div class="dm-section-label" style="margin-bottom:0;">MODO DE REGISTRO</div>
-              <div id="dm-mode-toggle" style="display:flex;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;overflow:hidden;">
-                <button id="dm-mode-btn-simple" onclick="setTradeMode('simple')" style="padding:5px 14px;font-size:9px;letter-spacing:.1em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:var(--accent);color:var(--bg);transition:all .15s;">SIMPLE</button>
-                <button id="dm-mode-btn-detallado" onclick="setTradeMode('detallado')" style="padding:5px 14px;font-size:9px;letter-spacing:.1em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s;">DETALLADO</button>
-              </div>
-            </div>
-          </div>
-
           <!-- MODO SIMPLE -->
           <div id="dm-mode-simple-fields" class="dm-section">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -2187,7 +2222,13 @@
             <!-- Salida única -->
             <div id="dm-simple-single" class="dm-2col">
               <div class="dm-field">
-                <div class="dm-field-label">PUNTOS GANADOS / PERDIDOS</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                  <div class="dm-field-label" style="margin-bottom:0;">GANADOS / PERDIDOS</div>
+                  <div id="dm-unit-toggle" style="display:flex;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;overflow:hidden;">
+                    <button type="button" id="dm-unit-btn-points" onclick="setDmUnit('points')" style="padding:2px 8px;font-size:8px;letter-spacing:.08em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:var(--accent);color:var(--bg);transition:all .15s;">PUNTOS</button>
+                    <button type="button" id="dm-unit-btn-ticks" onclick="setDmUnit('ticks')" style="padding:2px 8px;font-size:8px;letter-spacing:.08em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s;">TICKS</button>
+                  </div>
+                </div>
                 <input class="dm-input" type="text" inputmode="decimal" id="dm-simple-points" placeholder="ej: 30 o -15" oninput="dmCalcSimple()">
               </div>
               <div class="dm-field">
@@ -2200,64 +2241,41 @@
             <!-- Parciales simples (ocultos por defecto) -->
             <div id="dm-simple-parciales-wrap" style="display:none;margin-top:10px;">
               <div class="tp-row-header" style="grid-template-columns:60px 1fr 70px 70px 24px;">
-                <span>CTRS</span><span>PUNTOS</span><span>P&L ($)</span><span>RESULTADO</span><span></span>
+                <span>CTRS</span><span id="dm-simple-tp-unit-label">PUNTOS</span><span>P&L ($)</span><span>RESULTADO</span><span></span>
               </div>
               <div id="dm-simple-tp-rows"></div>
               <button class="add-tp-btn" id="dm-simple-add-tp-btn" onclick="dmSimpleAddTP()">+ Agregar parcial (0/5 — máx. 5)</button>
             </div>
           </div>
 
-          <!-- MODO DETALLADO: ENTRADA Y STOP -->
-          <div id="dm-mode-detail-fields" class="dm-section" style="display:none;">
-            <div class="dm-section-label">ENTRADA Y RIESGO</div>
-            <div class="dm-3col">
-              <div class="dm-field">
-                <div class="dm-field-label">ENTRADA</div>
-                <input class="dm-input" type="text" inputmode="decimal" id="dm-entry" placeholder="0.00" oninput="dmCalcAll()">
-              </div>
-              <div class="dm-field">
-                <div class="dm-field-label">STOP LOSS</div>
-                <input class="dm-input" type="text" inputmode="decimal" id="dm-sl" placeholder="0.00" oninput="dmCalcAll()">
-              </div>
-              <div class="dm-field">
-                <div class="dm-field-label">PUNTOS DE STOP</div>
-                <input class="dm-input readonly val-neg" type="text" id="dm-sl-points" placeholder="—" readonly>
-              </div>
+          <!-- NOTA DEL TRADE (debajo de resultado rápido) -->
+          <div class="dm-section">
+            <div class="dm-section-label">NOTA DEL TRADE</div>
+            <textarea class="dm-input" id="dm-j-text" placeholder="Setup, razonamiento, errores o aciertos..." style="resize:vertical; min-height:80px; width:100%;"></textarea>
+            <div style="font-size:9px; color:var(--text3); letter-spacing:0.1em; margin-top:10px; margin-bottom:6px;">CAPTURAS / CHARTS</div>
+            <div class="img-upload-area" id="dm-drop-zone"
+                 onclick="document.getElementById('dm-j-images').click()"
+                 ondragover="dmHandleDragOver(event)"
+                 ondragleave="dmHandleDragLeave(event)"
+                 ondrop="dmHandleDrop(event)">
+              Haz clic o arrastra imágenes aquí
             </div>
-          </div>
-
-          <!-- MODO DETALLADO: SALIDA SIMPLE -->
-          <div id="dm-simple-exit-section" class="dm-section" style="display:none;">
-            <div class="dm-section-label">SALIDA SIMPLE</div>
-            <div class="dm-2col">
-              <div class="dm-field">
-                <div class="dm-field-label">PRECIO DE SALIDA</div>
-                <input class="dm-input" type="text" inputmode="decimal" id="dm-simple-exit" placeholder="0.00" oninput="dmCalcAll()">
-              </div>
-              <div class="dm-field">
-                <div class="dm-field-label">PUNTOS / P&L</div>
-                <input class="dm-input readonly" type="text" id="dm-simple-exit-display" placeholder="—" readonly>
-              </div>
-            </div>
-            <div style="font-size:9px;color:var(--text3);margin-top:6px;letter-spacing:0.06em;">O usa parciales abajo para salidas múltiples.</div>
-          </div>
-
-          <!-- BLOQUE 3b: PARCIALES / TAKE PROFITS -->
-          <div class="dm-section" id="dm-parciales-section">
-            <div class="dm-section-label">PARCIALES / TAKE PROFITS</div>
-            <div class="tp-row-header">
-              <span>PRECIO SALIDA</span>
-              <span>CONTRATOS</span>
-              <span>PUNTOS</span>
-              <span>P&L ($)</span>
-              <span>RESULTADO</span>
-              <span></span>
-            </div>
-            <div id="dm-tp-rows"></div>
-            <button class="add-tp-btn" id="dm-add-tp-btn" onclick="dmAddTP()">+ Agregar parcial (máx. 3)</button>
+            <input type="file" id="dm-j-images" accept="image/*" multiple style="display:none" onchange="dmHandleFileSelect(event)">
+            <div class="img-preview-wrap" id="dm-img-preview"></div>
           </div>
 
         </div><!-- /dm-trade-form -->
+
+        <!-- Campos legacy del modo detallado (ocultos, mantenidos por compatibilidad interna) -->
+        <div style="display:none;">
+          <input type="text" id="dm-entry" value="">
+          <input type="text" id="dm-sl" value="">
+          <input type="text" id="dm-sl-points" value="">
+          <input type="text" id="dm-simple-exit" value="">
+          <input type="text" id="dm-simple-exit-display" value="">
+          <div id="dm-tp-rows"></div>
+          <button id="dm-add-tp-btn"></button>
+        </div>
 
         <!-- DIVIDER between form and history — siempre visible aunque el form esté oculto -->
         <div id="dm-history-divider" style="border-top:1px solid var(--border2); margin: 16px 0;"></div>
@@ -2284,22 +2302,6 @@
             <span class="dm-pnl-total-label">P&L ESTIMADO</span>
             <span class="dm-pnl-total-val val-pos" id="dm-pnl-total-display">$0.00</span>
           </div>
-        </div>
-
-        <!-- NOTA DEL TRADE -->
-        <div class="dm-section" style="margin-bottom:0;">
-          <div class="dm-section-label">NOTA DEL TRADE</div>
-          <textarea class="dm-input" id="dm-j-text" placeholder="Setup, razonamiento, errores o aciertos..." style="resize:vertical; min-height:80px; width:100%;"></textarea>
-          <div style="font-size:9px; color:var(--text3); letter-spacing:0.1em; margin-top:10px; margin-bottom:6px;">CAPTURAS / CHARTS</div>
-          <div class="img-upload-area" id="dm-drop-zone"
-               onclick="document.getElementById('dm-j-images').click()"
-               ondragover="dmHandleDragOver(event)"
-               ondragleave="dmHandleDragLeave(event)"
-               ondrop="dmHandleDrop(event)">
-            Haz clic o arrastra imágenes aquí
-          </div>
-          <input type="file" id="dm-j-images" accept="image/*" multiple style="display:none" onchange="dmHandleFileSelect(event)">
-          <div class="img-preview-wrap" id="dm-img-preview"></div>
         </div>
 
         <!-- CHECKLIST DE REGLAS -->
@@ -4807,7 +4809,7 @@ let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth(); // 0-indexed
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS_ES = ['LUN','MAR','MIÉ','JUE','VIE'];
+const DAYS_ES = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
 
 function calPrev() { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
 function calNext() { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
@@ -4830,22 +4832,19 @@ function renderCalendar() {
   const grid = document.getElementById('cal-grid');
   let html = '';
 
-  // Day of week headers — Mon to Fri only
+  // Day of week headers — Mon to Sun
   DAYS_ES.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
   html += `<div class="cal-dow" style="color:#7B9FD4;letter-spacing:0.08em;font-size:9px;">PNL SEMANAL</div>`;
 
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const todayStr = getLocalDateStr();
 
-  // Find weekday (Mon=0..Fri=4) of the 1st of the month
+  // Find weekday (Mon=0..Sun=6) of the 1st of the month
   // getDay() returns 0=Sun,1=Mon,...,6=Sat
   const firstDow = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
-  // Convert to Mon-based: Mon=0, Tue=1, ..., Fri=4
-  // Sun(0)->6, Mon(1)->0, Tue(2)->1, Wed(3)->2, Thu(4)->3, Fri(5)->4, Sat(6)->5
+  // Convert to Mon-based: Mon=0, Tue=1, ..., Sun=6
   const firstWeekdayIdx = (firstDow + 6) % 7; // Mon-based index
-  // How many empty cells before day 1 (clamp to 0-4, skip if Sat/Sun start)
-  const emptyCells = Math.min(firstWeekdayIdx, 5);
-  for (let i = 0; i < emptyCells; i++) {
+  for (let i = 0; i < firstWeekdayIdx; i++) {
     html += `<div class="cal-cell empty"></div>`;
   }
 
@@ -4853,7 +4852,6 @@ function renderCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateObj = new Date(calYear, calMonth, d);
     const dow = dateObj.getDay(); // 0=Sun, 6=Sat
-    if (dow === 0 || dow === 6) continue; // skip weekends
 
     const mm = String(calMonth + 1).padStart(2, '0');
     const dd = String(d).padStart(2, '0');
@@ -4871,7 +4869,6 @@ function renderCalendar() {
     let pnlHTML = '';
     let pnlCellClass = '';
     if (hasTrades) {
-      const sign = dayPnl >= 0 ? '+' : '';
       const cls = dayPnl >= 0 ? 'pos' : 'neg';
       pnlCellClass = dayPnl >= 0 ? 'pnl-pos' : 'pnl-neg';
       pnlHTML = `<div class="cal-pnl ${cls}">${dayPnl >= 0 ? '+' : '-'}$${Math.abs(dayPnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
@@ -4889,16 +4886,17 @@ function renderCalendar() {
         ${tradesCountHTML}
       </div>`;
 
-    // If Friday or last day of month → emit weekly total
+    // If Sunday or last day of month → emit weekly total
     const isLastDayOfMonth = d === daysInMonth;
-    const isFriday = dow === 5;
-    if (isFriday || isLastDayOfMonth) {
+    const isSunday = dow === 0;
+    if (isSunday || isLastDayOfMonth) {
       if (weekHasTrades) {
         const wCls = weekPnl > 0 ? 'wk-pos' : weekPnl < 0 ? 'wk-neg' : 'wk-zero';
         const wSign = weekPnl >= 0 ? '+' : '';
         html += `<div class="cal-week-total ${wCls}"><span class="wk-label">SEMANA</span>${wSign}$${Math.abs(weekPnl).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
+      } else {
+        html += `<div class="cal-week-empty"></div>`;
       }
-      if (!weekHasTrades) html += `<div class="cal-week-empty"></div>`;
       weekPnl = 0;
       weekHasTrades = false;
     }
@@ -4950,6 +4948,8 @@ function openDayModal(dateStr) {
   } else {
     // Día de hoy: mostrar selector de mercado
     document.getElementById('dm-market-screen').style.display = 'flex';
+    document.getElementById('ms-step-symbol').style.display = 'none';
+    document.getElementById('ms-step-market').style.display = 'flex';
     initMarketScreenChart();
     document.getElementById('dm-body').style.visibility = 'hidden';
   }
@@ -5023,29 +5023,52 @@ function initMarketScreenChart() {
   window._msChartRaf = raf;
 }
 
+const MARKET_SYMBOLS = {
+  futuros: ['NQ','MNQ','ES','MES','YM','MYM'],
+  forex: ['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','USD/CHF','NZD/USD','EUR/GBP','EUR/JPY','GBP/JPY','XAU/USD'],
+  materias: ['GOLD','OIL (CL)','SILVER','NATURAL GAS','COPPER','WHEAT','CORN','SOYBEAN','PLATINUM','PALLADIUM'],
+  cripto: ['BTC/USD','ETH/USD','SOL/USD','BNB/USD','XRP/USD','ADA/USD','DOGE/USD','AVAX/USD','LINK/USD','MATIC/USD','DOT/USD','LTC/USD']
+};
+const MARKET_LABELS_ES = { futuros: 'FUTUROS', forex: 'FOREX', materias: 'MATERIAS PRIMAS', cripto: 'CRIPTO' };
+
 function selectMarket(market) {
+  window.dmMarketType = market;
+
+  document.getElementById('ms-symbol-eyebrow').textContent = MARKET_LABELS_ES[market];
+  const list = document.getElementById('ms-symbol-list');
+  list.innerHTML = '';
+  MARKET_SYMBOLS[market].forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'symbol-choice-btn';
+    btn.textContent = s;
+    btn.onclick = () => selectSymbol(market, s);
+    list.appendChild(btn);
+  });
+
+  document.getElementById('ms-step-market').style.display = 'none';
+  document.getElementById('ms-step-symbol').style.display = 'flex';
+}
+
+function backToMarketStep() {
+  document.getElementById('ms-step-symbol').style.display = 'none';
+  document.getElementById('ms-step-market').style.display = 'flex';
+}
+
+function selectSymbol(market, symbol) {
   const symbolSelect = document.getElementById('dm-symbol');
   symbolSelect.innerHTML = '';
-
-  const symbols = {
-    futuros: ['NQ','MNQ','ES','MES','YM','MYM'],
-    forex: ['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','USD/CHF','NZD/USD','EUR/GBP','EUR/JPY','GBP/JPY','XAU/USD'],
-    materias: ['GOLD','OIL (CL)','SILVER','NATURAL GAS','COPPER','WHEAT','CORN','SOYBEAN','PLATINUM','PALLADIUM'],
-    cripto: ['BTC/USD','ETH/USD','SOL/USD','BNB/USD','XRP/USD','ADA/USD','DOGE/USD','AVAX/USD','LINK/USD','MATIC/USD','DOT/USD','LTC/USD']
-  };
-
-  symbols[market].forEach(s => {
+  MARKET_SYMBOLS[market].forEach(s => {
     const opt = document.createElement('option');
     opt.value = s; opt.textContent = s;
     symbolSelect.appendChild(opt);
   });
-
-  // Update multiplier map for forex/commodities (pip/point = 1 default)
+  symbolSelect.value = symbol;
   window.dmMarketType = market;
 
   document.getElementById('dm-market-screen').style.display = 'none';
   document.getElementById('dm-body').style.visibility = 'visible';
   if (window._msChartRaf) { cancelAnimationFrame(window._msChartRaf); window._msChartRaf = null; }
+  dmCalcAll(); dmSyncHeader();
 }
 
 function refreshDayModal() {
@@ -5347,6 +5370,32 @@ function getSymbolMultiplier(symbol) {
   return map[symbol] || 2;
 }
 
+const TICK_SIZE = { NQ: 0.25, MNQ: 0.25, ES: 0.25, MES: 0.25, YM: 1, MYM: 1 };
+function getTickSize(symbol) {
+  return TICK_SIZE[symbol] || 1;
+}
+
+// ── UNIDAD: PUNTOS vs TICKS ──
+let dmUnit = 'points'; // 'points' | 'ticks'
+
+function setDmUnit(unit) {
+  dmUnit = unit;
+  const isPoints = unit === 'points';
+  const btnPoints = document.getElementById('dm-unit-btn-points');
+  const btnTicks  = document.getElementById('dm-unit-btn-ticks');
+  if (btnPoints && btnTicks) {
+    btnPoints.style.background = isPoints ? 'var(--accent)' : 'transparent';
+    btnPoints.style.color      = isPoints ? 'var(--bg)' : 'var(--text3)';
+    btnTicks.style.background  = isPoints ? 'transparent' : 'var(--accent)';
+    btnTicks.style.color       = isPoints ? 'var(--text3)' : 'var(--bg)';
+  }
+  const input = document.getElementById('dm-simple-points');
+  if (input) input.placeholder = isPoints ? 'ej: 30 o -15' : 'ej: 12 o -8';
+  const tpLabel = document.getElementById('dm-simple-tp-unit-label');
+  if (tpLabel) tpLabel.textContent = isPoints ? 'PUNTOS' : 'TICKS';
+  dmCalcSimple();
+}
+
 function dmCalcCore() {
   // Returns totalPnl and updates dmTPs[i].points / .pnl in place
   const entry = parseFloat(document.getElementById('dm-entry').value) || 0;
@@ -5603,30 +5652,10 @@ function setResult(r) {
 
 // ====================== SAVE ALL ======================
 // ── TRADE MODE TOGGLE ──
-let dmTradeMode = 'simple'; // 'simple' | 'detallado'
+let dmTradeMode = 'simple'; // siempre 'simple' — modo detallado eliminado
 
 function setTradeMode(mode) {
-  dmTradeMode = mode;
-  const isSimple = mode === 'simple';
-
-  document.getElementById('dm-mode-simple-fields').style.display   = isSimple ? '' : 'none';
-  document.getElementById('dm-mode-detail-fields').style.display   = isSimple ? 'none' : '';
-  document.getElementById('dm-simple-exit-section').style.display  = isSimple ? 'none' : '';
-  document.getElementById('dm-parciales-section').style.display    = isSimple ? 'none' : '';
-
-  const btnSimple    = document.getElementById('dm-mode-btn-simple');
-  const btnDetallado = document.getElementById('dm-mode-btn-detallado');
-  if (isSimple) {
-    btnSimple.style.background    = 'var(--accent)';
-    btnSimple.style.color         = 'var(--bg)';
-    btnDetallado.style.background = 'transparent';
-    btnDetallado.style.color      = 'var(--text3)';
-  } else {
-    btnDetallado.style.background = 'var(--accent)';
-    btnDetallado.style.color      = 'var(--bg)';
-    btnSimple.style.background    = 'transparent';
-    btnSimple.style.color         = 'var(--text3)';
-  }
+  dmTradeMode = 'simple';
   dmCalcSimple();
 }
 
@@ -5687,17 +5716,19 @@ function dmSimpleRenderTPs() {
 
   const sym  = document.getElementById('dm-symbol').value;
   const mult = getSymbolMultiplier(sym);
+  const tickSize = getTickSize(sym);
+  const unitMult = dmUnit === 'ticks' ? tickSize : 1;
 
   if (dmSimpleTPs.length === 0) {
     container.innerHTML = '';
     return;
   }
   container.innerHTML = dmSimpleTPs.map((tp, i) => {
-    const pts  = parseFloat(tp.pts) || 0;
+    const units = parseFloat(tp.pts) || 0;
     const qty  = parseInt(tp.qty)   || 1;
-    const pnl  = pts * mult * qty;
-    const pnlStr = pts !== 0 ? ((pnl>=0?'+$':'-$') + Math.abs(pnl).toFixed(2)) : '—';
-    const ptsStr = pts !== 0 ? ((pts>0?'+':'')+pts) : '—';
+    const pnl  = (units * unitMult) * mult * qty;
+    const pnlStr = units !== 0 ? ((pnl>=0?'+$':'-$') + Math.abs(pnl).toFixed(2)) : '—';
+    const ptsStr = units !== 0 ? ((units>0?'+':'')+units) : '—';
     const pnlColor = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text2)';
     return `
     <div class="tp-row" id="stp-row-${i}" style="grid-template-columns:60px 1fr 70px 70px 24px;">
@@ -5731,15 +5762,17 @@ function dmCalcSimple() {
   if (dmTradeMode !== 'simple') return;
   const sym  = document.getElementById('dm-symbol').value;
   const mult = getSymbolMultiplier(sym);
+  const tickSize = getTickSize(sym);
+  const unitMult = dmUnit === 'ticks' ? tickSize : 1; // valor en puntos por unidad ingresada
   let totalPnl = 0;
 
   if (dmSimpleParcialesActive) {
     // Re-render to refresh calculated values
     dmSimpleRenderTPs();
     totalPnl = dmSimpleTPs.reduce((s, tp) => {
-      const pts = parseFloat(tp.pts) || 0;
+      const units = parseFloat(tp.pts) || 0;
       const qty = parseInt(tp.qty)   || 1;
-      return s + pts * mult * qty;
+      return s + (units * unitMult) * mult * qty;
     }, 0);
     // Auto result: any winner = win, all loss = loss, etc.
     const hasWin  = dmSimpleTPs.some(t => t.result === 'win' || t.result === 'cmw');
@@ -5747,19 +5780,19 @@ function dmCalcSimple() {
     const autoRes = allBE ? 'be' : hasWin ? 'win' : 'loss';
     setResult(autoRes);
   } else {
-    const pts  = parseFloat(document.getElementById('dm-simple-points').value) || 0;
+    const units = parseFloat(document.getElementById('dm-simple-points').value) || 0;
     const qty  = parseInt(document.getElementById('dm-qty').value) || 1;
-    const pnl  = pts * mult * qty;
+    const pnl  = (units * unitMult) * mult * qty;
     const disp = document.getElementById('dm-simple-pnl-display');
-    if (pts !== 0) {
+    if (units !== 0) {
       disp.value = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
       disp.className = 'dm-input readonly ' + (pnl >= 0 ? 'val-pos' : 'val-neg');
     } else {
       disp.value = '—';
       disp.className = 'dm-input readonly';
     }
-    if (pts > 0) setResult('win');
-    else if (pts < 0) setResult('loss');
+    if (units > 0) setResult('win');
+    else if (units < 0) setResult('loss');
     totalPnl = pnl;
   }
 
@@ -5788,26 +5821,28 @@ async function dmSaveAll() {
   // SIMPLE MODE SAVE
   if (dmTradeMode === 'simple') {
     const mult = getSymbolMultiplier(symbol);
+    const tickSize = getTickSize(symbol);
+    const unitMult = dmUnit === 'ticks' ? tickSize : 1;
     let totalPnl = 0;
     let overallResult = currentResult || 'win';
     let simplePartials = [];
 
     if (dmSimpleParcialesActive && dmSimpleTPs.length > 0) {
       simplePartials = dmSimpleTPs.map(tp => {
-        const pts = parseFloat(tp.pts) || 0;
+        const units = parseFloat(tp.pts) || 0;
         const tpQty = parseInt(tp.qty) || qty;
-        const pnl = parseFloat((pts * mult * tpQty).toFixed(2));
-        return { pts, qty: tpQty, pnl, result: tp.result };
+        const pnl = parseFloat(((units * unitMult) * mult * tpQty).toFixed(2));
+        return { pts: units, qty: tpQty, pnl, result: tp.result };
       });
       totalPnl = parseFloat(simplePartials.reduce((s,p) => s + p.pnl, 0).toFixed(2));
       const hasWin = simplePartials.some(t => t.result === 'win' || t.result === 'cmw');
       const allBE  = simplePartials.every(t => t.result === 'be');
       overallResult = allBE ? 'be' : hasWin ? 'win' : 'loss';
     } else {
-      const pts = parseFloat(document.getElementById('dm-simple-points').value) || 0;
-      totalPnl = parseFloat((pts * mult * qty).toFixed(2));
-      overallResult = currentResult || (pts > 0 ? 'win' : pts < 0 ? 'loss' : 'be');
-      if (pts === 0 && !currentResult) return; // nothing to save
+      const units = parseFloat(document.getElementById('dm-simple-points').value) || 0;
+      totalPnl = parseFloat(((units * unitMult) * mult * qty).toFixed(2));
+      overallResult = currentResult || (units > 0 ? 'win' : units < 0 ? 'loss' : 'be');
+      if (units === 0 && !currentResult) return; // nothing to save
     }
 
     const newTrade = {
