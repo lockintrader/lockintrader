@@ -116,6 +116,28 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
 .plan-trimestral { background: rgba(108,127,216,.12); color: #6C7FD8; border: 1px solid rgba(108,127,216,.25); }
 .plan-semestral  { background: rgba(74,175,212,.12);  color: #4AAFD4; border: 1px solid rgba(74,175,212,.25); }
 .plan-anual      { background: rgba(180,190,210,.1);  color: #B4BED2; border: 1px solid rgba(180,190,210,.2); }
+
+/* COMPROBANTES */
+.comprobantes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.comp-card { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; overflow: hidden; transition: border-color .2s; }
+.comp-card:hover { border-color: var(--border2); }
+.comp-card.is-pendiente { border-color: rgba(245,158,11,.3); }
+.comp-thumb-wrap { position: relative; width: 100%; height: 170px; background: var(--bg3); cursor: zoom-in; overflow: hidden; }
+.comp-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s; }
+.comp-thumb-wrap:hover img { transform: scale(1.04); }
+.comp-status-tag { position: absolute; top: 8px; left: 8px; font-size: 8px; letter-spacing: 0.08em; font-weight: 700; padding: 3px 8px; border-radius: 999px; backdrop-filter: blur(4px); }
+.comp-status-tag.pendiente  { background: rgba(245,158,11,.18); color: var(--amber); border: 1px solid rgba(245,158,11,.35); }
+.comp-status-tag.aprobado   { background: rgba(84,200,120,.18); color: var(--green); border: 1px solid rgba(84,200,120,.35); }
+.comp-status-tag.rechazado  { background: rgba(255,84,112,.18); color: var(--red); border: 1px solid rgba(255,84,112,.35); }
+.comp-body { padding: 12px 14px 14px; }
+.comp-name { font-family: 'Syne',sans-serif; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.comp-email { font-size: 9px; color: var(--text3); margin-bottom: 8px; word-break: break-all; }
+.comp-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-size: 9px; color: var(--text2); }
+.comp-meta-row strong { color: var(--text); font-weight: 700; }
+.comp-actions { display: flex; gap: 6px; margin-top: 10px; }
+.comp-actions select { flex: 1; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px; padding: 7px 8px; font-size: 9px; color: var(--text); font-family: 'Space Mono', monospace; outline: none; }
+.comp-actions button { flex-shrink: 0; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 6px; padding: 7px 10px; font-size: 9px; color: var(--red); cursor: pointer; font-family: 'Space Mono', monospace; }
+.comp-actions button:hover { border-color: var(--red); }
 .plan-none       { background: rgba(85,88,112,.1);    color: var(--text3); border: 1px solid rgba(85,88,112,.2); }
 .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 8px; letter-spacing: 0.08em; font-weight: 700; white-space: nowrap; }
 .status-active  { background: rgba(84,200,120,.1);  color: var(--green); border: 1px solid rgba(84,200,120,.25); }
@@ -370,6 +392,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
     <!-- NAV TABS -->
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="showSection('users',this)"><span class="nav-tab-icon">👥</span><span class="nav-tab-label">USUARIOS</span><span class="tab-badge" id="badge-pending" style="display:none">0</span></button>
+      <button class="nav-tab" onclick="showSection('comprobantes',this)"><span class="nav-tab-icon">🧾</span><span class="nav-tab-label">COMPROBANTES</span><span class="tab-badge" id="badge-comprobantes" style="display:none">0</span></button>
       <button class="nav-tab" onclick="showSection('trades',this)"><span class="nav-tab-icon">📊</span><span class="nav-tab-label">TRADES</span></button>
       <button class="nav-tab" onclick="showSection('images',this)"><span class="nav-tab-icon">🖼️</span><span class="nav-tab-label">IMÁGENES</span></button>
       <button class="nav-tab" onclick="showSection('passwords',this)"><span class="nav-tab-icon">🔑</span><span class="nav-tab-label">CONTRASEÑAS</span></button>
@@ -400,6 +423,20 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Mono', mon
         </div>
       </div>
       <div class="table-wrap" id="users-table-wrap"><div class="loading-state"><div class="spinner"></div> Conectando…</div></div>
+    </div>
+
+    <!-- COMPROBANTES -->
+    <div class="section" id="sec-comprobantes">
+      <div class="section-hdr">
+        <div><div class="section-title">Comprobantes de Pago</div><div class="section-count" id="comp-count-label">Cargando…</div></div>
+        <select class="filter-select" id="comp-status-filter" onchange="renderComprobantesSection()">
+          <option value="">TODOS LOS ESTADOS</option>
+          <option value="pendiente">PENDIENTES</option>
+          <option value="aprobado">APROBADOS</option>
+          <option value="rechazado">RECHAZADOS</option>
+        </select>
+      </div>
+      <div id="comprobantes-container" class="comprobantes-grid"><div class="loading-state"><div class="spinner"></div> Cargando…</div></div>
     </div>
 
     <!-- TRADES -->
@@ -629,6 +666,8 @@ const db    = getFirestore(fbApp);
 
 let allUsers      = [];
 let allTradesFlat = [];
+let allComprobantes = [];
+let unsubComprobantes = null;
 let currentUserTab = 'all';
 let currentEditUID = null;
 let pendingDeleteUID = null;
@@ -649,6 +688,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById('topbar-email').textContent = user.email;
     setFbStatus('connecting');
     startRealtimeListener();
+    startComprobantesListener();
   } else if (user) {
     signOut(auth);
     setLoginErr('Acceso denegado.');
@@ -656,6 +696,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
     if (unsubSnapshot) { unsubSnapshot(); unsubSnapshot = null; }
+    if (unsubComprobantes) { unsubComprobantes(); unsubComprobantes = null; }
     setFbStatus('disconnected');
   }
 });
@@ -735,6 +776,34 @@ function startRealtimeListener() {
   );
 }
 
+// ── COMPROBANTES LISTENER ──
+function startComprobantesListener() {
+  document.getElementById('comprobantes-container').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div> Conectando…</div>';
+  if (unsubComprobantes) unsubComprobantes();
+
+  unsubComprobantes = onSnapshot(collection(db, 'comprobantes'),
+    snapshot => {
+      allComprobantes = [];
+      snapshot.forEach(d => allComprobantes.push({ id: d.id, ...d.data() }));
+      allComprobantes.sort((a,b) => (b.fecha||'') > (a.fecha||'') ? 1 : -1);
+      updateComprobantesBadge();
+      const sec = document.querySelector('.section.active')?.id;
+      if (sec === 'sec-comprobantes') renderComprobantesSection();
+    },
+    err => {
+      console.error('[comprobantes onSnapshot]', err);
+      document.getElementById('comprobantes-container').innerHTML =
+        `<div class="empty-state">Error Firebase: ${escHtml(err.message)}</div>`;
+    }
+  );
+}
+function updateComprobantesBadge() {
+  const pendientes = allComprobantes.filter(c => (c.status||'pendiente') === 'pendiente').length;
+  const badge = document.getElementById('badge-comprobantes');
+  if (pendientes > 0) { badge.textContent = pendientes; badge.style.display = ''; } else { badge.style.display = 'none'; }
+}
+
 // ── HELPERS ──
 function getStatus(u) {
   if (u.activated === true)      return 'active';
@@ -780,6 +849,7 @@ window.showSection = (name, btn) => {
   document.getElementById('sec-'+name).classList.add('active');
   btn.classList.add('active');
   if (name==='trades')    renderTradesSection();
+  if (name==='comprobantes') renderComprobantesSection();
   if (name==='images')    renderImagesSection();
   if (name==='passwords') renderPasswordsSection();
   if (name==='accesos')   renderAccesosSection();
@@ -1265,6 +1335,62 @@ window.openUserTradesModal = (uid) => {
   document.getElementById('user-trades-modal').classList.add('open');
 };
 window.closeUserTradesModal = () => { document.getElementById('user-trades-modal').classList.remove('open'); };
+
+// ── COMPROBANTES SECTION ──
+window.renderComprobantesSection = () => {
+  const sf = document.getElementById('comp-status-filter').value;
+  let list = [...allComprobantes];
+  if (sf) list = list.filter(c => (c.status||'pendiente') === sf);
+  document.getElementById('comp-count-label').textContent = list.length + ' comprobante' + (list.length!==1?'s':'');
+  if (!list.length) {
+    document.getElementById('comprobantes-container').innerHTML = '<div class="empty-state">No hay comprobantes que coincidan.</div>';
+    return;
+  }
+  document.getElementById('comprobantes-container').innerHTML = list.map(c => {
+    const status = c.status || 'pendiente';
+    const name = ((c.nombres||'')+' '+(c.apellidos||'')).trim() || 'Sin nombre';
+    const plan = c.plan || 'none';
+    const fecha = c.fecha ? fmtDate(c.fecha) : '—';
+    const img = c.imageBase64 || c.imageUrl || '';
+    return `<div class="comp-card is-${status}">
+      <div class="comp-thumb-wrap" onclick="openLightbox('${img.replace(/'/g,"\\'")}')">
+        ${img ? `<img src="${img}" loading="lazy" alt="Comprobante">` : `<div class="empty-state" style="height:100%;display:flex;align-items:center;justify-content:center;">Sin imagen</div>`}
+        <span class="comp-status-tag ${status}">${status.toUpperCase()}</span>
+      </div>
+      <div class="comp-body">
+        <div class="comp-name">${escHtml(name)}</div>
+        <div class="comp-email">${escHtml(c.email||'—')}</div>
+        <div class="comp-meta-row"><span>Plan</span><span class="plan-badge plan-${plan}">${plan.toUpperCase()}</span></div>
+        <div class="comp-meta-row"><span>Método</span><strong>${escHtml((c.metodo||'—').toUpperCase())}</strong></div>
+        <div class="comp-meta-row"><span>Monto</span><strong>$${(c.monto||0).toFixed ? c.monto.toFixed(2) : c.monto||'—'}</strong></div>
+        <div class="comp-meta-row"><span>Fecha</span><strong>${fecha}</strong></div>
+        <div class="comp-actions">
+          <select onchange="updateComprobanteStatus('${c.id}', this.value)">
+            <option value="pendiente"  ${status==='pendiente'?'selected':''}>PENDIENTE</option>
+            <option value="aprobado"   ${status==='aprobado'?'selected':''}>APROBADO</option>
+            <option value="rechazado"  ${status==='rechazado'?'selected':''}>RECHAZADO</option>
+          </select>
+          <button onclick="deleteComprobante('${c.id}')" title="Eliminar">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.updateComprobanteStatus = async (id, status) => {
+  try {
+    await updateDoc(doc(db,'comprobantes',id), { status });
+    showToast('Estado actualizado', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+};
+
+window.deleteComprobante = async (id) => {
+  if (!confirm('¿Eliminar este comprobante? Esta acción no se puede deshacer.')) return;
+  try {
+    await deleteDoc(doc(db,'comprobantes',id));
+    showToast('Comprobante eliminado', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+};
 
 // ── IMAGES SECTION ──
 window.renderImagesSection = () => {

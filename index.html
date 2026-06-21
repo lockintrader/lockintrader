@@ -110,19 +110,6 @@
     position: relative; overflow: hidden; text-align: center;
   }
 
-  .hero-badge, .hero-logo-large, .hero-title, .hero-sub, .hero-actions, .hero-stats, .hero-orb-1, .hero-orb-2 {
-    position: relative; z-index: 1;
-  }
-  /* ── CANDLESTICK CANVAS ── */
-  #candlestick-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.28;
-  }
-
   /* Hero background glow orbs */
   .hero-orb-1 {
     position: absolute; top: -200px; left: -200px; width: 600px; height: 600px;
@@ -450,13 +437,15 @@
   .modal-overlay.open { display: flex; }
   .modal {
     background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px;
-    width: 100%; max-width: 460px; overflow: hidden;
+    width: 100%; max-width: 460px;
+    max-height: 90vh; display: flex; flex-direction: column;
     animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   @keyframes modalIn { from{opacity:0;transform:scale(0.9) translateY(20px);} to{opacity:1;transform:none;} }
   .modal-header {
     padding: 24px 28px 20px; border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
   }
   .modal-title { font-family: 'Syne',sans-serif; font-size: 20px; font-weight: 800; color: #fff; }
   .modal-close {
@@ -465,7 +454,7 @@
     display: flex; align-items: center; justify-content: center; transition: all 0.2s;
   }
   .modal-close:hover { border-color: var(--red); color: var(--red); }
-  .modal-body { padding: 24px 28px; }
+  .modal-body { padding: 24px 28px; overflow-y: auto; }
   .modal-plan-info {
     background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
     padding: 16px 20px; margin-bottom: 24px;
@@ -492,19 +481,62 @@
   .pay-option.selected .pay-check::after { content:'✓'; color:#000; font-size:9px; font-weight: 700; }
 
   .usdt-box {
-    display: none; background: var(--bg2); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+    display: none; position: relative; overflow: hidden;
+    background: linear-gradient(145deg, var(--bg2), #0c0c12);
+    border: 1px solid var(--border2);
+    border-radius: 10px; padding: 16px 16px 14px; margin-bottom: 16px;
   }
   .usdt-box.visible { display: block; }
-  .usdt-network { font-size: 8px; color: var(--text3); letter-spacing: 0.16em; margin-bottom: 8px; }
-  .usdt-addr {
-    font-size: 10px; color: var(--amber); word-break: break-all; line-height: 1.5;
-    background: rgba(245,158,11,0.04); border-radius: 4px; padding: 8px 10px;
-    border: 1px solid var(--amber-border); cursor: pointer; transition: background 0.2s;
+  .usdt-box::before {
+    content: '';
+    position: absolute; inset: -20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Ctext x='6' y='40' font-family='monospace' font-size='26' fill='%23F59E0B' opacity='0.07'%3E%24%3C/text%3E%3C/svg%3E");
+    background-size: 70px 70px;
+    animation: dollarDrift 14s linear infinite;
+    pointer-events: none;
   }
-  .usdt-addr:hover { background: rgba(245,158,11,0.1); }
-  .usdt-hint { font-size: 8px; color: var(--text3); margin-top: 8px; }
-  .usdt-copied { font-size: 8px; color: var(--amber); margin-top: 6px; display:none; }
+  @keyframes dollarDrift {
+    from { background-position: 0 0; }
+    to   { background-position: 140px 140px; }
+  }
+  .crypto-row {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px; border-radius: 8px;
+    margin-bottom: 8px; transition: background 0.2s;
+    cursor: pointer;
+  }
+  .crypto-row:hover { background: rgba(245,158,11,0.06); }
+  .crypto-row:last-of-type { margin-bottom: 0; }
+  .crypto-qr-mini {
+    flex-shrink: 0; width: 58px; height: 58px;
+    background: #fff; border-radius: 8px; padding: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .crypto-qr-mini img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .crypto-info { flex: 1; min-width: 0; }
+  .usdt-network { font-size: 8px; color: var(--text3); letter-spacing: 0.14em; margin-bottom: 5px; text-transform: uppercase; }
+  .usdt-addr {
+    font-size: 9.5px; color: var(--amber); word-break: break-all; line-height: 1.5;
+    background: rgba(245,158,11,0.06); border-radius: 4px; padding: 6px 8px;
+    border: 1px solid var(--amber-border);
+  }
+  .usdt-hint { position: relative; z-index: 1; font-size: 8px; color: var(--text3); margin-top: 10px; }
+  .usdt-copied { position: relative; z-index: 1; font-size: 8px; color: var(--amber); margin-top: 6px; display:none; }
+
+  .proof-upload {
+    border: 1.5px dashed var(--border2); border-radius: 10px; padding: 18px;
+    text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 8px;
+    background: var(--bg2);
+  }
+  .proof-upload:hover { border-color: var(--amber); background: rgba(245,158,11,0.04); }
+  .proof-upload.has-image { padding: 8px; }
+  .proof-icon { font-size: 22px; margin-bottom: 6px; opacity: .8; }
+  .proof-text { font-size: 10px; color: var(--text2); margin-bottom: 3px; }
+  .proof-sub { font-size: 8px; color: var(--text3); }
+  #proof-preview { max-width: 100%; max-height: 180px; border-radius: 6px; display: block; margin: 0 auto; }
+  .proof-hint { font-size: 8px; color: var(--text3); margin-bottom: 12px; }
+  .proof-remove { font-size: 8px; color: var(--red); text-align: center; margin-top: 6px; cursor: pointer; }
 
   .field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
   .field-label { font-size: 8px; color: var(--text3); letter-spacing: 0.14em; }
@@ -662,7 +694,6 @@
 <body>
 
 <!-- NAV -->
-<canvas id="candlestick-bg"></canvas>
 <nav>
   <a class="nav-logo" href="#">
     <!-- LockIn Logo Mark Nav -->
@@ -712,7 +743,7 @@
         <linearGradient id="hbgD" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#161624"/><stop offset="100%" stop-color="#0d0d18"/></linearGradient>
         <linearGradient id="hg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
         <linearGradient id="hr1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#d45555"/><stop offset="100%" stop-color="#8f2828"/></linearGradient>
-        <linearGradient id="haccentLine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00e676" stop-opacity="0"/><stop offset="50%" stop-color="#00e676"/><stop offset="100%" stop-color="#00e676" stop-opacity="0"/></linearGradient>
+        <linearGradient id="haccentLine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00c896" stop-opacity="0"/><stop offset="50%" stop-color="#00c896"/><stop offset="100%" stop-color="#00c896" stop-opacity="0"/></linearGradient>
         <clipPath id="hdc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
       </defs>
       <ellipse cx="340" cy="185" rx="130" ry="110" fill="#00c896" opacity="0.035"/>
@@ -740,13 +771,13 @@
         <rect x="394" y="162" width="12" height="38" rx="1.5" fill="url(#hg1)" opacity="0.85"/>
         <line x1="400" y1="200" x2="400" y2="213" stroke="#5ee89a" stroke-width="1.2" stroke-linecap="round"/>
       </g>
-      <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linejoin="round" opacity="0.85"/>
-      <circle cx="340" cy="52" r="3" fill="#00e676" opacity="0.9"/>
-      <circle cx="458" cy="185" r="3" fill="#00e676" opacity="0.7"/>
-      <circle cx="340" cy="318" r="3" fill="#00e676" opacity="0.9"/>
-      <circle cx="222" cy="185" r="3" fill="#00e676" opacity="0.7"/>
+      <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#hsilver)" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="340" cy="52" r="3" fill="#ffffff" opacity="0.9"/>
+      <circle cx="458" cy="185" r="3" fill="#c8d0e0" opacity="0.8"/>
+      <circle cx="340" cy="318" r="3" fill="#ffffff" opacity="0.9"/>
+      <circle cx="222" cy="185" r="3" fill="#c8d0e0" opacity="0.8"/>
       <text x="256" y="368" font-family="'Syne',sans-serif" font-size="38" font-weight="700" letter-spacing="6" fill="#f0f2f8">LOCK</text>
-      <text x="390" y="368" font-family="'Syne',sans-serif" font-size="38" font-weight="700" letter-spacing="6" fill="#00e676"> IN</text>
+      <text x="390" y="368" font-family="'Syne',sans-serif" font-size="38" font-weight="700" letter-spacing="6" fill="#00c896"> IN</text>
       <rect x="256" y="377" width="172" height="1.5" rx="1" fill="url(#haccentLine)" opacity="0.7"/>
     </svg>
   </div>
@@ -757,10 +788,10 @@
     <span class="subtitle-line">Trading Journal</span>
   </h1>
 
-  <p class="hero-sub">La herramienta definitiva para registrar, analizar y mejorar tu performance como trader. Diseñada para todo tipo de trader que quiere dominar su edge con datos reales.</p>
+  <p class="hero-sub">La herramienta definitiva para registrar, analizar y mejorar tu performance como trader. Diseñada para traders ICT/SMC que quieren dominar su edge con datos reales.</p>
 
   <div class="hero-actions">
-    <button class="btn-primary" onclick="openModal('semestral')">COMENZAR AHORA</button>
+    <button class="btn-primary" onclick="openModal('semestral')">INICIAR PERIODO DE PRUEBA</button>
     <a href="#features"><button class="btn-ghost">VER FUNCIONES ↓</button></a>
   </div>
 
@@ -853,202 +884,120 @@
   <div class="container">
     <div class="demo-wrap">
 
-      <!-- APP REPLICA — pixel-perfect del dashboard real -->
-      <div style="border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px #1e1e2e, 0 0 80px rgba(180,190,210,0.07), 0 40px 120px rgba(0,0,0,0.95);font-family:'Space Mono',monospace;">
-
-        <!-- Browser chrome -->
-        <div style="background:#0d0d15;border-bottom:1px solid #1a1a28;padding:9px 14px;display:flex;align-items:center;gap:6px;">
-          <div style="width:11px;height:11px;border-radius:50%;background:#FF5F57;"></div>
-          <div style="width:11px;height:11px;border-radius:50%;background:#FFBD2E;"></div>
-          <div style="width:11px;height:11px;border-radius:50%;background:#28C840;"></div>
-          <div style="flex:1;display:flex;justify-content:center;">
-            <div style="background:#141420;border:1px solid #1e1e30;border-radius:5px;padding:3px 18px;font-size:8px;color:#343548;letter-spacing:0.08em;">lockintrader.com/app</div>
-          </div>
+      <!-- APP REPLICA -->
+      <div class="app-replica">
+        <div class="app-replica-titlebar">
+          <div class="app-replica-dot" style="background:#FF3D57;"></div>
+          <div class="app-replica-dot" style="background:#FFB300;"></div>
+          <div class="app-replica-dot" style="background:#F59E0B;"></div>
+          <span class="app-replica-title">LOCKIN — DASHBOARD</span>
         </div>
 
-        <!-- App shell: sidebar + main -->
-        <div style="display:flex;height:520px;background:#09090F;">
-
-          <!-- Sidebar real -->
-          <div style="width:54px;background:#09090F;border-right:1px solid #161625;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:3px;flex-shrink:0;">
-            <!-- Logo -->
-            <div style="width:32px;height:32px;border-radius:8px;background:#141420;border:1px solid #1e1e30;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
-              <svg width="20" height="20" viewBox="222 52 236 266" fill="none">
-                <defs>
-                  <linearGradient id="rg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#c8d0e0"/><stop offset="100%" stop-color="#8a9ab0"/></linearGradient>
-                  <linearGradient id="rg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5ee89a"/><stop offset="100%" stop-color="#33c46a"/></linearGradient>
-                  <linearGradient id="rr1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#d45555"/><stop offset="100%" stop-color="#8f2828"/></linearGradient>
-                  <clipPath id="rdc"><polygon points="340,52 458,185 340,318 222,185"/></clipPath>
-                </defs>
-                <polygon points="340,52 458,185 340,318 222,185" fill="#0d0d18"/>
-                <g clip-path="url(#rdc)">
-                  <rect x="268" y="175" width="14" height="32" rx="1.5" fill="url(#rr1)" opacity="0.7"/>
-                  <rect x="290" y="162" width="14" height="40" rx="1.5" fill="url(#rg2)" opacity="0.9"/>
-                  <rect x="325" y="140" width="16" height="58" rx="2" fill="url(#rg2)"/>
-                  <rect x="349" y="130" width="16" height="68" rx="2" fill="url(#rg2)"/>
-                  <rect x="374" y="162" width="14" height="34" rx="1.5" fill="url(#rr1)" opacity="0.75"/>
-                  <rect x="396" y="158" width="14" height="44" rx="1.5" fill="url(#rg2)" opacity="0.85"/>
-                </g>
-                <polygon points="340,52 458,185 340,318 222,185" fill="none" stroke="url(#rg1)" stroke-width="2.5" stroke-linejoin="round"/>
+        <div class="app-replica-shell">
+          <div class="app-replica-sidebar">
+            <div class="app-sidebar-logo-dot">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <ellipse cx="10" cy="10" rx="9" ry="5.5" stroke="#F59E0B" stroke-width="0.8" opacity="0.5"/>
+                <circle cx="10" cy="10" r="3" stroke="#F59E0B" stroke-width="0.8"/>
+                <circle cx="10" cy="10" r="1.2" fill="#F59E0B"/>
               </svg>
             </div>
-            <!-- Nav icons — matching real app pages -->
-            <div style="width:38px;height:36px;border-radius:8px;background:rgba(180,190,210,0.07);border:1px solid rgba(180,190,210,0.12);display:flex;align-items:center;justify-content:center;" title="Home">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#B4BED2" stroke-width="2" stroke-linecap="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><rect x="9" y="14" width="6" height="7" rx="1"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Dashboard">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Trades">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Calendario">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Charts">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;" title="Backtesting">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div style="width:38px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-top:auto;" title="Tema">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#343548" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-            </div>
+            <div class="app-nav-icon active">⬛</div>
+            <div class="app-nav-icon">📋</div>
+            <div class="app-nav-icon">📝</div>
+            <div class="app-nav-icon">📅</div>
+            <div class="app-nav-icon">📊</div>
+            <div class="app-nav-icon">📈</div>
           </div>
 
-          <!-- Main dashboard content -->
-          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;background:#09090F;">
-
-            <!-- Top bar with title -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #161625;background:#0F0F18;flex-shrink:0;">
-              <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#E8ECF5;letter-spacing:-0.01em;">Dashboard</div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <div style="font-size:8px;color:#343548;letter-spacing:0.12em;">JUNIO 2025</div>
-                <div style="background:rgba(180,190,210,0.07);border:1px solid rgba(180,190,210,0.18);border-radius:4px;padding:2px 8px;font-size:7px;color:#B4BED2;letter-spacing:0.12em;">● EN VIVO</div>
+          <div class="app-replica-main">
+            <div class="app-metrics-row">
+              <div class="app-metric">
+                <div class="app-metric-label">P&amp;L MES</div>
+                <div class="app-metric-val" style="color:#F59E0B;">+$3,420</div>
+                <div class="app-metric-sub">↑ vs mes anterior</div>
+              </div>
+              <div class="app-metric">
+                <div class="app-metric-label">WIN RATE</div>
+                <div class="app-metric-val" style="color:#e8eaed;">72%</div>
+                <div class="app-metric-sub">13W · 5L</div>
+              </div>
+              <div class="app-metric">
+                <div class="app-metric-label">TRADES</div>
+                <div class="app-metric-val" style="color:#e8eaed;">18</div>
+                <div class="app-metric-sub">este mes</div>
+              </div>
+              <div class="app-metric">
+                <div class="app-metric-label">MEJOR DÍA</div>
+                <div class="app-metric-val" style="color:#F59E0B;">+$1,960</div>
+                <div class="app-metric-sub">Jue 09 May</div>
               </div>
             </div>
 
-            <!-- Overview chart card (real uprofit style) -->
-            <div style="margin:10px 10px 0;background:#141420;border:1px solid #1e1e30;border-radius:10px;overflow:hidden;flex-shrink:0;">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px 6px;">
-                <div style="font-size:8px;color:#B4BED2;letter-spacing:0.14em;font-weight:700;">DESCRIPCIÓN GENERAL</div>
-                <div style="display:flex;gap:10px;font-size:7px;color:#343548;align-items:center;">
-                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:2px;background:#B4BED2;display:inline-block;border-radius:1px;"></span>Balance</span>
-                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:2px;background:#FF5470;display:inline-block;border-radius:1px;"></span>Reducción</span>
-                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#4ADE80;display:inline-block;"></span>Win</span>
-                  <span style="display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#FF4560;display:inline-block;"></span>Loss</span>
-                </div>
+            <div class="app-section-header">
+              <span class="app-section-title">HISTORIAL RECIENTE</span>
+              <span class="app-section-badge">MAYO 2025</span>
+            </div>
+
+            <div class="app-trade-list">
+              <div class="app-trade-row win">
+                <span class="app-sym">NAS100</span>
+                <span class="app-badge long">LONG</span>
+                <span class="app-entry">Entry 21,340 · SL 21,280</span>
+                <span class="app-setup">OB + FVG</span>
+                <span class="app-pnl pos">+$840</span>
+                <span class="app-badge win">WIN</span>
               </div>
-              <!-- Chart canvas area -->
-              <div style="height:88px;position:relative;padding:0 2px;">
-                <canvas id="app-overview-canvas" style="width:100%;height:88px;display:block;"></canvas>
+              <div class="app-trade-row loss">
+                <span class="app-sym">NAS100</span>
+                <span class="app-badge short">SHORT</span>
+                <span class="app-entry">Entry 21,560 · SL 21,610</span>
+                <span class="app-setup">BMS</span>
+                <span class="app-pnl neg">-$200</span>
+                <span class="app-badge loss">SL</span>
               </div>
-              <!-- Metric strip below chart -->
-              <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #1e1e30;">
-                <div style="padding:8px 10px;border-right:1px solid #1e1e30;">
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.1em;margin-bottom:3px;">P&amp;L TOTAL</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#B4BED2;">+$4,820</div>
-                </div>
-                <div style="padding:8px 10px;border-right:1px solid #1e1e30;">
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.1em;margin-bottom:3px;">WIN RATE</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#E8ECF5;">74%</div>
-                </div>
-                <div style="padding:8px 10px;border-right:1px solid #1e1e30;">
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.1em;margin-bottom:3px;">TRADES</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#E8ECF5;">23</div>
-                </div>
-                <div style="padding:8px 10px;border-right:1px solid #1e1e30;">
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.1em;margin-bottom:3px;">MEJOR DÍA</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#B4BED2;">+$1,960</div>
-                </div>
-                <div style="padding:8px 10px;">
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.1em;margin-bottom:3px;">DRAWDOWN</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#FF5470;">-2.1%</div>
-                </div>
+              <div class="app-trade-row win">
+                <span class="app-sym">ES</span>
+                <span class="app-badge long">LONG</span>
+                <span class="app-entry">Entry 5,610 · SL 5,590</span>
+                <span class="app-setup">SMT + OB</span>
+                <span class="app-pnl pos">+$1,120</span>
+                <span class="app-badge cmw">PARCIAL</span>
+              </div>
+              <div class="app-trade-row win">
+                <span class="app-sym">NAS100</span>
+                <span class="app-badge long">LONG</span>
+                <span class="app-entry">Entry 21,210 · SL 21,150</span>
+                <span class="app-setup">KILLZONE</span>
+                <span class="app-pnl pos">+$460</span>
+                <span class="app-badge win">WIN</span>
+              </div>
+              <div class="app-trade-row be">
+                <span class="app-sym">GC</span>
+                <span class="app-badge short">SHORT</span>
+                <span class="app-entry">Entry 3,342 · SL 3,355</span>
+                <span class="app-setup">FVG</span>
+                <span class="app-pnl neg">-$180</span>
+                <span class="app-badge be">BE</span>
               </div>
             </div>
 
-            <!-- Two-col row: ops donut + activity -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 10px 0;flex-shrink:0;">
-              <!-- Ops donut card -->
-              <div style="background:#141420;border:1px solid #1e1e30;border-radius:10px;padding:10px 12px;">
-                <div style="font-size:8px;color:#B4BED2;letter-spacing:0.14em;font-weight:700;margin-bottom:8px;">OPERACIONES (%)</div>
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <canvas id="app-donut-canvas" width="72" height="72" style="flex-shrink:0;"></canvas>
-                  <div style="display:flex;flex-direction:column;gap:6px;">
-                    <div>
-                      <div style="font-size:7px;color:#343548;letter-spacing:0.08em;">Ganadoras</div>
-                      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#B4BED2;">17</div>
-                    </div>
-                    <div style="height:1px;background:#1e1e30;"></div>
-                    <div>
-                      <div style="font-size:7px;color:#343548;letter-spacing:0.08em;">Perdedoras</div>
-                      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#FF5470;">6</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <!-- Actividad / trade list -->
-              <div style="background:#141420;border:1px solid #1e1e30;border-radius:10px;padding:10px 12px;overflow:hidden;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
-                  <div style="font-size:8px;color:#B4BED2;letter-spacing:0.14em;font-weight:700;">HISTORIAL</div>
-                  <div style="font-size:6px;color:#B4BED2;background:rgba(180,190,210,0.07);border:1px solid rgba(180,190,210,0.15);border-radius:3px;padding:1px 6px;letter-spacing:0.1em;">JUNIO 2025</div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:3px;">
-                  <!-- Trade rows — exact style from real app -->
-                  <div style="display:flex;align-items:center;gap:5px;background:#0F0F18;border:1px solid #1e1e30;border-left:2px solid #B4BED2;border-radius:6px;padding:5px 7px;">
-                    <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#E8ECF5;min-width:44px;">NAS100</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.08);color:#B4BED2;">LONG</span>
-                    <span style="flex:1;font-size:7px;color:#343548;">21,340</span>
-                    <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#B4BED2;">+$840</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.07);color:#B4BED2;">WIN</span>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:5px;background:#0F0F18;border:1px solid #1e1e30;border-left:2px solid #FF5470;border-radius:6px;padding:5px 7px;">
-                    <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#E8ECF5;min-width:44px;">NAS100</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(255,84,112,0.1);color:#FF5470;">SHORT</span>
-                    <span style="flex:1;font-size:7px;color:#343548;">21,560</span>
-                    <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#FF5470;">-$200</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(255,84,112,0.08);color:#FF5470;">SL</span>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:5px;background:#0F0F18;border:1px solid #1e1e30;border-left:2px solid #B4BED2;border-radius:6px;padding:5px 7px;">
-                    <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#E8ECF5;min-width:44px;">ES</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.08);color:#B4BED2;">LONG</span>
-                    <span style="flex:1;font-size:7px;color:#343548;">5,610</span>
-                    <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#B4BED2;">+$1,120</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.07);color:#B4BED2;">PARCIAL</span>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:5px;background:#0F0F18;border:1px solid #1e1e30;border-left:2px solid #B4BED2;border-radius:6px;padding:5px 7px;">
-                    <span style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:#E8ECF5;min-width:44px;">GC</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.08);color:#B4BED2;">LONG</span>
-                    <span style="flex:1;font-size:7px;color:#343548;">3,342</span>
-                    <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#B4BED2;">+$460</span>
-                    <span style="font-size:6px;padding:1px 4px;border-radius:2px;background:rgba(180,190,210,0.07);color:#B4BED2;">WIN</span>
-                  </div>
-                </div>
+            <div class="app-equity-wrap">
+              <div class="app-equity-label">CURVA DE EQUITY — MAYO</div>
+              <div class="app-equity-chart">
+                <svg viewBox="0 0 500 38" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="eq-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.18"/>
+                      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,30 L28,28 L55,25 L83,22 L110,26 L138,20 L165,15 L193,18 L220,12 L248,8 L275,10 L303,6 L330,9 L358,5 L385,3 L413,7 L440,4 L468,2 L500,1 L500,38 L0,38 Z" fill="url(#eq-grad)"/>
+                  <polyline points="0,30 28,28 55,25 83,22 110,26 138,20 165,15 193,18 220,12 248,8 275,10 303,6 330,9 358,5 385,3 413,7 440,4 468,2 500,1"
+                    fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
               </div>
             </div>
-
-            <!-- Consistency + benefits row -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 10px 10px;flex-shrink:0;">
-              <!-- Consistency gauge card -->
-              <div style="background:#141420;border:1px solid #1e1e30;border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
-                <div style="position:relative;flex-shrink:0;">
-                  <canvas id="app-gauge-canvas" width="68" height="68"></canvas>
-                </div>
-                <div>
-                  <div style="font-size:7px;color:#343548;letter-spacing:0.12em;margin-bottom:2px;">CONSISTENCIA</div>
-                  <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#B4BED2;line-height:1;">82%</div>
-                  <div style="font-size:7px;color:#343548;margin-top:4px;">Mejor día: $1,960</div>
-                  <div style="font-size:7px;color:#343548;">es 40.7% del total</div>
-                </div>
-              </div>
-              <!-- Benefits bar chart -->
-              <div style="background:#141420;border:1px solid #1e1e30;border-radius:10px;padding:10px 12px;">
-                <div style="font-size:8px;color:#B4BED2;letter-spacing:0.14em;font-weight:700;margin-bottom:8px;">BENEFICIOS</div>
-                <canvas id="app-benefits-canvas" style="width:100%;height:68px;display:block;"></canvas>
-              </div>
-            </div>
-
           </div>
         </div>
       </div>
@@ -1327,20 +1276,64 @@
             </div>
             <div class="pay-check" id="check-usdt"></div>
           </div>
+          <div class="pay-option" id="opt-btc" onclick="selectPay('btc')">
+            <div class="pay-icon">₿</div>
+            <div class="pay-label">
+              <div class="pay-name">Bitcoin (BTC)</div>
+              <div class="pay-desc">Red Bitcoin nativa</div>
+            </div>
+            <div class="pay-check" id="check-btc"></div>
+          </div>
+        </div>
+
+        <div class="usdt-box" id="btc-box">
+          <div class="crypto-row" onclick="copyAddr('BTC','16bunaWbMEUbgVroQFwhdxdA4cxctP7g2t')">
+            <div class="crypto-qr-mini">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGAQAAAACh4MLwAAABk0lEQVR4nO2YTWrkMBCFP7kEWco38FGqbxZyM/lAA+Vlg8zLQu6GwEwWWUzXIsILodp8vPp5kov4+zqXfwTgNwIoACzcwiWZppA+UrBdSKNJ4QM3SZGBbQFKucH+Fvu57qbOUep/Jvg+ctw43uvF+RKC7yL37cPCTT0NWwUEFWrj3KIUp4kjA9uXPp0fkKVP5woGbupzkkhKwRaucHAFtP48TMC2ALV9DDhXn7MOvKw56k0CN2mKNn0hjW67BYMdGK0PGK2fW0+i22gd3NQVKJB6ll5Ql6Rr5LqpDzxHTme9YYFJk8okS8IWboECmiwmbR8tS05N/WrSeLZDBraF433AgIHft25BhXrckvSpBY+09injSOGnC1O01suKgrPcBljk8IVgAK1bIPUB0yYS6Pa8h8xb5TR9z3JHCphJxOdz5tq/nm0Bl0STgrfYy3qVX456c/BZbDZrb5rs69kekdbPlfumOUxyzLf62Hj9s0Kx0Wkqqydhm++sewW4rwH7qFnmG5eTSvF4NaTw0/L7j+tHkU++bDY+mXR1BgAAAABJRU5ErkJggg==" alt="QR BTC">
+            </div>
+            <div class="crypto-info">
+              <div class="usdt-network">Bitcoin · BTC</div>
+              <div class="usdt-addr">16bunaWbMEUbgVroQFwhdxdA4cxctP7g2t</div>
+            </div>
+          </div>
+          <div class="usdt-hint">⚠️ Envía exactamente el monto de tu plan. Luego envíanos el comprobante por email.</div>
+          <div class="usdt-copied" id="btc-copied">✓ Dirección copiada al portapapeles</div>
         </div>
 
         <div class="usdt-box" id="usdt-box">
-          <div class="usdt-network">DIRECCIÓN USDT · TRC-20 (TRON)</div>
-          <div class="usdt-addr" id="usdt-addr-trc" onclick="copyAddr('TRC20','TJYm5xE6kxjF2Q3K1QhV8Lx3mPbnVzNvRq')">
-            TJYm5xE6kxjF2Q3K1QhV8Lx3mPbnVzNvRq
+          <div class="crypto-row" onclick="copyAddr('TRC20','TP8VLqpRmQ6Fz73yapGVhaWxnFqdn4i9n2')">
+            <div class="crypto-qr-mini">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGAQAAAACh4MLwAAABk0lEQVR4nO2YMYodMRBEn74EP+wBH2CP0v9mxjfTHGVv0BMu9FAONCwbrG1w8LeDFQMTVPIoqVSSmvh8nLc/CPCtAAqAHmBKSFtGen492w1c0sLri1NSVPDtBrT2AM72ODcHONp4MsHnY1x/mw7E1l8fTyb4N9vxyB/R8PMlRiU2wTCdkGO/J5g4KrC959TfP6BGTtE1poLEV2wllWALTwBPmwqkqfAyvs1c7gUKsHmhVmAL0iY4NtOkACsyp5eS9qsHHK1trtfG8SiRUwl8FVbaTJsAVsE3pJmmtNk1MWETPKusN19gKxSJd80qbJr9sk5pWjntUYWN5ZVpnY6uWa7AFvRwBV0Tu9qhxpxeysA5fia0jXtwjzJdb0qbiXdpLbZeYu+9eqGHY7PrKqwyWdBVphLrHFKl628crbU28HMD9oQBXbPAenu/Z+1ADwYkez6X4C/KumdxNPBkb5u3VqHrPyr+tu33INl7VPENwNRjH/D2IuDcqrBJE/YBXboHrCeIr2f78B6CU+su077fuP5L+Q2xyyIW3DnDEAAAAABJRU5ErkJggg==" alt="QR TRC20">
+            </div>
+            <div class="crypto-info">
+              <div class="usdt-network">USDT · TRC-20 (TRON)</div>
+              <div class="usdt-addr">TP8VLqpRmQ6Fz73yapGVhaWxnFqdn4i9n2</div>
+            </div>
           </div>
-          <div class="usdt-network" style="margin-top:10px;">DIRECCIÓN USDT · BEP-20 (BSC)</div>
-          <div class="usdt-addr" id="usdt-addr-bep" onclick="copyAddr('BEP20','0x8f3A2b1c9D4e7F0a6B5c2d1E3f4A7b8C9d0e1F2a')">
-            0x8f3A2b1c9D4e7F0a6B5c2d1E3f4A7b8C9d0e1F2a
+          <div class="crypto-row" onclick="copyAddr('BEP20','0x634f473a800a3a9029a26f35e20350accfbff89a')">
+            <div class="crypto-qr-mini">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAADGAQAAAACh4MLwAAABmUlEQVR4nO2YsY0cMQxFH0cCNtR2sKVwOnBJW5M70JSyHVDhAlp8B5o7OzgDhoM7BseIIyYPIj8pjomP7bX9JQDfEdgYZmZ1fY39dcXMzPYEbChcUpGA2fryFT6/nm0DzHbGPpvK425XGFY/meBjq2/OUR5G++lj/2SCf2Dz102MH0eLmolNUOEyjx00dpoYGdg2OMwMYNxLeIWXmV0zsKFl4TSdIpUkJdApCgdWD6H15ZQkbFJRV0CTwidewnP0NxQ+WwekDpRgcaZgkxTM9lZn6uv2UrAFQAmfrc/WwWfrmepNE6S+CEuQpd4kmk4e/MxplnrrJTjz2DSbpJ6FLZwmQMFsfemCFFo4I7N1u/XL4243XR6myDGzwv+QqqQ+8Rw63YAKCn/eegXwS/C8Zrm3El7U3+cCZJoLkuJ0Jq48/S1gvUOaJoCXLP1tA5fE2BVUvAQTGBl2wAoYDtTJrEfhsHX69WzvkWNCkZ631UZSsbldD7P98jCzvbaegO33Xr+kCqypmkAL7+83wFdaFUn2Bfv+x/VfkV8QnEloh/erSAAAAABJRU5ErkJggg==" alt="QR BEP20">
+            </div>
+            <div class="crypto-info">
+              <div class="usdt-network">USDT · BEP-20 (BSC)</div>
+              <div class="usdt-addr">0x634f473a800a3a9029a26f35e20350accfbff89a</div>
+            </div>
           </div>
           <div class="usdt-hint">⚠️ Envía exactamente el monto de tu plan. Luego envíanos el comprobante por email.</div>
           <div class="usdt-copied" id="usdt-copied">✓ Dirección copiada al portapapeles</div>
         </div>
+
+        <div class="modal-section-title" style="margin-top:20px;" id="proof-title">COMPROBANTE DE PAGO</div>
+        <div class="proof-upload" id="proof-upload" onclick="document.getElementById('proof-input').click()">
+          <input type="file" id="proof-input" accept="image/*" style="display:none;" onchange="handleProofUpload(event)">
+          <div id="proof-placeholder">
+            <div class="proof-icon">📎</div>
+            <div class="proof-text">Click para subir captura del comprobante</div>
+            <div class="proof-sub">JPG, PNG · máx. 5MB</div>
+          </div>
+          <img id="proof-preview" style="display:none;">
+        </div>
+        <div class="proof-hint" id="proof-hint">Sube la captura de tu transferencia/depósito para que podamos verificarlo más rápido.</div>
 
         <div id="error-msg" style="font-size:9px;color:var(--red);margin-bottom:10px;min-height:16px;"></div>
 
@@ -1372,6 +1365,39 @@
     anual:      { label:'PLAN ANUAL',      period:'12 meses · Mejor valor',     price:'$45', paypal:'https://www.paypal.com/paypalme/lockintrader/45' },
   };
   let currentPlan = 'semestral', currentMethod = 'paypal';
+  let proofBase64 = null;
+
+  function handleProofUpload(event) {
+    const file = event.target.files[0];
+    const errEl = document.getElementById('error-msg');
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { errEl.textContent = '⚠ El archivo debe ser una imagen.'; return; }
+    if (file.size > 5 * 1024 * 1024) { errEl.textContent = '⚠ La imagen no debe superar 5MB.'; return; }
+    errEl.textContent = '';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        proofBase64 = canvas.toDataURL('image/jpeg', 0.72);
+
+        const preview = document.getElementById('proof-preview');
+        preview.src = proofBase64;
+        preview.style.display = 'block';
+        document.getElementById('proof-placeholder').style.display = 'none';
+        document.getElementById('proof-upload').classList.add('has-image');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
   function switchModalPlan(plan, btn) {
     currentPlan = plan;
@@ -1398,6 +1424,11 @@
     document.getElementById('modal-form-content').style.display = '';
     document.getElementById('modal-success').classList.remove('visible');
     document.getElementById('error-msg').textContent = '';
+    proofBase64 = null;
+    document.getElementById('proof-input').value = '';
+    document.getElementById('proof-preview').style.display = 'none';
+    document.getElementById('proof-placeholder').style.display = '';
+    document.getElementById('proof-upload').classList.remove('has-image');
     selectPay('paypal');
     setTimeout(() => switchModalPlan(plan, null), 0);
     document.getElementById('payModal').classList.add('open');
@@ -1414,17 +1445,28 @@
     currentMethod = method;
     document.getElementById('opt-paypal').classList.toggle('selected', method==='paypal');
     document.getElementById('opt-usdt').classList.toggle('selected', method==='usdt');
+    document.getElementById('opt-btc').classList.toggle('selected', method==='btc');
     document.getElementById('usdt-box').classList.toggle('visible', method==='usdt');
+    document.getElementById('btc-box').classList.toggle('visible', method==='btc');
     document.getElementById('confirm-label').textContent = method==='paypal' ? 'IR A PAYPAL →' : 'YA PAGUÉ · ENVIAR';
+    const hint = document.getElementById('proof-hint');
+    if (method === 'paypal') {
+      hint.textContent = 'Opcional: si ya tienes el comprobante de PayPal, puedes adjuntarlo.';
+    } else {
+      hint.textContent = '⚠ Obligatorio: sube la captura de tu transferencia para verificar tu pago.';
+    }
   }
   function copyAddr(net, addr) {
     navigator.clipboard.writeText(addr).then(() => {
-      const el = document.getElementById('usdt-copied');
-      el.style.display = 'block';
-      setTimeout(() => el.style.display='none', 2500);
+      ['usdt-copied','btc-copied'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = 'block';
+        setTimeout(() => el.style.display='none', 2500);
+      });
     });
   }
-  function confirmPay() {
+  async function confirmPay() {
     const nombres   = document.getElementById('field-nombres').value.trim();
     const apellidos = document.getElementById('field-apellidos').value.trim();
     const email     = document.getElementById('field-email').value.trim();
@@ -1432,7 +1474,26 @@
     if (!nombres)   { errEl.textContent = '⚠ Por favor ingresa tus nombres.'; return; }
     if (!apellidos) { errEl.textContent = '⚠ Por favor ingresa tus apellidos.'; return; }
     if (!email || !email.includes('@')) { errEl.textContent = '⚠ Por favor ingresa un correo válido.'; return; }
+    if (currentMethod !== 'paypal' && !proofBase64) {
+      errEl.textContent = '⚠ Sube el comprobante de tu pago para continuar.';
+      return;
+    }
     errEl.textContent = '';
+
+    const btn = document.getElementById('confirm-btn');
+    const originalLabel = document.getElementById('confirm-label').textContent;
+    btn.disabled = true;
+    document.getElementById('confirm-label').textContent = 'ENVIANDO…';
+
+    try {
+      await guardarComprobante({ nombres, apellidos, email });
+    } catch (e) {
+      console.error('[comprobante]', e);
+      // No bloqueamos el flujo del usuario si falla el guardado en Firebase
+    }
+
+    btn.disabled = false;
+    document.getElementById('confirm-label').textContent = originalLabel;
 
     // Abrir PayPal en nueva pestaña, o mostrar dirección cripto ya visible
     if (currentMethod === 'paypal') {
@@ -1514,298 +1575,10 @@
   function startTimer() { autoTimer = setInterval(() => { cIdx = cIdx >= maxIdx() ? 0 : cIdx+1; applyPos(); }, 4500); }
   function resetTimer() { clearInterval(autoTimer); startTimer(); }
 
-  window.addEventListener('DOMContentLoaded', () => {
-    buildCarousel(); startTimer();
-
-    // ── Overview chart (balance line + red drawdown + win/loss dots) ──
-    const oc = document.getElementById('app-overview-canvas');
-    if (oc) {
-      oc.width = oc.offsetWidth || 500; oc.height = 88;
-      const octx = oc.getContext('2d');
-      const W = oc.width, H = oc.height;
-      // Balance curve points (normalized 0-1)
-      const bal = [0.08,0.12,0.18,0.14,0.22,0.30,0.26,0.38,0.44,0.40,0.50,0.58,0.54,0.64,0.72,0.68,0.78,0.82,0.88,0.92,0.88,0.95,1.0];
-      const pts = bal.length;
-      const xStep = W / (pts - 1);
-      const PAD = 8;
-      const toX = i => i * xStep;
-      const toY = v => PAD + (H - PAD * 2) * (1 - v);
-
-      // Drawdown fill (subtle red area below curve)
-      octx.beginPath();
-      for (let i = 0; i < pts; i++) {
-        const y = toY(bal[i]);
-        const ddY = Math.min(y + (Math.random() * 12 + 3), H - 2);
-        i === 0 ? octx.moveTo(toX(i), ddY) : octx.lineTo(toX(i), ddY);
-      }
-      for (let i = pts - 1; i >= 0; i--) octx.lineTo(toX(i), toY(bal[i]));
-      octx.closePath();
-      octx.fillStyle = 'rgba(255,84,112,0.08)';
-      octx.fill();
-
-      // Balance gradient fill
-      const grad = octx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(180,190,210,0.18)');
-      grad.addColorStop(1, 'rgba(180,190,210,0)');
-      octx.beginPath();
-      for (let i = 0; i < pts; i++) i === 0 ? octx.moveTo(toX(i), toY(bal[i])) : octx.lineTo(toX(i), toY(bal[i]));
-      octx.lineTo(toX(pts - 1), H); octx.lineTo(0, H); octx.closePath();
-      octx.fillStyle = grad; octx.fill();
-
-      // Balance line
-      octx.beginPath();
-      for (let i = 0; i < pts; i++) i === 0 ? octx.moveTo(toX(i), toY(bal[i])) : octx.lineTo(toX(i), toY(bal[i]));
-      octx.strokeStyle = '#B4BED2'; octx.lineWidth = 1.5;
-      octx.lineJoin = 'round'; octx.lineCap = 'round'; octx.stroke();
-
-      // Win/loss dots
-      const results = [1,1,0,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1];
-      for (let i = 0; i < pts; i++) {
-        octx.beginPath();
-        octx.arc(toX(i), toY(bal[i]), 3, 0, Math.PI * 2);
-        octx.fillStyle = results[i] ? '#4ADE80' : '#FF4560';
-        octx.fill();
-      }
-    }
-
-    // ── Ops donut (win/loss) ──
-    const dc = document.getElementById('app-donut-canvas');
-    if (dc) {
-      const dctx = dc.getContext('2d');
-      const cx = 36, cy = 36, r = 26, lw = 10;
-      const win = 17, total = 23, winAngle = (win / total) * Math.PI * 2;
-      // Loss arc
-      dctx.beginPath();
-      dctx.arc(cx, cy, r, 0, Math.PI * 2);
-      dctx.strokeStyle = 'rgba(255,84,112,0.3)';
-      dctx.lineWidth = lw; dctx.stroke();
-      // Win arc
-      dctx.beginPath();
-      dctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + winAngle);
-      dctx.strokeStyle = '#B4BED2';
-      dctx.lineWidth = lw; dctx.lineCap = 'round'; dctx.stroke();
-      // Center pct label
-      dctx.fillStyle = '#E8ECF5';
-      dctx.font = 'bold 11px Syne, sans-serif';
-      dctx.textAlign = 'center';
-      dctx.textBaseline = 'middle';
-      dctx.fillText('74%', cx, cy);
-    }
-
-    // ── Gauge (consistency) ──
-    const gc = document.getElementById('app-gauge-canvas');
-    if (gc) {
-      const gctx = gc.getContext('2d');
-      const cx = 34, cy = 38, r = 26;
-      // Background arc
-      gctx.beginPath();
-      gctx.arc(cx, cy, r, Math.PI * 0.75, Math.PI * 2.25);
-      gctx.strokeStyle = 'rgba(180,190,210,0.12)';
-      gctx.lineWidth = 8; gctx.lineCap = 'round'; gctx.stroke();
-      // Fill arc (82%)
-      const fillAngle = Math.PI * 0.75 + (Math.PI * 1.5) * 0.82;
-      gctx.beginPath();
-      gctx.arc(cx, cy, r, Math.PI * 0.75, fillAngle);
-      gctx.strokeStyle = '#B4BED2';
-      gctx.lineWidth = 8; gctx.lineCap = 'round'; gctx.stroke();
-      // Label
-      gctx.fillStyle = '#B4BED2';
-      gctx.font = 'bold 12px Syne, sans-serif';
-      gctx.textAlign = 'center'; gctx.textBaseline = 'middle';
-      gctx.fillText('82%', cx, cy - 2);
-    }
-
-    // ── Benefits bar chart ──
-    const bc = document.getElementById('app-benefits-canvas');
-    if (bc) {
-      bc.width = bc.offsetWidth || 200; bc.height = 68;
-      const bctx = bc.getContext('2d');
-      const W = bc.width, H = bc.height;
-      const days = ['L','M','X','J','V','L','M','X','J','V','L','M'];
-      const vals = [240, -80, 420, 1960, 180, -120, 860, 320, -60, 540, 460, 200];
-      const maxV = Math.max(...vals.map(Math.abs));
-      const barW = (W / days.length) - 3;
-      vals.forEach((v, i) => {
-        const barH = (Math.abs(v) / maxV) * (H * 0.8);
-        const x = i * (W / days.length);
-        const y = v >= 0 ? H - barH - 2 : H - 2;
-        bctx.fillStyle = v >= 0 ? 'rgba(180,190,210,0.55)' : 'rgba(255,84,112,0.5)';
-        bctx.beginPath();
-        bctx.roundRect(x, y, barW, Math.max(barH, 2), 2);
-        bctx.fill();
-      });
-    }
-  });
+  window.addEventListener('DOMContentLoaded', () => { buildCarousel(); startTimer(); });
   window.addEventListener('resize', () => { buildCarousel(); });
 
-  // ── CANDLESTICK BACKGROUND — REAL CONNECTED CHART ──
-  (function() {
-    const canvas = document.getElementById('candlestick-bg');
-    const ctx = canvas.getContext('2d');
-
-    const CANDLE_W   = 16;
-    const CANDLE_GAP = 5;
-    const STEP       = CANDLE_W + CANDLE_GAP;
-    const PX_PER_SEC = 20;
-
-    const GREEN_FILL   = 'rgba(0,230,118,0.85)';
-    const RED_FILL     = 'rgba(205,50,70,0.85)';
-    const GREEN_WICK   = 'rgba(0,230,118,0.7)';
-    const RED_WICK     = 'rgba(205,50,70,0.7)';
-    const GREEN_STROKE = '#00e676';
-    const RED_STROKE   = '#cc3244';
-
-    // Real connected OHLC: open = previous close, price walks full screen
-    // Price in 0..1 (fraction of screen height, inverted: 0=top, 1=bottom)
-    const TOTAL = 4000;
-    const candles = [];
-
-    (function gen() {
-      let price = 0.5;  // start mid-screen
-      let trend = 0;
-
-      for (let i = 0; i < TOTAL; i++) {
-        // Trend drifts slowly, mean-reverts toward center
-        trend += (Math.random() - 0.5) * 0.018;
-        trend += (0.5 - price) * 0.04;  // pull back to center
-        trend  = Math.max(-0.06, Math.min(0.06, trend));
-
-        const open = price;
-
-        // Body move: 2%–12% of screen
-        const move  = trend + (Math.random() - 0.5) * 0.08;
-        const close = Math.max(0.05, Math.min(0.95, open + move));
-
-        // Wicks extend beyond body
-        const spike  = Math.random() < 0.08;
-        const wickMx = spike ? 0.10 : 0.04;
-        const hiWick = Math.random() * wickMx + 0.008;
-        const loWick = Math.random() * wickMx + 0.008;
-
-        const hi = Math.max(open, close) + hiWick;
-        const lo = Math.min(open, close) - loWick;
-
-        price = close; // CONNECTED: next open = this close
-
-        candles.push({
-          open, close, isGreen: close <= open, // inverted Y: lower value = higher on screen
-          hi: Math.min(hi, 0.98),
-          lo: Math.max(lo, 0.02),
-        });
-      }
-    })();
-
-    let W, H;
-    let scrollOffset = 0;
-    let lastTs = null;
-
-    function resize() {
-      W = canvas.width  = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    function drawGrid(subPx) {
-      ctx.lineWidth = 1;
-      // Horizontal lines
-      ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-      for (let i = 1; i <= 7; i++) {
-        const y = H * (i / 8);
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-      // Vertical lines every 10 candles
-      ctx.strokeStyle = 'rgba(255,255,255,0.018)';
-      const period = STEP * 10;
-      const phase  = subPx % period;
-      for (let x = period - phase; x < W; x += period) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-      }
-    }
-
-    function tick(ts) {
-      requestAnimationFrame(tick);
-
-      const dt = lastTs === null ? 0 : Math.min((ts - lastTs) / 1000, 0.1);
-      lastTs = ts;
-      scrollOffset += PX_PER_SEC * dt;
-
-      ctx.clearRect(0, 0, W, H);
-
-      const subPx    = scrollOffset % STEP;
-      const rightIdx = Math.floor(scrollOffset / STEP) % TOTAL;
-      const visCount = Math.ceil(W / STEP) + 4;
-
-      // p2y: 0=top of screen, 1=bottom (price fraction maps directly)
-      const p2y = f => f * H;
-
-      drawGrid(subPx);
-
-      // MA20 line — average of close fractions
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(180,190,210,0.22)';
-      ctx.lineWidth = 1.2;
-      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      let first = true;
-      for (let i = 20; i <= visCount + 2; i++) {
-        const idx = (rightIdx - i + TOTAL * 2) % TOTAL;
-        let sum = 0;
-        for (let j = 0; j < 20; j++) sum += candles[(idx + j + TOTAL) % TOTAL].close;
-        const x = W - subPx - (i - 1) * STEP + CANDLE_W / 2;
-        const y = p2y(sum / 20);
-        first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        first = false;
-      }
-      ctx.stroke();
-
-      // Draw candles
-      for (let i = 0; i <= visCount; i++) {
-        const idx = (rightIdx - i + TOTAL * 2) % TOTAL;
-        const c   = candles[idx];
-        const x   = W - subPx - i * STEP;
-        if (x + CANDLE_W < 0 || x > W + STEP) continue;
-
-        const isUp = c.close < c.open; // smaller Y = higher on screen = bullish
-        const oY = p2y(c.open);
-        const cY = p2y(c.close);
-        const hY = p2y(c.hi);
-        const lY = p2y(c.lo);
-        const bT = Math.min(oY, cY);
-        const bH = Math.max(Math.abs(cY - oY), 2);
-        const cx = x + CANDLE_W / 2;
-
-        // Upper wick
-        ctx.beginPath();
-        ctx.moveTo(cx, hY); ctx.lineTo(cx, bT);
-        ctx.strokeStyle = isUp ? GREEN_WICK : RED_WICK;
-        ctx.lineWidth = 1.5; ctx.stroke();
-
-        // Lower wick
-        ctx.beginPath();
-        ctx.moveTo(cx, bT + bH); ctx.lineTo(cx, lY);
-        ctx.strokeStyle = isUp ? GREEN_WICK : RED_WICK;
-        ctx.lineWidth = 1.5; ctx.stroke();
-
-        // Body
-        ctx.fillStyle   = isUp ? GREEN_FILL : RED_FILL;
-        ctx.fillRect(x, bT, CANDLE_W, bH);
-        ctx.strokeStyle = isUp ? GREEN_STROKE : RED_STROKE;
-        ctx.lineWidth   = 0.8;
-        ctx.strokeRect(x, bT, CANDLE_W, bH);
-      }
-
-      // Vignette — dark edges, bright center
-      const vig = ctx.createRadialGradient(W/2, H/2, H * 0.08, W/2, H/2, H * 0.72);
-      vig.addColorStop(0, 'rgba(5,4,12,0)');
-      vig.addColorStop(1, 'rgba(5,4,12,0.9)');
-      ctx.fillStyle = vig;
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    requestAnimationFrame(tick);
-  })();
-
-
+  // Scroll fade in
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; } });
   }, { threshold: 0.08 });
@@ -1814,6 +1587,36 @@
     el.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
     observer.observe(el);
   });
+</script>
+
+<!-- FIREBASE: guarda el comprobante de pago para que el admin lo revise -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:"AIzaSyD7qzwECrRDkcwQNQu_AnU6G2hor7B-VUE", authDomain:"ict-traders-gt.firebaseapp.com",
+    projectId:"ict-traders-gt", storageBucket:"ict-traders-gt.appspot.com",
+    messagingSenderId:"173761639587", appId:"1:173761639587:web:1eaa7fe3d0beb782933b16"
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const db    = getFirestore(fbApp);
+
+  window.guardarComprobante = async ({ nombres, apellidos, email }) => {
+    const planInfo = PLANS[currentPlan];
+    const monto = parseFloat((planInfo.price || '0').replace('$',''));
+    await addDoc(collection(db, 'comprobantes'), {
+      nombres, apellidos, email,
+      plan: currentPlan,
+      metodo: currentMethod,
+      monto: isNaN(monto) ? 0 : monto,
+      imageBase64: proofBase64 || null,
+      status: 'pendiente',
+      fecha: new Date().toISOString(),
+      creadoEn: serverTimestamp()
+    });
+  };
 </script>
 </body>
 </html>

@@ -780,7 +780,7 @@
   .td-rule-text { font-size:10px; color:#C8CDDE; flex:1; line-height:1.4; }
   .td-rules-empty { font-size:10px; color:var(--text3); font-style:italic; padding:4px 0; }
   .td-note-label { font-size:9px; color:#8B90A8; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:8px; }
-  .td-note { background:var(--bg3); border-radius:10px; padding:14px 16px; font-size:12px; color:#C8CDDE; line-height:1.7; border-left:2px solid #2E2E48; white-space:pre-wrap; overflow-y:auto; flex:1; min-height:0; }
+  .td-note { background:var(--bg3); border-radius:10px; padding:14px 16px; font-size:12px; color:#C8CDDE; line-height:1.7; border-left:2px solid #2E2E48; white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word; overflow-x:hidden; overflow-y:auto; flex:1; min-height:0; }
   .td-note-wrap { display:flex; flex-direction:column; flex:1; min-height:0; }
   .td-back-btn {
     width:100%; padding:13px; border-radius:8px; border:0.5px solid #2E2E48;
@@ -2298,20 +2298,7 @@
           <!-- Fondo animado velas -->
           <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;">
             <div id="dro-inline-scan" style="position:absolute;top:-30%;left:-20%;width:30%;height:160%;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,0.04) 50%,transparent 65%);animation:tdScan 11s linear infinite;"></div>
-            <svg style="position:absolute;left:0;right:0;bottom:0;width:100%;height:50%;opacity:0.09;animation:tdCandleFloat 10s ease-in-out infinite;" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-              <line stroke="#8a93a3" stroke-width="1.2" x1="50" y1="140" x2="50" y2="230"/><rect x="38" y="155" width="24" height="45" rx="1.5" fill="#FF5470"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="120" y1="110" x2="120" y2="195"/><rect x="108" y="128" width="24" height="40" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="190" y1="95" x2="190" y2="185"/><rect x="178" y="115" width="24" height="48" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="260" y1="120" x2="260" y2="210"/><rect x="248" y="140" width="24" height="42" rx="1.5" fill="#FF5470"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="330" y1="100" x2="330" y2="190"/><rect x="318" y="118" width="24" height="44" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="400" y1="85" x2="400" y2="170"/><rect x="388" y="102" width="24" height="38" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="470" y1="115" x2="470" y2="205"/><rect x="458" y="130" width="24" height="50" rx="1.5" fill="#FF5470"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="540" y1="90" x2="540" y2="180"/><rect x="528" y="108" width="24" height="42" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="610" y1="105" x2="610" y2="200"/><rect x="598" y="122" width="24" height="46" rx="1.5" fill="#FF5470"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="680" y1="80" x2="680" y2="165"/><rect x="668" y="98" width="24" height="40" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="750" y1="110" x2="750" y2="200"/><rect x="738" y="128" width="24" height="44" rx="1.5" fill="#4ADE80"/>
-              <line stroke="#8a93a3" stroke-width="1.2" x1="820" y1="95" x2="820" y2="185"/><rect x="808" y="112" width="24" height="40" rx="1.5" fill="#FF5470"/>
-            </svg>
+            <svg id="dro-inline-bg-candles" style="position:absolute;left:0;right:0;bottom:0;width:100%;height:56%;opacity:0.11;animation:tdCandleFloat 10s ease-in-out infinite;" viewBox="0 0 900 260" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
           </div>
           <!-- Contenido del panel -->
           <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:24px 28px;gap:18px;overflow-y:auto;animation:dro-fadeIn 0.4s ease;">
@@ -2337,7 +2324,7 @@
             <!-- Nota del día / journal -->
             <div id="dro-inline-journal" style="flex-shrink:0;display:none;">
               <div style="font-size:9px;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">NOTA DEL DÍA</div>
-              <div id="dro-inline-journal-text" style="font-size:11px;color:#C8CDDE;line-height:1.7;background:var(--bg3);border-radius:8px;padding:12px 14px;border-left:2px solid #2E2E48;white-space:pre-wrap;"></div>
+              <div id="dro-inline-journal-text" style="font-size:11px;color:#C8CDDE;line-height:1.7;background:var(--bg3);border-radius:8px;padding:12px 14px;border-left:2px solid #2E2E48;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;"></div>
             </div>
             <!-- P&L cuenta global -->
             <div id="dro-inline-account" style="margin-top:auto;flex-shrink:0;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;"></div>
@@ -2386,18 +2373,19 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
                   <div class="dm-field-label" style="margin-bottom:0;">GANADOS / PERDIDOS</div>
                   <div id="dm-unit-toggle" style="display:flex;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;overflow:hidden;">
-                    <button type="button" id="dm-unit-btn-points" onclick="setDmUnit('points')" style="padding:2px 8px;font-size:8px;letter-spacing:.08em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:var(--accent);color:var(--bg);transition:all .15s;">PUNTOS</button>
-                    <button type="button" id="dm-unit-btn-ticks" onclick="setDmUnit('ticks')" style="padding:2px 8px;font-size:8px;letter-spacing:.08em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s;">TICKS</button>
+                    <button type="button" id="dm-unit-btn-points" onclick="setDmUnit('points')" style="padding:2px 7px;font-size:8px;letter-spacing:.06em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:var(--accent);color:var(--bg);transition:all .15s;">PUNTOS</button>
+                    <button type="button" id="dm-unit-btn-ticks" onclick="setDmUnit('ticks')" style="padding:2px 7px;font-size:8px;letter-spacing:.06em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s;">TICKS</button>
+                    <button type="button" id="dm-unit-btn-lots" onclick="setDmUnit('lots')" style="padding:2px 7px;font-size:8px;letter-spacing:.06em;font-family:'Space Mono',monospace;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .15s;">LOTES</button>
                   </div>
                 </div>
                 <input class="dm-input" type="text" inputmode="decimal" id="dm-simple-points" placeholder="ej: 30 o -15" oninput="dmCalcSimple()">
               </div>
               <div class="dm-field">
                 <div class="dm-field-label">P&L ($)</div>
-                <input class="dm-input readonly" type="text" id="dm-simple-pnl-display" placeholder="—" readonly>
+                <input class="dm-input" type="text" inputmode="decimal" id="dm-simple-pnl-display" placeholder="ej: 200 o -150" oninput="dmCalcSimple()">
               </div>
             </div>
-            <div id="dm-simple-single-hint" style="font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:0.06em;">Ingresa positivo para ganancia, negativo para pérdida.</div>
+            <div id="dm-simple-single-hint" style="font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:0.06em;">Ingresa los puntos/ticks/lotes y el P&L en dólares manualmente. Positivo = ganancia, negativo = pérdida.</div>
 
             <!-- Parciales simples (ocultos por defecto) -->
             <div id="dm-simple-parciales-wrap" style="display:none;margin-top:10px;">
@@ -2407,6 +2395,7 @@
               <div id="dm-simple-tp-rows"></div>
               <button class="add-tp-btn" id="dm-simple-add-tp-btn" onclick="dmSimpleAddTP()">+ Agregar parcial (0/5 — máx. 5)</button>
             </div>
+
           </div>
 
           <!-- NOTA DEL TRADE (debajo de resultado rápido) -->
@@ -2637,6 +2626,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://s3.tradingview.com/tv.js"></script>
 
 <!-- ====================== FIREBASE SDK ====================== -->
@@ -5013,15 +5003,65 @@ function renderActivityTable() {
 }
 
 function exportActivityCSV() {
-  const rows = [['Fecha','Saldo Inicial del Dia','PnL del Dia','Saldo Final','Perdida Disponible']];
-  document.querySelectorAll('#activity-table-body tr').forEach(tr => {
-    rows.push([...tr.querySelectorAll('td')].map(td => td.textContent.trim()));
+  const activeTrades = getActiveTrades();
+  const acct         = accountConfig ? accountConfig.size : 0;
+  const maxDDAct     = accountConfig ? getMaxDD() : 0;
+
+  const dayMap = {};
+  activeTrades.forEach(t => {
+    if (!dayMap[t.date]) dayMap[t.date] = [];
+    dayMap[t.date].push(t);
   });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'actividad_trading.csv';
-  a.click();
+
+  const sortedFwd = Object.keys(dayMap).sort();
+  const MONTHS_ES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  let runBalance = acct;
+  let runPerdida = maxDDAct;
+
+  const rows = [['Fecha','Saldo inicial del día','PnL del día','Saldo final','Pérdida disponible']];
+
+  sortedFwd.forEach(d => {
+    const dayPnl    = dayMap[d].reduce((s,t) => s + t.pnl, 0);
+    const balBefore = runBalance;
+
+    runBalance += dayPnl;
+    runPerdida += dayPnl;
+    runPerdida  = Math.max(0, runPerdida);
+
+    const [,m,day] = d.split('-');
+    const dateLabel = `${parseInt(day)} de ${MONTHS_ES_SHORT[parseInt(m)-1]}`;
+
+    rows.push([
+      dateLabel,
+      Math.round(balBefore * 100) / 100,
+      Math.round(dayPnl * 100) / 100,
+      Math.round(runBalance * 100) / 100,
+      Math.round(runPerdida * 100) / 100
+    ]);
+  });
+
+  // newest first, like the dashboard table
+  const header = rows[0];
+  const body   = rows.slice(1).reverse();
+
+  const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+  ws['!cols'] = [
+    { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 16 }
+  ];
+
+  const moneyFmt = '"$"#,##0.00';
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = 1; R <= range.e.r; R++) {
+    for (let C = 1; C <= 4; C++) {
+      const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+      if (ws[cellRef]) ws[cellRef].z = moneyFmt;
+    }
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Actividad');
+  XLSX.writeFile(wb, 'actividad_trading.xlsx');
 }
 
 function renderDashboard() {
@@ -5431,7 +5471,7 @@ function refreshDayModal() {
   // Siempre limpiar el formulario — los trades guardados se muestran abajo
   document.getElementById('dm-entry').value = '';
   const spEl = document.getElementById('dm-simple-points'); if(spEl) spEl.value = '';
-  const spdEl = document.getElementById('dm-simple-pnl-display'); if(spdEl){spdEl.value='—';spdEl.className='dm-input readonly';}
+  const spdEl = document.getElementById('dm-simple-pnl-display'); if(spdEl){spdEl.value='';spdEl.className='dm-input';}
   document.getElementById('dm-sl').value = '';
   document.getElementById('dm-sl-points').value = '';
   document.getElementById('dm-simple-exit').value = '';
@@ -5549,25 +5589,28 @@ function getTickSize(symbol) {
   return TICK_SIZE[symbol] || 1;
 }
 
-// ── UNIDAD: PUNTOS vs TICKS ──
-let dmUnit = 'points'; // 'points' | 'ticks'
+// ── UNIDAD: PUNTOS vs TICKS vs LOTES ──
+let dmUnit = 'points'; // 'points' | 'ticks' | 'lots'
 
 function setDmUnit(unit) {
   dmUnit = unit;
-  const isPoints = unit === 'points';
   const btnPoints = document.getElementById('dm-unit-btn-points');
   const btnTicks  = document.getElementById('dm-unit-btn-ticks');
-  if (btnPoints && btnTicks) {
-    btnPoints.style.background = isPoints ? 'var(--accent)' : 'transparent';
-    btnPoints.style.color      = isPoints ? 'var(--bg)' : 'var(--text3)';
-    btnTicks.style.background  = isPoints ? 'transparent' : 'var(--accent)';
-    btnTicks.style.color       = isPoints ? 'var(--text3)' : 'var(--bg)';
-  }
+  const btnLots   = document.getElementById('dm-unit-btn-lots');
+  [['points', btnPoints], ['ticks', btnTicks], ['lots', btnLots]].forEach(([key, btn]) => {
+    if (!btn) return;
+    const active = unit === key;
+    btn.style.background = active ? 'var(--accent)' : 'transparent';
+    btn.style.color      = active ? 'var(--bg)' : 'var(--text3)';
+  });
   const input = document.getElementById('dm-simple-points');
-  if (input) input.placeholder = isPoints ? 'ej: 30 o -15' : 'ej: 12 o -8';
+  if (input) {
+    input.placeholder = unit === 'points' ? 'ej: 30 o -15'
+                       : unit === 'ticks'  ? 'ej: 12 o -8'
+                       : 'ej: 0.50 o -0.25';
+  }
   const tpLabel = document.getElementById('dm-simple-tp-unit-label');
-  if (tpLabel) tpLabel.textContent = isPoints ? 'PUNTOS' : 'TICKS';
-  dmCalcSimple();
+  if (tpLabel) tpLabel.textContent = unit === 'points' ? 'PUNTOS' : unit === 'ticks' ? 'TICKS' : 'LOTES';
 }
 
 function dmCalcCore() {
@@ -5863,7 +5906,7 @@ function dmSimpleToggleParciales() {
 function dmSimpleAddTP() {
   if (dmSimpleTPs.length >= 5) return;
   const qty = parseInt(document.getElementById('dm-qty').value) || 1;
-  dmSimpleTPs.push({ pts: '', qty: qty, result: 'win' });
+  dmSimpleTPs.push({ pts: '', qty: qty, pnl: '', result: 'win' });
   dmSimpleRenderTPs();
 }
 
@@ -5888,22 +5931,15 @@ function dmSimpleRenderTPs() {
     ? 'Máximo 5 parciales'
     : `+ Agregar parcial (${dmSimpleTPs.length}/5 — máx. 5)`;
 
-  const sym  = document.getElementById('dm-symbol').value;
-  const mult = getSymbolMultiplier(sym);
-  const tickSize = getTickSize(sym);
-  const unitMult = dmUnit === 'ticks' ? tickSize : 1;
-
   if (dmSimpleTPs.length === 0) {
     container.innerHTML = '';
     return;
   }
+  const unitPh = dmUnit === 'points' ? 'Puntos' : dmUnit === 'ticks' ? 'Ticks' : 'Lotes';
   container.innerHTML = dmSimpleTPs.map((tp, i) => {
-    const units = parseFloat(tp.pts) || 0;
-    const qty  = parseInt(tp.qty)   || 1;
-    const pnl  = (units * unitMult) * mult * qty;
-    const pnlStr = units !== 0 ? ((pnl>=0?'+$':'-$') + Math.abs(pnl).toFixed(2)) : '—';
-    const ptsStr = units !== 0 ? ((units>0?'+':'')+units) : '—';
-    const pnlColor = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text2)';
+    const pnlVal   = parseFloat(tp.pnl);
+    const hasPnl   = tp.pnl !== '' && tp.pnl !== undefined && tp.pnl !== null && !isNaN(pnlVal);
+    const pnlColor = hasPnl ? (pnlVal > 0 ? 'var(--green)' : pnlVal < 0 ? 'var(--red)' : 'var(--text2)') : 'var(--text2)';
     return `
     <div class="tp-row" id="stp-row-${i}" style="grid-template-columns:60px 1fr 70px 70px 24px;">
       <div class="dm-field">
@@ -5911,12 +5947,12 @@ function dmSimpleRenderTPs() {
           oninput="dmSimpleUpdateTP(${i},'qty',this.value)" style="font-size:11px;padding:6px 8px;">
       </div>
       <div class="dm-field">
-        <input class="dm-input" type="text" inputmode="decimal" placeholder="Puntos" value="${tp.pts}"
+        <input class="dm-input" type="text" inputmode="decimal" placeholder="${unitPh}" value="${tp.pts}"
           oninput="dmSimpleUpdateTP(${i},'pts',this.value)" style="font-size:11px;padding:6px 8px;">
       </div>
       <div class="dm-field">
-        <input class="dm-input readonly" type="text" readonly value="${pnlStr}"
-          style="font-size:11px;padding:6px 8px;color:${pnlColor};">
+        <input class="dm-input" type="text" inputmode="decimal" placeholder="$" value="${tp.pnl||''}"
+          oninput="dmSimpleUpdateTP(${i},'pnl',this.value)" style="font-size:11px;padding:6px 8px;color:${pnlColor};">
       </div>
       <div class="dm-field">
         <select class="dm-input" style="font-size:11px;padding:6px 8px;" onchange="dmSimpleUpdateTP(${i},'result',this.value)">
@@ -5934,39 +5970,24 @@ function dmSimpleRenderTPs() {
 
 function dmCalcSimple() {
   if (dmTradeMode !== 'simple') return;
-  const sym  = document.getElementById('dm-symbol').value;
-  const mult = getSymbolMultiplier(sym);
-  const tickSize = getTickSize(sym);
-  const unitMult = dmUnit === 'ticks' ? tickSize : 1; // valor en puntos por unidad ingresada
   let totalPnl = 0;
 
   if (dmSimpleParcialesActive) {
-    // Re-render to refresh calculated values
+    // Re-render para reflejar los valores tal como los escribió el usuario
     dmSimpleRenderTPs();
-    totalPnl = dmSimpleTPs.reduce((s, tp) => {
-      const units = parseFloat(tp.pts) || 0;
-      const qty = parseInt(tp.qty)   || 1;
-      return s + (units * unitMult) * mult * qty;
-    }, 0);
-    // Auto result: any winner = win, all loss = loss, etc.
+    totalPnl = dmSimpleTPs.reduce((s, tp) => s + (parseFloat(tp.pnl) || 0), 0);
+    // Resultado automático: si hay algún ganador = win, todo BE = be, si no = loss
     const hasWin  = dmSimpleTPs.some(t => t.result === 'win' || t.result === 'cmw');
     const allBE   = dmSimpleTPs.every(t => t.result === 'be');
     const autoRes = allBE ? 'be' : hasWin ? 'win' : 'loss';
     setResult(autoRes);
   } else {
-    const units = parseFloat(document.getElementById('dm-simple-points').value) || 0;
-    const qty  = parseInt(document.getElementById('dm-qty').value) || 1;
-    const pnl  = (units * unitMult) * mult * qty;
     const disp = document.getElementById('dm-simple-pnl-display');
-    if (units !== 0) {
-      disp.value = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2);
-      disp.className = 'dm-input readonly ' + (pnl >= 0 ? 'val-pos' : 'val-neg');
-    } else {
-      disp.value = '—';
-      disp.className = 'dm-input readonly';
-    }
-    if (units > 0) setResult('win');
-    else if (units < 0) setResult('loss');
+    const raw  = (disp.value || '').trim();
+    const pnl  = parseFloat(raw) || 0;
+    disp.className = raw === '' ? 'dm-input' : 'dm-input ' + (pnl > 0 ? 'val-pos' : pnl < 0 ? 'val-neg' : '');
+    if (pnl > 0) setResult('win');
+    else if (pnl < 0) setResult('loss');
     totalPnl = pnl;
   }
 
@@ -5994,11 +6015,8 @@ async function dmSaveAll() {
 
   // SIMPLE MODE SAVE
   if (dmTradeMode === 'simple') {
-    const mult = getSymbolMultiplier(symbol);
-    const tickSize = getTickSize(symbol);
-    const unitMult = dmUnit === 'ticks' ? tickSize : 1;
     let totalPnl = 0;
-    let totalUnits = 0; // puntos o ticks, tal como los registró el usuario
+    let totalUnits = 0; // puntos, ticks o lotes, tal como los registró el usuario
     let overallResult = currentResult || 'win';
     let simplePartials = [];
 
@@ -6006,7 +6024,7 @@ async function dmSaveAll() {
       simplePartials = dmSimpleTPs.map(tp => {
         const units = parseFloat(tp.pts) || 0;
         const tpQty = parseInt(tp.qty) || qty;
-        const pnl = parseFloat(((units * unitMult) * mult * tpQty).toFixed(2));
+        const pnl = parseFloat((parseFloat(tp.pnl) || 0).toFixed(2));
         return { pts: units, qty: tpQty, pnl, result: tp.result };
       });
       totalPnl = parseFloat(simplePartials.reduce((s,p) => s + p.pnl, 0).toFixed(2));
@@ -6016,10 +6034,11 @@ async function dmSaveAll() {
       overallResult = allBE ? 'be' : hasWin ? 'win' : 'loss';
     } else {
       const units = parseFloat(document.getElementById('dm-simple-points').value) || 0;
-      totalPnl = parseFloat(((units * unitMult) * mult * qty).toFixed(2));
+      const pnlInput = parseFloat(document.getElementById('dm-simple-pnl-display').value) || 0;
+      totalPnl = parseFloat(pnlInput.toFixed(2));
       totalUnits = units;
-      overallResult = currentResult || (units > 0 ? 'win' : units < 0 ? 'loss' : 'be');
-      if (units === 0 && !currentResult) return; // nothing to save
+      overallResult = currentResult || (totalPnl > 0 ? 'win' : totalPnl < 0 ? 'loss' : 'be');
+      if (units === 0 && totalPnl === 0 && !currentResult) return; // nothing to save
     }
 
     const newTrade = {
@@ -6030,7 +6049,7 @@ async function dmSaveAll() {
       pnl: totalPnl,
       partials: simplePartials,
       resultUnits: totalUnits,
-      resultUnit: dmUnit, // 'points' | 'ticks'
+      resultUnit: dmUnit, // 'points' | 'ticks' | 'lots'
       tradeNote,
       tags: [...dmCurrentTags],
       rulesChecked: {...dmCheckedRules},
@@ -6250,7 +6269,7 @@ function openTradeDetailModal(tradeId) {
   const qtyLabelEl = document.getElementById('td-qty-label');
   const qtyValEl   = document.getElementById('td-qty');
   if (t.resultUnits !== undefined && t.resultUnits !== null) {
-    qtyLabelEl.textContent = t.resultUnit === 'ticks' ? 'TICKS' : 'PUNTOS';
+    qtyLabelEl.textContent = t.resultUnit === 'ticks' ? 'TICKS' : t.resultUnit === 'lots' ? 'LOTES' : 'PUNTOS';
     qtyValEl.textContent = (t.resultUnits >= 0 ? '+' : '') + t.resultUnits;
   } else {
     const mult = getSymbolMultiplier(t.symbol) || 1;
@@ -6425,7 +6444,7 @@ function toggleAhCard(idx) {
           const imgEl = card.querySelector('[data-trade-id="' + tradeId + '"] .ah-trade-imgs');
           if (imgEl && imagesDoc[key] && imagesDoc[key].length) {
             imgEl.innerHTML = imagesDoc[key].map(src =>
-              '<img class="day-img" src="' + src + '" onclick="openLightbox(\'' + src + '\')" style="max-width:120px;border-radius:6px;cursor:zoom-in;">'
+              '<img class="day-img" src="' + src + '" onclick="event.stopPropagation();openLightbox(\'' + src + '\')" style="width:46px;height:46px;max-width:46px;border-radius:6px;cursor:zoom-in;">'
             ).join('');
           }
         });
@@ -6494,34 +6513,31 @@ function renderAhTrades(acc) {
           + '</table></div>';
       }
 
+      // Nota — lectura corrida, sin scroll horizontal (se ajusta de izquierda a derecha)
       var noteHTML = hasNote
-        ? '<div style="margin-top:12px;font-size:11px;color:#aaa;line-height:1.7;background:rgba(0,0,0,0.35);border-radius:7px;padding:10px 12px;border-left:2px solid ' + tc + ';">' + t.tradeNote + '</div>'
+        ? '<div style="margin-top:10px;font-size:11px;color:#9a9a9a;line-height:1.7;background:rgba(0,0,0,0.35);border-radius:7px;padding:9px 11px;border-left:2px solid ' + tc + ';white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">📌 ' + t.tradeNote + '</div>'
         : '';
+      // Imágenes — miniaturas pequeñas, como indicador, con zoom al hacer clic
       var imgsHTML = hasImgs
-        ? '<div class="day-images ah-trade-imgs" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">' + imgSrcs.map(function(src){ return '<img class="day-img" src="' + src + '" onclick="openLightbox(\'' + src + '\')" style="max-width:120px;border-radius:6px;cursor:zoom-in;">'; }).join('') + '</div>'
+        ? '<div class="day-images ah-trade-imgs" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">' + imgSrcs.map(function(src){ return '<img class="day-img" src="' + src + '" onclick="event.stopPropagation();openLightbox(\'' + src + '\')" style="width:46px;height:46px;max-width:46px;border-radius:6px;cursor:zoom-in;">'; }).join('') + '</div>'
         : '<div class="ah-trade-imgs"></div>';
       var setupBadge = (t.setup && t.setup !== '\u2014')
         ? '<span style="font-size:9px;color:#555;background:#111;border:0.5px solid #2a2200;border-radius:4px;padding:2px 7px;">' + t.setup + '</span>'
         : '';
-      var slHTML = t.sl
-        ? (t.sl + (t.slPoints ? ' <span style="font-size:10px;color:#555;">(' + t.slPoints + 'pts)</span>' : ''))
-        : '\u2014';
 
-      return '<div data-trade-id="' + t.id + '" style="background:#0d0d0d;border:0.5px solid ' + borderC + ';border-radius:10px;padding:14px;margin-bottom:8px;">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">'
-          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-            + '<span style="font-family:Rajdhani,sans-serif;font-size:12px;font-weight:700;color:#3d3820;letter-spacing:0.12em;">TRADE #' + (ti+1) + '</span>'
+      // ── Tarjeta compacta, mismo estilo que los trades en modo lectura del diario ──
+      return '<div data-trade-id="' + t.id + '" style="background:#0d0d0d;border:0.5px solid ' + borderC + ';border-radius:10px;padding:12px 14px;margin-bottom:8px;">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">'
+            + '<span style="font-family:\'Space Mono\',monospace;font-size:10px;font-weight:700;color:#3d3820;letter-spacing:0.16em;opacity:0.85;">TRADE #' + (ti+1) + '</span>'
             + '<span class="badge ' + (t.dir === 'Long' ? 'long' : 'short') + '">' + t.dir + '</span>'
-            + '<span style="font-weight:600;color:#e0e0e0;font-size:12px;">' + t.symbol + '</span>'
+            + '<span style="font-weight:600;color:#e0e0e0;font-size:12px;">' + t.symbol + (t.qty && t.qty > 1 ? ' ×' + t.qty : '') + '</span>'
             + '<span class="badge ' + t.result + '">' + (LABELS[t.result] || t.result) + '</span>'
             + setupBadge
+            + (hasNote ? '<span style="font-size:11px;opacity:0.55;" title="Tiene nota">\ud83d\udcdd</span>' : '')
+            + (hasImgs ? '<span style="font-size:11px;opacity:0.55;" title="Tiene imagen">\ud83d\uddbc\ufe0f</span>' : '')
           + '</div>'
-          + '<span style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:' + tc + ';">' + ts + '$' + Math.abs(t.pnl).toLocaleString() + '</span>'
-        + '</div>'
-        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#070707;border-radius:7px;padding:10px 12px;">'
-          + '<div><div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">ENTRADA</div><div style="font-size:14px;color:#ccc;font-family:Rajdhani,sans-serif;font-weight:600;">' + (t.entry || '\u2014') + '</div></div>'
-          + '<div><div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">STOP LOSS</div><div style="font-size:14px;color:#FF4560;font-family:Rajdhani,sans-serif;font-weight:600;">' + slHTML + '</div></div>'
-          + '<div><div style="font-size:9px;color:#3d3820;letter-spacing:0.08em;margin-bottom:3px;">CONTRATOS</div><div style="font-size:14px;color:#ccc;font-family:Rajdhani,sans-serif;font-weight:600;">' + (t.qty || 1) + '</div></div>'
+          + '<span style="font-family:\'Space Mono\',monospace;font-size:14px;font-weight:700;color:' + tc + ';letter-spacing:0.02em;">' + ts + '$' + Math.abs(t.pnl).toLocaleString() + '</span>'
         + '</div>'
         + partialsHTML
         + noteHTML
@@ -7936,7 +7952,7 @@ function openDayReadonlyModal() {
 
         let pts = '';
         if (t.resultUnits !== undefined && t.resultUnits !== null) {
-          pts = (t.resultUnits>=0?'+':'')+t.resultUnits+' '+(t.resultUnit==='ticks'?'ticks':'pts');
+          pts = (t.resultUnits>=0?'+':'')+t.resultUnits+' '+(t.resultUnit==='ticks'?'ticks':t.resultUnit==='lots'?'lotes':'pts');
         }
 
         return `<div class="dro-trade-card ${resultClass[t.result]||'be'}" onclick="closeDayReadonlyModal();setTimeout(()=>openTradeDetailModal('${t.id}'),120)">
@@ -7994,6 +8010,47 @@ function closeDayReadonlyModal(e) {
 </script>
 
 <script>
+// ══ FONDO DE VELAS ESTILO TRADINGVIEW (random walk realista) ═══════
+function genTvBgCandlesSVG(count) {
+  const W = 900, H = 260;
+  const margin = 10;
+  const usable = H - margin * 2;
+  const gap = W / count;
+  const bodyW = Math.max(2.2, gap * 0.52);
+  let y = H / 2 + (Math.random() - 0.5) * usable * 0.2;
+  let bias = 0;
+  let parts = '';
+  for (let i = 0; i < count; i++) {
+    // momentum tipo random-walk, con sesgo que cambia lentamente (impulsos/retrocesos)
+    bias += (Math.random() - 0.5) * 0.5;
+    bias = Math.max(-1, Math.min(1, bias));
+    // de vez en cuando una vela grande (impulso fuerte), como en un chart real
+    const burst = Math.random() < 0.07 ? 2.4 : 1;
+    const openY = y;
+    const range = usable * (0.01 + Math.random() * 0.02) * burst;
+    let closeY = openY + ((Math.random() - 0.5) + bias * 0.4) * range * 2;
+    closeY = Math.max(margin, Math.min(H - margin, closeY));
+    const bodyTop = Math.min(openY, closeY);
+    const bodyBot = Math.max(openY, closeY);
+    const wickUp = Math.random() * range * 0.7;
+    const wickDown = Math.random() * range * 0.7;
+    const hi = Math.max(margin, bodyTop - wickUp);
+    const lo = Math.min(H - margin, bodyBot + wickDown);
+    const x = i * gap + gap / 2;
+    const up = closeY <= openY;
+    const color = up ? '#4ADE80' : '#FF5470';
+    const h = Math.max(1.2, bodyBot - bodyTop);
+    parts += `<line x1="${x.toFixed(1)}" y1="${hi.toFixed(1)}" x2="${x.toFixed(1)}" y2="${lo.toFixed(1)}" stroke="#8a93a3" stroke-width="1"/>` +
+             `<rect x="${(x - bodyW / 2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${h.toFixed(1)}" rx="1" fill="${color}"/>`;
+    y = closeY;
+  }
+  return parts;
+}
+(function initTvBgCandles() {
+  const el = document.getElementById('dro-inline-bg-candles');
+  if (el) el.innerHTML = genTvBgCandlesSVG(90);
+})();
+
 // ══ READONLY INLINE PANEL ═══════════════════════════════════════════
 function renderDayReadonlyInline(dateStr) {
   if (!dateStr) dateStr = currentDayDate;
